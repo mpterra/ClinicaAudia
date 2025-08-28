@@ -207,7 +207,7 @@ CREATE TABLE venda_produto (
     produto_id INT NOT NULL,
     quantidade INT NOT NULL DEFAULT 1,
     preco_unitario DECIMAL(10,2) NOT NULL,
-    data_venda DATE DEFAULT CURRENT_DATE,
+    data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     garantia_meses INT DEFAULT 0,
     fim_garantia DATE,
     PRIMARY KEY (venda_id, produto_id),
@@ -426,3 +426,7 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+INSERT INTO usuario (login, senha, tipo) values ('admin', '54321', 'ADMIN');
+
+SELECT * FROM USUARIO;
