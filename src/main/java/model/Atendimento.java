@@ -27,6 +27,10 @@ public class Atendimento {
         AGENDADO, REALIZADO, FALTOU, CANCELADO
     }
 
+    // -------------------------
+    // Construtores
+    // -------------------------
+
     // Construtor vazio
     public Atendimento() {}
 
@@ -46,7 +50,9 @@ public class Atendimento {
         this.usuario = usuario;
     }
 
+    // -------------------------
     // Getters e Setters
+    // -------------------------
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -75,11 +81,17 @@ public class Atendimento {
     public void setValor(BigDecimal valor) { this.valor = valor; }
 
     public LocalDateTime getCriadoEm() { return criadoEm; }
+    public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
+
     public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
+    public void setAtualizadoEm(LocalDateTime atualizadoEm) { this.atualizadoEm = atualizadoEm; }
 
     public String getUsuario() { return usuario; }
     public void setUsuario(String usuario) { this.usuario = usuario; }
 
+    // -------------------------
+    // toString
+    // -------------------------
     @Override
     public String toString() {
         return "Atendimento{" +
