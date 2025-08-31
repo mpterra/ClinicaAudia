@@ -24,7 +24,6 @@ import javax.swing.ImageIcon;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import controller.UsuarioController;
-import model.Usuario;
 
 public class TelaLogin {
 
@@ -64,7 +63,8 @@ public class TelaLogin {
 
         // Painel com imagem ajustada para caber proporcionalmente
         JPanel panel = new JPanel() {
-            private Image imagem;
+            private static final long serialVersionUID = 1L;
+			private Image imagem;
 
             {
                 URL url = getClass().getResource("/images/logo.png");

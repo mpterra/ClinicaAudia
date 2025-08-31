@@ -4,9 +4,6 @@ import model.VendaProduto;
 import util.Database;
 import model.Venda;
 import model.Produto;
-import model.Atendimento;
-import model.Paciente;
-
 import java.math.BigDecimal;
 import java.sql.*;
 import java.time.LocalDateTime;

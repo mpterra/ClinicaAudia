@@ -2,8 +2,6 @@ package controller;
 
 import dao.AgendaProfissionalDAO;
 import model.AgendaProfissional;
-import util.Database;
-
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;

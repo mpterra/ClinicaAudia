@@ -5,7 +5,6 @@ import util.Database;
 import model.Atendimento;
 
 import java.sql.*;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 

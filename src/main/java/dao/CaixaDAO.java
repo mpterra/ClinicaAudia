@@ -6,7 +6,6 @@ import util.Database;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class CaixaDAO {
