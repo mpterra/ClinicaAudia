@@ -1,6 +1,7 @@
 package controller;
 
 import dao.UsuarioDAO;
+import exception.LoginDuplicadoException;
 import model.Usuario;
 
 import java.security.MessageDigest;
@@ -19,7 +20,7 @@ public class UsuarioController {
     // ============================
     // CREATE
     // ============================
-    public Usuario salvar(Usuario usuario) throws SQLException {
+    public Usuario salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
         // Converter senha em hash antes de salvar
         String hash = gerarHash(usuario.getSenha());
         usuario.setSenha(hash);
@@ -29,7 +30,6 @@ public class UsuarioController {
     // ============================
     // READ
     // ============================
-
     public Usuario buscarPorLogin(String login) throws SQLException {
         return dao.buscarPorLogin(login);
     }
@@ -41,7 +41,7 @@ public class UsuarioController {
     // ============================
     // UPDATE
     // ============================
-    public boolean atualizar(Usuario usuario) throws SQLException {
+    public boolean atualizar(Usuario usuario) throws SQLException, LoginDuplicadoException {
         // Converter senha em hash antes de atualizar
         String hash = gerarHash(usuario.getSenha());
         usuario.setSenha(hash);
@@ -61,18 +61,11 @@ public class UsuarioController {
     public boolean login(String login, String senhaDigitada) throws SQLException {
         Usuario usuario = dao.buscarPorLogin(login);
         if (usuario == null) {
-        	System.out.println("Usuário ou senha incorretos");
             return false; // Usuário não existe
         }
 
         String hashDigitado = gerarHash(senhaDigitada);
-        if (hashDigitado.equals(usuario.getSenha())) {
-        	System.out.println("Login bem-sucedido");
-            return true; // Login bem-sucedido
-        } else {
-        	System.out.println("Usuário ou senha incorretos");
-            return false; // Senha incorreta
-        }
+        return hashDigitado.equals(usuario.getSenha());
     }
 
     // ============================

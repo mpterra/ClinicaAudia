@@ -7,33 +7,41 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import exception.LoginDuplicadoException;
+
 public class UsuarioDAO {
 
 	// ============================
 	// CREATE
 	// ============================
-	public Usuario salvar(Usuario usuario) throws SQLException {
-		String sql = "INSERT INTO usuario (login, senha, tipo) VALUES (?, ?, ?)";
-		try (Connection conn = Database.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	public Usuario salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
+	    String sql = "INSERT INTO usuario (login, senha, tipo) VALUES (?, ?, ?)";
 
-			stmt.setString(1, usuario.getLogin());
-			stmt.setString(2, usuario.getSenha());
-			stmt.setString(3, usuario.getTipo());
+	    try (Connection conn = Database.getConnection();
+	         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-			int affectedRows = stmt.executeUpdate();
-			if (affectedRows == 0) {
-				throw new SQLException("Falha ao inserir Usuario, nenhuma linha afetada.");
-			}
+	        stmt.setString(1, usuario.getLogin());
+	        stmt.setString(2, usuario.getSenha());
+	        stmt.setString(3, usuario.getTipo());
 
-			try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-				if (generatedKeys.next()) {
-					usuario.setId(generatedKeys.getInt(1));
-				}
-			}
-		}
-		return usuario;
+	        int affectedRows = stmt.executeUpdate();
+	        if (affectedRows == 0) {
+	            throw new SQLException("Falha ao inserir Usuario, nenhuma linha afetada.");
+	        }
+
+	        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	                usuario.setId(generatedKeys.getInt(1));
+	            }
+	        }
+
+	    } catch (SQLIntegrityConstraintViolationException e) {
+	        throw new LoginDuplicadoException("Já existe um usuário com este login.");
+	    }
+
+	    return usuario;
 	}
+
 
 	// ============================
 	// READ
