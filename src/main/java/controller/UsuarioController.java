@@ -3,6 +3,8 @@ package controller;
 import dao.UsuarioDAO;
 import model.Usuario;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -18,15 +20,15 @@ public class UsuarioController {
     // CREATE
     // ============================
     public Usuario salvar(Usuario usuario) throws SQLException {
+        // Converter senha em hash antes de salvar
+        String hash = gerarHash(usuario.getSenha());
+        usuario.setSenha(hash);
         return dao.salvar(usuario);
     }
 
     // ============================
     // READ
     // ============================
-    public Usuario buscarPorId(int id) throws SQLException {
-        return dao.buscarPorId(id);
-    }
 
     public Usuario buscarPorLogin(String login) throws SQLException {
         return dao.buscarPorLogin(login);
@@ -40,6 +42,9 @@ public class UsuarioController {
     // UPDATE
     // ============================
     public boolean atualizar(Usuario usuario) throws SQLException {
+        // Converter senha em hash antes de atualizar
+        String hash = gerarHash(usuario.getSenha());
+        usuario.setSenha(hash);
         return dao.atualizar(usuario);
     }
 
@@ -48,5 +53,45 @@ public class UsuarioController {
     // ============================
     public boolean deletar(int id) throws SQLException {
         return dao.deletar(id);
+    }
+
+    // ============================
+    // LOGIN
+    // ============================
+    public boolean login(String login, String senhaDigitada) throws SQLException {
+        Usuario usuario = dao.buscarPorLogin(login);
+        if (usuario == null) {
+        	System.out.println("Usuário ou senha incorretos");
+            return false; // Usuário não existe
+        }
+
+        String hashDigitado = gerarHash(senhaDigitada);
+        if (hashDigitado.equals(usuario.getSenha())) {
+        	System.out.println("Login bem-sucedido");
+            return true; // Login bem-sucedido
+        } else {
+        	System.out.println("Usuário ou senha incorretos");
+            return false; // Senha incorreta
+        }
+    }
+
+    // ============================
+    // UTIL: Geração de Hash
+    // ============================
+    private String gerarHash(String senha) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(senha.getBytes());
+
+            // Converter para String hexadecimal
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Erro ao gerar hash da senha", e);
+        }
     }
 }

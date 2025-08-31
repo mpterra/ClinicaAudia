@@ -5,6 +5,7 @@ import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.net.URL;
+import java.sql.SQLException;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -21,6 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.ImageIcon;
 
 import com.formdev.flatlaf.FlatLightLaf;
+
+import controller.UsuarioController;
+import model.Usuario;
 
 public class TelaLogin {
 
@@ -133,7 +137,21 @@ public class TelaLogin {
             public void actionPerformed(ActionEvent e) {
                 String login = textLogin.getText();
                 String senha = new String(passwordField.getPassword());
-                // lógica de autenticação aqui
+                boolean sucesso = false;
+                
+                UsuarioController uc = new UsuarioController();
+                try {
+					sucesso = uc.login(login, senha);
+					if (sucesso) {
+	                    frame.dispose();
+	                    TelaPrincipal.main(null);
+	                } else {
+	                    lblUsuarioIncorreto.setVisible(true);
+	                }
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+                
             }
         });
 

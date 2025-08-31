@@ -28,6 +28,11 @@ public class Usuario {
         this.senha = senha;
         this.tipo = tipo;
     }
+    
+    public Usuario(String login, String senha) {
+		this.login = login;
+		this.senha = senha;
+	}
 
     // Getters e Setters
     public int getId() {

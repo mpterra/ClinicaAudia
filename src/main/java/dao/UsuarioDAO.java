@@ -38,18 +38,6 @@ public class UsuarioDAO {
 	// ============================
 	// READ
 	// ============================
-	public Usuario buscarPorId(int id) throws SQLException {
-		String sql = "SELECT * FROM usuario WHERE id = ?";
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-			stmt.setInt(1, id);
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next())
-					return mapRow(rs);
-			}
-		}
-		return null;
-	}
 
 	public Usuario buscarPorLogin(String login) throws SQLException {
 		String sql = "SELECT * FROM usuario WHERE login = ?";
