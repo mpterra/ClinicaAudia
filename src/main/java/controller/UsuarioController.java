@@ -20,7 +20,7 @@ public class UsuarioController {
     // ============================
     // CREATE
     // ============================
-    public Usuario salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
+    public boolean salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
         // Converter senha em hash antes de salvar
         String hash = gerarHash(usuario.getSenha());
         usuario.setSenha(hash);

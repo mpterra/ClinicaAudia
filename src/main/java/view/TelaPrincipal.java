@@ -1,21 +1,18 @@
 package view;
 
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Image;
+import java.awt.*;
 import java.net.URL;
 import javax.swing.*;
 
 public class TelaPrincipal extends JFrame {
 
-    private JDesktopPane desktop;
+    private JPanel painelCentral;
 
     public TelaPrincipal() {
         setTitle("Clínica Áudia - Sistema de Gestão");
 
         // ====== Ícone do JFrame ======
         try {
-            // Busca o ícone no classpath (src/main/resources/images/)
             URL iconURL = getClass().getClassLoader().getResource("images/icon.png");
             if (iconURL != null) {
                 Image icon = new ImageIcon(iconURL).getImage();
@@ -26,7 +23,7 @@ public class TelaPrincipal extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // =================================
+        // =============================
 
         // Tamanho padrão
         setSize(980, 680);
@@ -40,10 +37,13 @@ public class TelaPrincipal extends JFrame {
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        desktop = new JDesktopPane();
-        add(desktop);
+        // Painel central
+        painelCentral = new JPanel(new BorderLayout());
+        add(painelCentral, BorderLayout.CENTER);
 
         setJMenuBar(createMenuBar());
+        
+        //abrir a tela que quero de inicio
     }
 
     private JMenuBar createMenuBar() {
@@ -51,38 +51,38 @@ public class TelaPrincipal extends JFrame {
 
         // MENU ATENDIMENTO
         JMenu menuAtendimento = createMenu("Atendimento");
-        menuAtendimento.add(createMenuItem("Agenda Profissional"));
-        menuAtendimento.add(createMenuItem("Marcar Atendimento"));
-        menuAtendimento.add(createMenuItem("Evolução do Paciente"));
+        menuAtendimento.add(createMenuItem("Agenda Profissional", e -> {}));
+        menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {}));
+        menuAtendimento.add(createMenuItem("Evolução do Paciente", e -> {}));
 
         // MENU FINANCEIRO
         JMenu menuFinanceiro = createMenu("Financeiro");
-        menuFinanceiro.add(createMenuItem("Pagamentos Atendimentos"));
-        menuFinanceiro.add(createMenuItem("Vendas"));
-        menuFinanceiro.add(createMenuItem("Pagamentos Vendas"));
-        menuFinanceiro.add(createMenuItem("Caixa"));
+        menuFinanceiro.add(createMenuItem("Pagamentos Atendimentos", e -> {}));
+        menuFinanceiro.add(createMenuItem("Vendas", e -> {}));
+        menuFinanceiro.add(createMenuItem("Pagamentos Vendas", e -> {}));
+        menuFinanceiro.add(createMenuItem("Caixa", e -> {}));
 
         // MENU ESTOQUE
         JMenu menuEstoque = createMenu("Estoque");
-        menuEstoque.add(createMenuItem("Movimento de Estoque"));
-        menuEstoque.add(createMenuItem("Consultar Estoque"));
+        menuEstoque.add(createMenuItem("Movimento de Estoque", e -> {}));
+        menuEstoque.add(createMenuItem("Consultar Estoque", e -> {}));
 
         // MENU RELATÓRIOS
         JMenu menuRelatorios = createMenu("Relatórios");
-        menuRelatorios.add(createMenuItem("Pacientes"));
-        menuRelatorios.add(createMenuItem("Atendimentos"));
-        menuRelatorios.add(createMenuItem("Vendas"));
-        menuRelatorios.add(createMenuItem("Caixa"));
+        menuRelatorios.add(createMenuItem("Pacientes", e -> {}));
+        menuRelatorios.add(createMenuItem("Atendimentos", e -> {}));
+        menuRelatorios.add(createMenuItem("Vendas", e -> {}));
+        menuRelatorios.add(createMenuItem("Caixa", e -> {}));
 
         // MENU CADASTRO
         JMenu menuCadastro = createMenu("Cadastro");
-        menuCadastro.add(createMenuItem("Pacientes"));
+        menuCadastro.add(createMenuItem("Pacientes", e -> {}));
         menuCadastro.addSeparator();
-        menuCadastro.add(createMenuItem("Tipos de Produto"));
-        menuCadastro.add(createMenuItem("Produtos"));
+        menuCadastro.add(createMenuItem("Tipos de Produto", e -> {}));
+        menuCadastro.add(createMenuItem("Produtos", e -> {}));
         menuCadastro.addSeparator();
-        menuCadastro.add(createMenuItem("Profissionais"));
-        menuCadastro.add(createMenuItem("Usuários"));
+        menuCadastro.add(createMenuItem("Profissionais", e -> {}));
+        menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 
         menuBar.add(menuAtendimento);
         menuBar.add(menuFinanceiro);
@@ -99,29 +99,21 @@ public class TelaPrincipal extends JFrame {
         return menu;
     }
 
-    private JMenuItem createMenuItem(String text) {
+    private JMenuItem createMenuItem(String text, java.awt.event.ActionListener action) {
         JMenuItem item = new JMenuItem(text);
         item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        item.addActionListener(action);
         return item;
     }
 
-    public void openInternalFrame(final JInternalFrame frame) {
-        desktop.add(frame);
-        frame.setVisible(true);
-
-        Runnable centralizar = () -> {
-            Dimension desktopSize = desktop.getSize();
-            Dimension frameSize = frame.getSize();
-            frame.setLocation((desktopSize.width - frameSize.width) / 2, (desktopSize.height - frameSize.height) / 2);
-        };
-
-        centralizar.run();
-
-        desktop.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
-                centralizar.run();
-            }
-        });
+    // ==========================
+    // MÉTODOS PARA ABRIR PAINÉIS
+    // ==========================
+    
+    private void abrirCadastroUsuario() {
+        painelCentral.removeAll();
+        painelCentral.add(new CadastroUsuarioPanel(), BorderLayout.CENTER);
+        painelCentral.revalidate();
+        painelCentral.repaint();
     }
 }

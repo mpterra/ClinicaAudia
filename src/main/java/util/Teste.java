@@ -14,13 +14,10 @@ public class Teste {
 
         // Testar cadastro
         UsuarioController uc = new UsuarioController();
-        Usuario user = new Usuario();
-		user = uc.buscarPorLogin("admin");
-        System.out.println(user);
+        Usuario user = new Usuario("admin", "54321");
+        user.setTipo("ADMIN");
         
-        user.setSenha("54321");
-        
-        uc.atualizar(user);
-
+		boolean teste = uc.salvar(user);
+        System.out.println(teste ? "Usuário salvo com sucesso!" : "Falha ao salvar usuário.");
     }
 }

@@ -14,7 +14,7 @@ public class UsuarioDAO {
 	// ============================
 	// CREATE
 	// ============================
-	public Usuario salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
+	public boolean salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
 	    String sql = "INSERT INTO usuario (login, senha, tipo) VALUES (?, ?, ?)";
 
 	    try (Connection conn = Database.getConnection();
@@ -39,7 +39,7 @@ public class UsuarioDAO {
 	        throw new LoginDuplicadoException("Já existe um usuário com este login.");
 	    }
 
-	    return usuario;
+	    return true;
 	}
 
 
