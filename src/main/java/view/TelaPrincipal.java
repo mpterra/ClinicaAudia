@@ -33,24 +33,6 @@ public class TelaPrincipal extends JFrame {
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        // ====== MENU CADASTRO ======
-        JMenu menuCadastro = createMenu("Cadastro");
-        JMenuItem miUsuarios = createMenuItem("Usuários");
-        JMenuItem miPacientes = createMenuItem("Pacientes");
-        JMenuItem miProfissionais = createMenuItem("Profissionais");
-        JMenuItem miEnderecos = createMenuItem("Endereços");
-        JMenuItem miProdutos = createMenuItem("Produtos");
-        JMenuItem miTipoProduto = createMenuItem("Tipos de Produto");
-
-        menuCadastro.add(miPacientes);
-        menuCadastro.add(miProfissionais);
-        menuCadastro.add(miEnderecos);
-        menuCadastro.addSeparator();
-        menuCadastro.add(miTipoProduto);
-        menuCadastro.add(miProdutos);
-        menuCadastro.addSeparator();
-        menuCadastro.add(miUsuarios);
-
         // ====== MENU ATENDIMENTO ======
         JMenu menuAtendimento = createMenu("Atendimento");
         JMenuItem miAgenda = createMenuItem("Agenda Profissional");
@@ -88,13 +70,29 @@ public class TelaPrincipal extends JFrame {
         menuRelatorios.add(miRelAtendimentos);
         menuRelatorios.add(miRelVendas);
         menuRelatorios.add(miRelCaixa);
+        
+        // ====== MENU CADASTRO ======
+        JMenu menuCadastro = createMenu("Cadastro");
+        JMenuItem miUsuarios = createMenuItem("Usuários");
+        JMenuItem miPacientes = createMenuItem("Pacientes");
+        JMenuItem miProfissionais = createMenuItem("Profissionais");
+        JMenuItem miProdutos = createMenuItem("Produtos");
+        JMenuItem miTipoProduto = createMenuItem("Tipos de Produto");
+
+        menuCadastro.add(miPacientes);
+        menuCadastro.addSeparator();
+        menuCadastro.add(miTipoProduto);
+        menuCadastro.add(miProdutos);
+        menuCadastro.addSeparator();
+        menuCadastro.add(miProfissionais);
+        menuCadastro.add(miUsuarios);
 
         // Adiciona menus na barra
-        menuBar.add(menuCadastro);
         menuBar.add(menuAtendimento);
         menuBar.add(menuFinanceiro);
         menuBar.add(menuEstoque);
         menuBar.add(menuRelatorios);
+        menuBar.add(menuCadastro);
 
         return menuBar;
     }
