@@ -49,41 +49,48 @@ public class TelaPrincipal extends JFrame {
     private JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
+        
+        // MENU PACIENTES
+        JMenu menuPacientes = createMenu("Pacientes");
+        menuPacientes.add(createMenuItem("Novo Paciente", e -> {}));
+        menuPacientes.add(createMenuItem("Pesquisar Pacientes", e -> {}));
+        
+        
         // MENU ATENDIMENTO
         JMenu menuAtendimento = createMenu("Atendimento");
-        menuAtendimento.add(createMenuItem("Agenda Profissional", e -> {}));
         menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {}));
-        menuAtendimento.add(createMenuItem("Evolução do Paciente", e -> {}));
+        menuAtendimento.add(createMenuItem("Agenda", e -> {}));
+        
 
         // MENU FINANCEIRO
         JMenu menuFinanceiro = createMenu("Financeiro");
-        menuFinanceiro.add(createMenuItem("Pagamentos Atendimentos", e -> {}));
-        menuFinanceiro.add(createMenuItem("Vendas", e -> {}));
-        menuFinanceiro.add(createMenuItem("Pagamentos Vendas", e -> {}));
         menuFinanceiro.add(createMenuItem("Caixa", e -> {}));
+        menuFinanceiro.addSeparator();
+        menuFinanceiro.add(createMenuItem("Contas a Pagar", e -> {}));
+        menuFinanceiro.add(createMenuItem("Contas a Receber", e -> {}));
+
 
         // MENU ESTOQUE
         JMenu menuEstoque = createMenu("Estoque");
-        menuEstoque.add(createMenuItem("Movimento de Estoque", e -> {}));
         menuEstoque.add(createMenuItem("Consultar Estoque", e -> {}));
+        menuEstoque.add(createMenuItem("Últimos Movimentos", e -> {}));
+        
 
         // MENU RELATÓRIOS
         JMenu menuRelatorios = createMenu("Relatórios");
-        menuRelatorios.add(createMenuItem("Pacientes", e -> {}));
         menuRelatorios.add(createMenuItem("Atendimentos", e -> {}));
         menuRelatorios.add(createMenuItem("Vendas", e -> {}));
-        menuRelatorios.add(createMenuItem("Caixa", e -> {}));
+        menuRelatorios.add(createMenuItem("Despesas", e -> {}));
 
         // MENU CADASTRO
         JMenu menuCadastro = createMenu("Cadastro");
-        menuCadastro.add(createMenuItem("Pacientes", e -> {}));
-        menuCadastro.addSeparator();
         menuCadastro.add(createMenuItem("Tipos de Produto", e -> {}));
         menuCadastro.add(createMenuItem("Produtos", e -> {}));
         menuCadastro.addSeparator();
         menuCadastro.add(createMenuItem("Profissionais", e -> {}));
         menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 
+        menuBar.add(menuPacientes);
         menuBar.add(menuAtendimento);
         menuBar.add(menuFinanceiro);
         menuBar.add(menuEstoque);
