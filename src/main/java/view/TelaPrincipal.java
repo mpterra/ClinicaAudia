@@ -4,6 +4,8 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import javax.swing.*;
 
+import com.formdev.flatlaf.FlatLightLaf;
+
 public class TelaPrincipal extends JFrame {
 
     private JDesktopPane desktop;
@@ -126,7 +128,14 @@ public class TelaPrincipal extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (UnsupportedLookAndFeelException ex) {
+            ex.printStackTrace();
+        }
+
+        // sempre dentro do EDT
+        javax.swing.SwingUtilities.invokeLater(() -> {
             new TelaPrincipal().setVisible(true);
         });
     }

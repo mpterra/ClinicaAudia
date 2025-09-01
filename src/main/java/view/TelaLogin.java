@@ -144,7 +144,7 @@ public class TelaLogin {
 					sucesso = uc.login(login, senha);
 					if (sucesso) {
 	                    frame.dispose();
-	                    TelaPrincipal.main(null);
+	                    new TelaPrincipal().setVisible(true);
 	                } else {
 	                    lblUsuarioIncorreto.setVisible(true);
 	                }
