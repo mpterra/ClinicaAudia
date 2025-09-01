@@ -15,8 +15,8 @@ public class Teste {
 
         // Testar cadastro
         Usuario user = new Usuario();
-        user.setLogin("mauricio");
-        user.setSenha("EngHawaii87");
+        user.setLogin("admin");
+        user.setSenha("cba321");
         user.setTipo("ADMIN");
 
         try {
