@@ -91,6 +91,22 @@ public class UsuarioDAO {
 			return stmt.executeUpdate() > 0;
 		}
 	}
+	
+	// ============================
+	// ATIVAR / DESATIVAR
+	// ============================
+	public boolean atualizarStatus(int id, int ativo, String usuarioLogado) throws SQLException {
+	    String sql = "UPDATE usuario SET ativo = ?, usuario = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?";
+	    try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+	        stmt.setInt(1, ativo);
+	        stmt.setString(2, usuarioLogado); // quem fez a alteração
+	        stmt.setInt(3, id);
+
+	        return stmt.executeUpdate() > 0;
+	    }
+	}
+
 
 	// ============================
 	// DELETE
@@ -108,12 +124,13 @@ public class UsuarioDAO {
 	// MAP ROW
 	// ============================
 	private Usuario mapRow(ResultSet rs) throws SQLException {
-		Usuario u = new Usuario();
-		u.setId(rs.getInt("id"));
-		u.setLogin(rs.getString("login"));
-		u.setSenha(rs.getString("senha"));
-		u.setTipo(rs.getString("tipo"));
-
-		return u;
+	    Usuario u = new Usuario();
+	    u.setId(rs.getInt("id"));
+	    u.setLogin(rs.getString("login"));
+	    u.setSenha(rs.getString("senha"));
+	    u.setTipo(rs.getString("tipo"));
+	    u.setStatus(rs.getInt("ativo") == 1);
+	    return u;
 	}
+
 }

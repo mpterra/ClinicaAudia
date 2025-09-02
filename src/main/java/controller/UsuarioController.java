@@ -49,6 +49,10 @@ public class UsuarioController {
 		usuario.setSenha(hash);
 		return dao.atualizar(usuario);
 	}
+	
+	public boolean atualizarStatus(int id, int ativo, String usuarioLogado) throws SQLException {
+        return dao.atualizarStatus(id, ativo, usuarioLogado);
+    }
 
 	// ============================
 	// DELETE
