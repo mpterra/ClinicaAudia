@@ -24,6 +24,8 @@ import javax.swing.ImageIcon;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import controller.UsuarioController;
+import model.Usuario;
+import util.Sessao;
 
 public class TelaLogin {
 
@@ -135,26 +137,26 @@ public class TelaLogin {
 		JButton btnEntrar = new JButton("Entrar");
 		btnEntrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		btnEntrar.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				String login = textLogin.getText();
-				String senha = new String(passwordField.getPassword());
-				boolean sucesso = false;
+		    public void actionPerformed(ActionEvent e) {
+		        String login = textLogin.getText();
+		        String senha = new String(passwordField.getPassword());
 
-				UsuarioController uc = new UsuarioController();
-				try {
-					sucesso = uc.login(login, senha);
-					if (sucesso) {
-						frame.dispose();
-						new TelaPrincipal().setVisible(true);
-					} else {
-						lblUsuarioIncorreto.setVisible(true);
-					}
-				} catch (SQLException e1) {
-					e1.printStackTrace();
-				}
-
-			}
+		        UsuarioController uc = new UsuarioController();
+		        try {
+		            Usuario usuario = uc.login(login, senha);
+		            if (usuario != null) {
+		                Sessao.setUsuario(usuario);  // <-- guarda na sessão
+		                frame.dispose();
+		                new TelaPrincipal().setVisible(true);
+		            } else {
+		                lblUsuarioIncorreto.setVisible(true);
+		            }
+		        } catch (SQLException e1) {
+		            e1.printStackTrace();
+		        }
+		    }
 		});
+
 
 		btnEntrar.setBounds(149, 329, 89, 23);
 		frame.getContentPane().add(btnEntrar);
