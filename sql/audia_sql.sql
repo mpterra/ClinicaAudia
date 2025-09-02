@@ -21,6 +21,11 @@ CREATE TABLE usuario (
     COLLATE utf8mb4_0900_as_cs 
     NOT NULL;
 
+    ALTER TABLE usuario
+    ADD COLUMN profissional_id INT NULL,
+    ADD CONSTRAINT fk_usuario_profissional FOREIGN KEY (profissional_id) REFERENCES profissional(id);
+
+
 
 -- ========================================
 -- TABELA ENDERECO
