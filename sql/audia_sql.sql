@@ -15,6 +15,13 @@ CREATE TABLE usuario (
     usuario VARCHAR(50)
 );
 
+    ALTER TABLE usuario
+    MODIFY COLUMN login VARCHAR(20) 
+    CHARACTER SET utf8mb4 
+    COLLATE utf8mb4_0900_as_cs 
+    NOT NULL;
+
+
 -- ========================================
 -- TABELA ENDERECO
 -- ========================================
