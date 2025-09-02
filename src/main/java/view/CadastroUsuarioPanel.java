@@ -16,6 +16,8 @@ import model.Profissional;
 
 import java.awt.*;
 import java.sql.SQLException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,7 +156,7 @@ public class CadastroUsuarioPanel extends JPanel {
 
 
     private void criarTabelaUsuariosComPesquisa() {
-        String[] colunas = {"Login", "Tipo", "Status", "Criado em"};
+        String[] colunas = {"Login", "Tipo", "Status", "Criação"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             private static final long serialVersionUID = 1L;
             @Override
@@ -249,19 +251,24 @@ public class CadastroUsuarioPanel extends JPanel {
 
             for (Usuario u : usuarios) {
                 String criadoFormatado = u.getCriadoEm() != null ? u.getCriadoEm().format(formatter) : "";
+                
                 modeloTabela.addRow(new Object[]{
-                        u.getLogin(),
-                        u.getTipo(),
-                        u.isAtivo() ? "Ativo" : "Inativo",
-                        criadoFormatado
+                    u.getLogin(),
+                    u.getTipo(),
+                    u.isAtivo() ? "Ativo" : "Inativo",
+                    "Criado por " + (u.getUsuario() != null ? u.getUsuario() : "?") 
+                    + " em " + criadoFormatado
                 });
             }
+
 
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao carregar usuários: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+
 
 
     private void carregarProfissionais() {

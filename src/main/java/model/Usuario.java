@@ -13,6 +13,7 @@ public class Usuario {
 	private LocalDateTime criadoEm;
 	private LocalDateTime atualizadoEm;
 	private Integer profissionalId;
+	private String usuario;
 
 	public enum TipoUsuario {
 		ADMIN, FONOAUDIOLOGO, SECRETARIA, FINANCEIRO
@@ -101,6 +102,14 @@ public class Usuario {
 
 	public void setProfissionalId(Integer profissionalId) {
 		this.profissionalId = profissionalId;
+	}
+	
+	public String getUsuario() {
+	    return usuario;
+	}
+
+	public void setUsuario(String usuario) {
+	    this.usuario = usuario;
 	}
 
 	// Para debug/log
