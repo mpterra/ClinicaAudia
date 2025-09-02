@@ -431,6 +431,6 @@ END$$
 
 DELIMITER ;
 
-INSERT INTO usuario (login, senha, tipo) values ('admin', '54321', 'ADMIN');
+-- ========================================
 
 SELECT * FROM usuario;

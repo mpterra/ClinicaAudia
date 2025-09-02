@@ -15,6 +15,7 @@ public class Teste {
         // Testar cadastro
         UsuarioController uc = new UsuarioController();
         Usuario user = new Usuario("admin", "54321");
+        Sessao.setUsuario(user); // Simula usuário logado
         user.setTipo("ADMIN");
         
 		boolean teste = uc.salvar(user);

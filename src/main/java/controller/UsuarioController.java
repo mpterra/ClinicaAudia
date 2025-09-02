@@ -3,6 +3,7 @@ package controller;
 import dao.UsuarioDAO;
 import exception.LoginDuplicadoException;
 import model.Usuario;
+import util.Sessao;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,7 +25,8 @@ public class UsuarioController {
 		// Converter senha em hash antes de salvar
 		String hash = gerarHash(usuario.getSenha());
 		usuario.setSenha(hash);
-		return dao.salvar(usuario);
+		String sessao = Sessao.getUsuarioLogado().getLogin();
+		return dao.salvar(usuario, sessao);
 	}
 
 	// ============================

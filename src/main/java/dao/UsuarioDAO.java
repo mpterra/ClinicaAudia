@@ -14,8 +14,8 @@ public class UsuarioDAO {
 	// ============================
 	// CREATE
 	// ============================
-	public boolean salvar(Usuario usuario) throws SQLException, LoginDuplicadoException {
-	    String sql = "INSERT INTO usuario (login, senha, tipo) VALUES (?, ?, ?)";
+	public boolean salvar(Usuario usuario, String usuarioLogado) throws SQLException, LoginDuplicadoException {
+	    String sql = "INSERT INTO usuario (login, senha, tipo, usuario) VALUES (?, ?, ?, ?)";
 
 	    try (Connection conn = Database.getConnection();
 	         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -23,6 +23,7 @@ public class UsuarioDAO {
 	        stmt.setString(1, usuario.getLogin());
 	        stmt.setString(2, usuario.getSenha());
 	        stmt.setString(3, usuario.getTipo());
+	        stmt.setString(4, usuarioLogado); // <--- usuário logado
 
 	        int affectedRows = stmt.executeUpdate();
 	        if (affectedRows == 0) {
@@ -41,6 +42,7 @@ public class UsuarioDAO {
 
 	    return true;
 	}
+
 
 
 	// ============================
