@@ -2,7 +2,9 @@ package view;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 import controller.UsuarioController;
 import exception.LoginDuplicadoException;
@@ -15,23 +17,28 @@ import java.util.List;
 public class CadastroUsuarioPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private JTextField tfLogin;
+    private JTextField tfLogin, tfPesquisar;
     private JPasswordField pfSenha;
     private JComboBox<String> cbTipo;
     private JButton btnSalvar, btnLimpar;
     private JTable tabelaUsuarios;
     private DefaultTableModel modeloTabela;
+    private TableRowSorter<DefaultTableModel> sorter;
 
     public CadastroUsuarioPanel() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(10, 20));
 
-        // Painel de Cadastro com borda preta
+        // ===== Painel de Cadastro =====
+        JPanel panelCadastroWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
         JPanel panelCadastro = new JPanel(new GridBagLayout());
+        panelCadastro.setPreferredSize(new Dimension(400, 250));
         panelCadastro.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
                 "Cadastro de Usuário",
                 TitledBorder.LEADING,
                 TitledBorder.TOP));
+
+        panelCadastroWrapper.add(panelCadastro);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -89,15 +96,53 @@ public class CadastroUsuarioPanel extends JPanel {
 
         tabelaUsuarios = new JTable(modeloTabela);
         tabelaUsuarios.setFillsViewportHeight(true);
-        tabelaUsuarios.setPreferredScrollableViewportSize(new Dimension(500, 200));
+
+        // tamanho ajustado
+        tabelaUsuarios.setPreferredScrollableViewportSize(new Dimension(800, 350));
+
+        // centralizar texto
+        DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
+        centralizado.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < tabelaUsuarios.getColumnCount(); i++) {
+            tabelaUsuarios.getColumnModel().getColumn(i).setCellRenderer(centralizado);
+        }
+
+        sorter = new TableRowSorter<>(modeloTabela);
+        tabelaUsuarios.setRowSorter(sorter);
 
         JScrollPane scrollTabela = new JScrollPane(tabelaUsuarios);
 
-        // Adiciona os dois painéis ao layout principal
-        add(panelCadastro, BorderLayout.NORTH);
-        add(scrollTabela, BorderLayout.CENTER);
+        // ==== PESQUISA ====
+        JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panelPesquisa.add(new JLabel("Pesquisar login:"));
+        tfPesquisar = new JTextField(20);
+        panelPesquisa.add(tfPesquisar);
 
-        // Ações dos botões
+        // evento de digitação -> filtra tabela
+        tfPesquisar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void filtrar() {
+                String texto = tfPesquisar.getText().trim();
+                if (texto.isEmpty()) {
+                    sorter.setRowFilter(null);
+                } else {
+                    sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0)); // coluna 0 = Login
+                }
+            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+        });
+
+        // Wrapper para centralizar tabela
+        JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
+        panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
+        panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
+
+        // Layout principal
+        add(panelCadastroWrapper, BorderLayout.NORTH);
+        add(panelTabelaWrapper, BorderLayout.CENTER);
+
+        // Ações
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
             try {
@@ -148,7 +193,7 @@ public class CadastroUsuarioPanel extends JPanel {
             UsuarioController uc = new UsuarioController();
             List<Usuario> usuarios = uc.listarTodos();
 
-            modeloTabela.setRowCount(0); // limpa tabela
+            modeloTabela.setRowCount(0); // limpa
             for (Usuario u : usuarios) {
                 modeloTabela.addRow(new Object[]{
                         u.getLogin(),
