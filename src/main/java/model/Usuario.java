@@ -11,6 +11,7 @@ public class Usuario {
 	private boolean status;
 	private LocalDateTime criadoEm;
 	private LocalDateTime atualizadoEm;
+	private Integer profissionalId;
 
 	public enum TipoUsuario {
 		ADMIN, FONOAUDIOLOGO, SECRETARIA, FINANCEIRO
@@ -85,6 +86,14 @@ public class Usuario {
 
 	public LocalDateTime getAtualizadoEm() {
 		return atualizadoEm;
+	}
+
+	public Integer getProfissionalId() {
+		return profissionalId;
+	}
+
+	public void setProfissionalId(Integer profissionalId) {
+		this.profissionalId = profissionalId;
 	}
 
 	// Para debug/log
