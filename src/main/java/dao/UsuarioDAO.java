@@ -138,6 +138,7 @@ public class UsuarioDAO {
         u.setSenha(rs.getString("senha"));
         u.setTipo(rs.getString("tipo"));
         u.setStatus(rs.getInt("ativo") == 1);
+        u.setCriadoEm(rs.getTimestamp("criado_em"));
 
         int profId = rs.getInt("profissional_id");
         if (!rs.wasNull()) {

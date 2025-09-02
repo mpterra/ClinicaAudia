@@ -16,6 +16,7 @@ import model.Profissional;
 
 import java.awt.*;
 import java.sql.SQLException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -243,19 +244,25 @@ public class CadastroUsuarioPanel extends JPanel {
             List<Usuario> usuarios = uc.listarTodos();
 
             modeloTabela.setRowCount(0);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
             for (Usuario u : usuarios) {
+                String criadoFormatado = u.getCriadoEm() != null ? u.getCriadoEm().format(formatter) : "";
                 modeloTabela.addRow(new Object[]{
                         u.getLogin(),
                         u.getTipo(),
                         u.isAtivo() ? "Ativo" : "Inativo",
-                        u.getCriadoEm()
+                        criadoFormatado
                 });
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao carregar usuários: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private void carregarProfissionais() {
         try {

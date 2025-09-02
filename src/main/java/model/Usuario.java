@@ -1,5 +1,6 @@
 package model;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 public class Usuario {
@@ -82,6 +83,12 @@ public class Usuario {
 
 	public LocalDateTime getCriadoEm() {
 		return criadoEm;
+	}
+	
+	public void setCriadoEm(Timestamp timestamp) {
+		if (timestamp != null) {
+			this.criadoEm = timestamp.toLocalDateTime();
+		}
 	}
 
 	public LocalDateTime getAtualizadoEm() {
