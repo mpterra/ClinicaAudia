@@ -37,6 +37,8 @@ public class CadastroUsuarioPanel extends JPanel {
     private JComboBox<String> cbProfissionais;
     private List<Profissional> listaProfissionais = new ArrayList<>();
 
+    private JLabel lblSenhaInfo;
+
     public CadastroUsuarioPanel() {
         setLayout(new BorderLayout(10, 20));
 
@@ -59,12 +61,12 @@ public class CadastroUsuarioPanel extends JPanel {
 
         // Wrapper para espaçamento
         JPanel panelWrapper = new JPanel(new BorderLayout());
-        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15)); // top, left, bottom, right
+        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
         panelWrapper.add(splitPane, BorderLayout.CENTER);
 
         add(panelWrapper, BorderLayout.CENTER);
 
-        // Listeners
+        // Listeners dos botões
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
             try {
@@ -98,12 +100,12 @@ public class CadastroUsuarioPanel extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // SUBTÍTULO elegante
+        // SUBTÍTULO elegante dentro do painel
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 3;
         JLabel lblSubtitulo = new JLabel("Preencha os dados do usuário");
-        lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 13));
         lblSubtitulo.setForeground(Color.DARK_GRAY);
         panelCadastro.add(lblSubtitulo, gbc);
         gbc.gridwidth = 1;
@@ -115,9 +117,17 @@ public class CadastroUsuarioPanel extends JPanel {
 
         tfLogin = new JTextField();
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(tfLogin, gbc);
+
+        // Label informativo ao lado do login
+        JLabel lblLoginInfo = new JLabel("Use somente letras minusculas e/ou números");
+        lblLoginInfo.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        lblLoginInfo.setForeground(Color.GRAY);
+        gbc.gridx = 2;
+        gbc.weightx = 0.5;
+        panelCadastro.add(lblLoginInfo, gbc);
 
         // SENHA
         gbc.gridx = 0;
@@ -128,9 +138,41 @@ public class CadastroUsuarioPanel extends JPanel {
 
         pfSenha = new JPasswordField();
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(pfSenha, gbc);
+
+        // JLabel de feedback da senha ao lado
+        lblSenhaInfo = new JLabel("6 caracteres, 1 número, 1 símbolo");
+        lblSenhaInfo.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        lblSenhaInfo.setForeground(Color.GRAY);
+        gbc.gridx = 2;
+        panelCadastro.add(lblSenhaInfo, gbc);
+
+        // LISTENER DINÂMICO
+        pfSenha.getDocument().addDocumentListener(new DocumentListener() {
+            private void verificarSenha() {
+                String senha = new String(pfSenha.getPassword());
+                boolean temNumero = senha.matches(".*[0-9].*");
+                boolean temSimbolo = senha.matches(".*[^a-zA-Z0-9].*");
+                boolean temTamanho = senha.length() >= 6;
+
+                String texto = "<html>";
+                texto += temTamanho ? "✔ " : "✖ ";
+                texto += "6 caracteres &nbsp;&nbsp;";
+                texto += temNumero ? "✔ " : "✖ ";
+                texto += "1 número &nbsp;&nbsp;";
+                texto += temSimbolo ? "✔ " : "✖ ";
+                texto += "1 símbolo</html>";
+
+                lblSenhaInfo.setText(texto);
+                lblSenhaInfo.setForeground((temTamanho && temNumero && temSimbolo) ? new Color(0, 128, 0) : Color.RED);
+            }
+
+            public void insertUpdate(DocumentEvent e) { verificarSenha(); }
+            public void removeUpdate(DocumentEvent e) { verificarSenha(); }
+            public void changedUpdate(DocumentEvent e) { verificarSenha(); }
+        });
 
         // TIPO
         gbc.gridx = 0;
@@ -141,9 +183,16 @@ public class CadastroUsuarioPanel extends JPanel {
 
         cbTipo = new JComboBox<>(new String[]{"ADMIN", "FONOAUDIOLOGO", "SECRETARIA", "FINANCEIRO"});
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbTipo, gbc);
+
+        // Label informativo ao lado do combobox tipo
+        JLabel lblTipoInfo = new JLabel("Escolha o tipo de login");
+        lblTipoInfo.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        lblTipoInfo.setForeground(Color.GRAY);
+        gbc.gridx = 2;
+        panelCadastro.add(lblTipoInfo, gbc);
 
         // Vincular a profissional?
         gbc.gridx = 0;
@@ -157,23 +206,25 @@ public class CadastroUsuarioPanel extends JPanel {
         ButtonGroup bg = new ButtonGroup();
         bg.add(rbSim);
         bg.add(rbNao);
-        JPanel panelRadios = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel panelRadios = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         panelRadios.add(rbSim);
         panelRadios.add(rbNao);
 
         gbc.gridx = 1;
-        gbc.weightx = 1.0;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(panelRadios, gbc);
+        gbc.gridwidth = 1;
 
         // ComboBox de Profissionais
         cbProfissionais = new JComboBox<>();
         cbProfissionais.setVisible(false);
         gbc.gridx = 1;
         gbc.gridy = 5;
-        gbc.weightx = 1.0;
+        gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbProfissionais, gbc);
+        gbc.gridwidth = 1;
 
         rbSim.addActionListener(e -> cbProfissionais.setVisible(true));
         rbNao.addActionListener(e -> cbProfissionais.setVisible(false));
@@ -187,22 +238,23 @@ public class CadastroUsuarioPanel extends JPanel {
 
         gbc.gridx = 0;
         gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
+        gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.EAST;
         panelCadastro.add(panelBotoes, gbc);
 
         // Cursor de mãozinha
-        btnSalvar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnLimpar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        rbSim.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        rbNao.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        cbProfissionais.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        cbTipo.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
+        btnSalvar.setCursor(handCursor);
+        btnLimpar.setCursor(handCursor);
+        rbSim.setCursor(handCursor);
+        rbNao.setCursor(handCursor);
+        cbProfissionais.setCursor(handCursor);
+        cbTipo.setCursor(handCursor);
 
         return panelCadastroWrapper;
     }
+
 
     private JPanel criarTabelaUsuariosComPesquisa() {
         JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
@@ -230,9 +282,12 @@ public class CadastroUsuarioPanel extends JPanel {
 
         JScrollPane scrollTabela = new JScrollPane(tabelaUsuarios);
 
-        // Pesquisa
         JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelPesquisa.add(new JLabel("Pesquisar login:"));
+        JLabel lblPesquisar = new JLabel("Pesquisar login:");
+        lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        lblPesquisar.setForeground(Color.DARK_GRAY);
+        panelPesquisa.add(lblPesquisar);
+
         tfPesquisar = new JTextField(20);
         panelPesquisa.add(tfPesquisar);
         tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
@@ -248,6 +303,17 @@ public class CadastroUsuarioPanel extends JPanel {
 
         panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
         panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
+
+        panelTabelaWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                int totalWidth = panelTabelaWrapper.getWidth();
+                tabelaUsuarios.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.2));
+                tabelaUsuarios.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.2));
+                tabelaUsuarios.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.2));
+                tabelaUsuarios.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.4));
+            }
+        });
 
         return panelTabelaWrapper;
     }
@@ -265,7 +331,16 @@ public class CadastroUsuarioPanel extends JPanel {
         String senha = new String(pfSenha.getPassword());
         String tipo = (String) cbTipo.getSelectedItem();
 
-        if (login.isEmpty() || senha.isEmpty()) {
+        boolean temNumero = senha.matches(".*[0-9].*");
+        boolean temSimbolo = senha.matches(".*[^a-zA-Z0-9].*");
+        boolean temTamanho = senha.length() >= 6;
+
+        if (!temNumero || !temSimbolo || !temTamanho) {
+            JOptionPane.showMessageDialog(this, "Senha inválida! Use pelo menos 6 caracteres, 1 número e 1 símbolo.", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (login.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Preencha todos os campos!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
