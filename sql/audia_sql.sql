@@ -85,6 +85,7 @@ CREATE TABLE profissional (
     cpf CHAR(11) NOT NULL UNIQUE,
     email VARCHAR(120),
     telefone VARCHAR(30),
+    data_nascimento DATE,
     tipo ENUM('FONOAUDIOLOGA','SECRETARIA') NOT NULL,
     id_endereco INT,
     ativo TINYINT NOT NULL DEFAULT 1,
@@ -443,9 +444,5 @@ DELIMITER ;
 
 -- ========================================
 
-SELECT 
-    *
-FROM
-    usuario;
-
+SELECT * FROM usuario;
 
