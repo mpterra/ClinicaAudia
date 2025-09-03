@@ -16,8 +16,6 @@ import model.Profissional;
 
 import java.awt.*;
 import java.sql.SQLException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,9 +40,19 @@ public class CadastroUsuarioPanel extends JPanel {
     public CadastroUsuarioPanel() {
         setLayout(new BorderLayout(10, 20));
 
-        criarPainelCadastro();
-        criarTabelaUsuariosComPesquisa();
+        // Criar os painéis
+        JPanel panelCadastro = criarPainelCadastro();
+        JPanel panelTabela = criarTabelaUsuariosComPesquisa();
 
+        // Divisor horizontal: 50% cadastro, 50% tabela
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
+        splitPane.setResizeWeight(0.5); // 50% cada lado
+        splitPane.setContinuousLayout(true); // atualização suave ao arrastar
+        splitPane.setDividerSize(5);
+
+        add(splitPane, BorderLayout.CENTER);
+
+        // Listeners
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
             try {
@@ -62,61 +70,66 @@ public class CadastroUsuarioPanel extends JPanel {
         carregarProfissionais();
     }
 
-    private void criarPainelCadastro() {
-        JPanel panelCadastroWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
+    private JPanel criarPainelCadastro() {
+        JPanel panelCadastroWrapper = new JPanel(new BorderLayout());
         JPanel panelCadastro = new JPanel(new GridBagLayout());
-        
-        // Alarga o painel de cadastro para ocupar 33% da largura do frame
-        int panelWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 3; 
-        panelCadastro.setPreferredSize(new Dimension(panelWidth, 350));
+
         panelCadastro.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
-                "Cadastro de Usuário",
+                "Cadastrar novo usuário",
                 TitledBorder.LEADING,
                 TitledBorder.TOP));
 
-        panelCadastroWrapper.add(panelCadastro);
-        add(panelCadastroWrapper, BorderLayout.NORTH);
+        panelCadastroWrapper.add(panelCadastro, BorderLayout.NORTH);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1.0;
 
         // LOGIN
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Login:"), gbc);
 
         tfLogin = new JTextField();
-        tfLogin.setPreferredSize(new Dimension(panelWidth - 40, 30)); // alarga o campo
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(tfLogin, gbc);
 
         // SENHA
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Senha:"), gbc);
 
         pfSenha = new JPasswordField();
-        pfSenha.setPreferredSize(new Dimension(panelWidth - 40, 30));
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(pfSenha, gbc);
 
         // TIPO
         gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Tipo:"), gbc);
 
         cbTipo = new JComboBox<>(new String[]{"ADMIN", "FONOAUDIOLOGO", "SECRETARIA", "FINANCEIRO"});
-        cbTipo.setPreferredSize(new Dimension(panelWidth - 40, 30));
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbTipo, gbc);
 
         // Vincular a profissional?
         gbc.gridx = 0;
         gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Vincular a Profissional?"), gbc);
 
         rbSim = new JRadioButton("Sim");
@@ -127,17 +140,21 @@ public class CadastroUsuarioPanel extends JPanel {
         JPanel panelRadios = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panelRadios.add(rbSim);
         panelRadios.add(rbNao);
+
         gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(panelRadios, gbc);
 
         // ComboBox de Profissionais
         cbProfissionais = new JComboBox<>();
         cbProfissionais.setVisible(false);
-        cbProfissionais.setPreferredSize(new Dimension(panelWidth - 40, 30));
+        gbc.gridx = 1;
         gbc.gridy = 4;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbProfissionais, gbc);
 
-        // Mostrar/ocultar combo ao clicar radio
         rbSim.addActionListener(e -> cbProfissionais.setVisible(true));
         rbNao.addActionListener(e -> cbProfissionais.setVisible(false));
 
@@ -147,15 +164,21 @@ public class CadastroUsuarioPanel extends JPanel {
         btnLimpar = new JButton("Limpar");
         panelBotoes.add(btnSalvar);
         panelBotoes.add(btnLimpar);
+
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.EAST;
         panelCadastro.add(panelBotoes, gbc);
+
+        return panelCadastroWrapper;
     }
 
+    private JPanel criarTabelaUsuariosComPesquisa() {
+        JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
 
-    private void criarTabelaUsuariosComPesquisa() {
         String[] colunas = {"Login", "Tipo", "Status", "Criação"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             private static final long serialVersionUID = 1L;
@@ -167,9 +190,7 @@ public class CadastroUsuarioPanel extends JPanel {
 
         tabelaUsuarios = new JTable(modeloTabela);
         tabelaUsuarios.setFillsViewportHeight(true);
-        tabelaUsuarios.setPreferredScrollableViewportSize(new Dimension(800, 350));
 
-        // Centralizar texto
         DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
         centralizado.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < tabelaUsuarios.getColumnCount(); i++) {
@@ -197,11 +218,10 @@ public class CadastroUsuarioPanel extends JPanel {
             public void changedUpdate(DocumentEvent e) { filtrar(); }
         });
 
-        JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
         panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
         panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
 
-        add(panelTabelaWrapper, BorderLayout.CENTER);
+        return panelTabelaWrapper;
     }
 
     private void limparCampos() {
@@ -251,16 +271,15 @@ public class CadastroUsuarioPanel extends JPanel {
 
             for (Usuario u : usuarios) {
                 String criadoFormatado = u.getCriadoEm() != null ? u.getCriadoEm().format(formatter) : "";
-                
+
                 modeloTabela.addRow(new Object[]{
-                    u.getLogin(),
-                    u.getTipo(),
-                    u.isAtivo() ? "Ativo" : "Inativo",
-                    "Criado por " + (u.getUsuario() != null ? u.getUsuario() : "?") 
-                    + " em " + criadoFormatado
+                        u.getLogin(),
+                        u.getTipo(),
+                        u.isAtivo() ? "Ativo" : "Inativo",
+                        "Criado por " + (u.getUsuario() != null ? u.getUsuario() : "?")
+                                + " em " + criadoFormatado
                 });
             }
-
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -268,13 +287,10 @@ public class CadastroUsuarioPanel extends JPanel {
         }
     }
 
-
-
-
     private void carregarProfissionais() {
         try {
             ProfissionalController pc = new ProfissionalController();
-            listaProfissionais = pc.buscarPorAtivo(true); // só ativos
+            listaProfissionais = pc.buscarPorAtivo(true);
             cbProfissionais.removeAllItems();
             for (Profissional p : listaProfissionais) {
                 cbProfissionais.addItem(p.getNome());
