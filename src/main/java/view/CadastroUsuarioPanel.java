@@ -40,17 +40,29 @@ public class CadastroUsuarioPanel extends JPanel {
     public CadastroUsuarioPanel() {
         setLayout(new BorderLayout(10, 20));
 
+        // TÍTULO elegante no topo
+        JLabel lblTitulo = new JLabel("Cadastro de Usuário", SwingConstants.CENTER);
+        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
+        lblTitulo.setForeground(new Color(30, 30, 60));
+        lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        add(lblTitulo, BorderLayout.NORTH);
+
         // Criar os painéis
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaUsuariosComPesquisa();
 
         // Divisor horizontal: 50% cadastro, 50% tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.5); // 50% cada lado
-        splitPane.setContinuousLayout(true); // atualização suave ao arrastar
+        splitPane.setResizeWeight(0.5);
+        splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
 
-        add(splitPane, BorderLayout.CENTER);
+        // Wrapper para espaçamento
+        JPanel panelWrapper = new JPanel(new BorderLayout());
+        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15)); // top, left, bottom, right
+        panelWrapper.add(splitPane, BorderLayout.CENTER);
+
+        add(panelWrapper, BorderLayout.CENTER);
 
         // Listeners
         btnLimpar.addActionListener(e -> limparCampos());
@@ -86,11 +98,19 @@ public class CadastroUsuarioPanel extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // LOGIN
+        // SUBTÍTULO elegante
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 2;
+        JLabel lblSubtitulo = new JLabel("Preencha os dados do usuário");
+        lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        lblSubtitulo.setForeground(Color.DARK_GRAY);
+        panelCadastro.add(lblSubtitulo, gbc);
+        gbc.gridwidth = 1;
+
+        // LOGIN
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         panelCadastro.add(new JLabel("Login:"), gbc);
 
         tfLogin = new JTextField();
@@ -101,7 +121,7 @@ public class CadastroUsuarioPanel extends JPanel {
 
         // SENHA
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Senha:"), gbc);
@@ -114,7 +134,7 @@ public class CadastroUsuarioPanel extends JPanel {
 
         // TIPO
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Tipo:"), gbc);
@@ -127,7 +147,7 @@ public class CadastroUsuarioPanel extends JPanel {
 
         // Vincular a profissional?
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Vincular a Profissional?"), gbc);
@@ -150,7 +170,7 @@ public class CadastroUsuarioPanel extends JPanel {
         cbProfissionais = new JComboBox<>();
         cbProfissionais.setVisible(false);
         gbc.gridx = 1;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbProfissionais, gbc);
@@ -166,12 +186,20 @@ public class CadastroUsuarioPanel extends JPanel {
         panelBotoes.add(btnLimpar);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.EAST;
         panelCadastro.add(panelBotoes, gbc);
+
+        // Cursor de mãozinha
+        btnSalvar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnLimpar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        rbSim.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        rbNao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        cbProfissionais.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        cbTipo.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         return panelCadastroWrapper;
     }
