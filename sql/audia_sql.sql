@@ -29,6 +29,7 @@ CREATE TABLE endereco (
     cep CHAR(8) NOT NULL,
     numero VARCHAR(10),
     rua VARCHAR(100),
+    complemento VARCHAR(150),
     bairro VARCHAR(100),
     cidade VARCHAR(100),
     estado VARCHAR(100),
