@@ -400,6 +400,12 @@ public class CadastroPacientePanel extends JPanel {
         endereco.setEstado((String) cbEstado.getSelectedItem());
         endereco.setCep(tfCep.getText().trim());
 
+        // Verificar se o endereço está minimamente preenchido
+        boolean enderecoValido = !endereco.getRua().isBlank() && !endereco.getCidade().isBlank() && !endereco.getCep().isBlank();
+        if (!enderecoValido) {
+            endereco = null; // Não salva endereço se incompleto
+        }
+
         String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
         Paciente paciente = new Paciente(0, nome, cpf, telefone, email, dataNascimento, endereco, usuarioLogado);
 
@@ -410,6 +416,7 @@ public class CadastroPacientePanel extends JPanel {
             carregarPacientes();
         }
     }
+
 
     private void carregarPacientes() {
         try {

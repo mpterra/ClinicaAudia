@@ -26,7 +26,7 @@ CREATE TABLE usuario (
 -- ========================================
 CREATE TABLE endereco (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    cep CHAR(8) NOT NULL,
+    cep CHAR(9) NOT NULL,
     numero VARCHAR(10),
     rua VARCHAR(100),
     complemento VARCHAR(150),
@@ -44,7 +44,7 @@ CREATE TABLE endereco (
 CREATE TABLE paciente (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    cpf CHAR(11) NOT NULL UNIQUE,
+    cpf CHAR(14) NOT NULL UNIQUE,
     telefone VARCHAR(30),
     email VARCHAR(60),
     data_nascimento DATE,
@@ -444,5 +444,3 @@ END$$
 DELIMITER ;
 
 -- ========================================
-
-SELECT * FROM usuario;

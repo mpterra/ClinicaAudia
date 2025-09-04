@@ -15,7 +15,7 @@ public class PacienteDAO {
 	// Inserir paciente
 	// -----------------------------
 	public void insert(Paciente paciente) throws SQLException {
-		String sql = "INSERT INTO paciente (nome, cpf, telefone, email, data_nascimento, endereco_id, usuario) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		String sql = "INSERT INTO paciente (nome, cpf, telefone, email, data_nascimento, id_endereco, usuario) VALUES (?, ?, ?, ?, ?, ?, ?)";
 		try (Connection conn = Database.getConnection();
 				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -40,7 +40,7 @@ public class PacienteDAO {
 	// Atualizar paciente
 	// -----------------------------
 	public void update(Paciente paciente) throws SQLException {
-		String sql = "UPDATE paciente SET nome=?, cpf=?, telefone=?, email=?, data_nascimento=?, endereco_id=?, usuario=?, atualizado_em=NOW() WHERE id=?";
+		String sql = "UPDATE paciente SET nome=?, cpf=?, telefone=?, email=?, data_nascimento=?, id_endereco=?, usuario=?, atualizado_em=NOW() WHERE id=?";
 		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
 			stmt.setString(1, paciente.getNome());
@@ -142,7 +142,7 @@ public class PacienteDAO {
 	// Buscar por cidade
 	// -----------------------------
 	public List<Paciente> findByCidade(String cidade) throws SQLException {
-		String sql = "SELECT p.* FROM paciente p " + "JOIN endereco e ON p.endereco_id = e.id "
+		String sql = "SELECT p.* FROM paciente p " + "JOIN endereco e ON p.id_endereco = e.id "
 				+ "WHERE e.cidade LIKE ? ORDER BY p.nome";
 		List<Paciente> lista = new ArrayList<>();
 		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -202,7 +202,7 @@ public class PacienteDAO {
 	// Mapear ResultSet para Paciente
 	// -----------------------------
 	private Paciente mapResultSet(ResultSet rs) throws SQLException {
-		int enderecoId = rs.getInt("endereco_id");
+		int enderecoId = rs.getInt("id_endereco");
 		Endereco endereco = null;
 		if (enderecoId > 0) {
 			// Se precisar dos dados completos, usar EnderecoDAO

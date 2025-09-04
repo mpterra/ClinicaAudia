@@ -23,13 +23,29 @@ public class PacienteController {
     // CRUD - Inserir paciente
     // -----------------------------
     public boolean salvarPaciente(Paciente paciente) throws SQLException {
+        if (paciente == null) throw new IllegalArgumentException("Paciente inválido.");
+
+        // 1️⃣ Salvar endereço primeiro se existir e ainda não tiver ID
+        Endereco endereco = paciente.getEndereco();
+        if (endereco != null && endereco.getId() <= 0) {
+            if (endereco.getCep() == null || endereco.getCep().isBlank() ||
+                endereco.getRua() == null || endereco.getRua().isBlank() ||
+                endereco.getCidade() == null || endereco.getCidade().isBlank()) {
+                throw new IllegalArgumentException("Endereço incompleto.");
+            }
+            enderecoDAO.insert(endereco); // ⚡ já seta o ID no objeto
+        }
+
+        // 2️⃣ Validar paciente
         validarPaciente(paciente);
+
+        // 3️⃣ Salvar ou atualizar paciente
         if (paciente.getId() == 0) {
             pacienteDAO.insert(paciente);
         } else {
             pacienteDAO.update(paciente);
         }
-        
+
         return true;
     }
 
@@ -104,9 +120,6 @@ public class PacienteController {
         if (paciente.getDataNascimento() == null || paciente.getDataNascimento().isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Data de nascimento inválida.");
         }
-        // Endereço pode ser null, mas se não for, deve existir no DB
-        if (paciente.getEndereco() != null && paciente.getEndereco().getId() <= 0) {
-            throw new IllegalArgumentException("Endereço inválido.");
-        }
+        // Endereço já foi salvo acima, então não precisa validar ID aqui
     }
 }
