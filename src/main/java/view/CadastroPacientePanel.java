@@ -7,11 +7,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.MaskFormatter;
 
 import controller.PacienteController;
 import exception.CampoObrigatorioException;
 import model.Paciente;
 import model.Endereco;
+import util.CPFUtils;
 import util.Sessao;
 
 import java.awt.*;
@@ -25,8 +27,10 @@ public class CadastroPacientePanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private JTextField tfNome, tfCpf, tfTelefone, tfEmail, tfDataNascimento;
-    private JTextField tfRua, tfNumero, tfComplemento, tfBairro, tfCidade, tfCep;
+    private JTextField tfNome, tfEmail;
+    private JFormattedTextField tfCpf, tfTelefone, tfCep;
+    private JTextField tfDataNascimento;
+    private JTextField tfRua, tfNumero, tfComplemento, tfBairro, tfCidade;
     private JComboBox<String> cbEstado;
 
     private JButton btnSalvar, btnLimpar;
@@ -37,29 +41,32 @@ public class CadastroPacientePanel extends JPanel {
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    private JLabel lblErroData, lblErroRua, lblValidaCpf;
+
     public CadastroPacientePanel() {
         setLayout(new BorderLayout(10, 20));
 
-        // TÍTULO
         JLabel lblTitulo = new JLabel("Cadastro de Paciente", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitulo.setForeground(new Color(30, 30, 60));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Painel cadastro e tabela
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaPacientesComPesquisa();
 
-        // Divisor horizontal
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.5);
+        splitPane.setResizeWeight(0.4); // 40% dados / 60% tabela
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
 
+        // Forçar tamanho inicial
+        panelCadastro.setPreferredSize(new Dimension(400, 600)); // ajuste conforme seu layout
+        panelTabela.setPreferredSize(new Dimension(600, 600));
+
         add(splitPane, BorderLayout.CENTER);
 
-        // Listeners
+
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
             try {
@@ -95,9 +102,7 @@ public class CadastroPacientePanel extends JPanel {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 4;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
         JLabel lblSubtitulo = new JLabel("Preencha os dados do paciente");
         lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 13));
         lblSubtitulo.setForeground(Color.DARK_GRAY);
@@ -106,11 +111,61 @@ public class CadastroPacientePanel extends JPanel {
 
         int campoColumns = 25;
 
-        tfNome = criarCampo(panelPaciente, "Nome:", 1, campoColumns, gbc);
-        tfCpf = criarCampo(panelPaciente, "CPF:", 2, campoColumns, gbc);
-        tfTelefone = criarCampo(panelPaciente, "Telefone:", 3, campoColumns, gbc);
-        tfEmail = criarCampo(panelPaciente, "Email:", 4, campoColumns, gbc);
-        tfDataNascimento = criarCampo(panelPaciente, "Data Nascimento (dd/MM/aaaa):", 5, campoColumns, gbc);
+        // Nome
+        gbc.gridx = 0; gbc.gridy = 1;
+        panelPaciente.add(new JLabel("Nome:"), gbc);
+        tfNome = new JTextField(campoColumns);
+        gbc.gridx = 1; gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelPaciente.add(tfNome, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+
+        // CPF
+        tfCpf = criarCampoFormatado(panelPaciente, "CPF:", 2, "###.###.###-##", campoColumns, gbc);
+        lblValidaCpf = new JLabel(" "); // inicialmente vazio
+        lblValidaCpf.setFont(new Font("SansSerif", Font.BOLD, 12));
+        gbc.gridx = 1; gbc.gridy = 3; gbc.gridwidth = 3;
+        panelPaciente.add(lblValidaCpf, gbc);
+        gbc.gridwidth = 1;
+
+        // Listener de validação de CPF
+        tfCpf.getDocument().addDocumentListener(new DocumentListener() {
+            private void validarCPF() {
+                String cpf = tfCpf.getText().replaceAll("\\D", "");
+                if (cpf.length() == 11) {
+                    if (CPFUtils.isCPFValido(cpf)) {
+                        lblValidaCpf.setText("CPF válido");
+                        lblValidaCpf.setForeground(new Color(0, 128, 0));
+                    } else {
+                        lblValidaCpf.setText("CPF inválido");
+                        lblValidaCpf.setForeground(Color.RED);
+                    }
+                } else {
+                    lblValidaCpf.setText(" ");
+                }
+            }
+            public void insertUpdate(DocumentEvent e) { validarCPF(); }
+            public void removeUpdate(DocumentEvent e) { validarCPF(); }
+            public void changedUpdate(DocumentEvent e) { validarCPF(); }
+        });
+
+        // Telefone
+        tfTelefone = criarCampoFormatado(panelPaciente, "Telefone:", 4, "(##) #####-####", campoColumns, gbc);
+
+        // Email
+        tfEmail = new JTextField(campoColumns);
+        gbc.gridx = 0; gbc.gridy = 5;
+        panelPaciente.add(new JLabel("Email:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelPaciente.add(tfEmail, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+
+        // Data de nascimento
+        tfDataNascimento = criarCampoFormatado(panelPaciente, "Data Nascimento (dd/MM/aaaa):", 6, "##/##/####", campoColumns, gbc);
+        lblErroData = criarLabelErro(panelPaciente, 7, gbc);
 
         // ----------------------------
         // Painel Endereço
@@ -128,19 +183,19 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.anchor = GridBagConstraints.WEST;
         gbcEnd.fill = GridBagConstraints.HORIZONTAL;
 
-        // Linha 1: Rua
-        gbcEnd.gridx = 0;
-        gbcEnd.gridy = 0;
+        // Rua
+        gbcEnd.gridx = 0; gbcEnd.gridy = 0;
         panelEndereco.add(new JLabel("Rua:"), gbcEnd);
-        tfRua = new JTextField(25);
-        gbcEnd.gridx = 1;
-        gbcEnd.gridwidth = 3;
+        tfRua = new JTextField(20);
+        gbcEnd.gridx = 1; gbcEnd.gridwidth = 3;
         panelEndereco.add(tfRua, gbcEnd);
+        lblErroRua = new JLabel(" "); lblErroRua.setForeground(Color.RED);
+        gbcEnd.gridy = 1;
+        panelEndereco.add(lblErroRua, gbcEnd);
         gbcEnd.gridwidth = 1;
 
-        // Linha 2: Número | Complemento
-        gbcEnd.gridy = 1;
-        gbcEnd.gridx = 0;
+        // Número | Complemento
+        gbcEnd.gridy = 2; gbcEnd.gridx = 0;
         panelEndereco.add(new JLabel("Número:"), gbcEnd);
         tfNumero = new JTextField(8);
         gbcEnd.gridx = 1;
@@ -152,9 +207,8 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.gridx = 3;
         panelEndereco.add(tfComplemento, gbcEnd);
 
-        // Linha 3: Bairro | Cidade
-        gbcEnd.gridy = 2;
-        gbcEnd.gridx = 0;
+        // Bairro | Cidade
+        gbcEnd.gridy = 3; gbcEnd.gridx = 0;
         panelEndereco.add(new JLabel("Bairro:"), gbcEnd);
         tfBairro = new JTextField(15);
         gbcEnd.gridx = 1;
@@ -166,18 +220,23 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.gridx = 3;
         panelEndereco.add(tfCidade, gbcEnd);
 
-        // Linha 4: Estado | CEP
-        gbcEnd.gridy = 3;
-        gbcEnd.gridx = 0;
+        // Estado | CEP
+        gbcEnd.gridy = 4; gbcEnd.gridx = 0;
         panelEndereco.add(new JLabel("Estado:"), gbcEnd);
-        String[] estados = {"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"};
+        String[] estados = {"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+                "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"};
         cbEstado = new JComboBox<>(estados);
         gbcEnd.gridx = 1;
         panelEndereco.add(cbEstado, gbcEnd);
 
         gbcEnd.gridx = 2;
         panelEndereco.add(new JLabel("CEP:"), gbcEnd);
-        tfCep = new JTextField(10);
+        try {
+            MaskFormatter cepMask = new MaskFormatter("#####-###");
+            cepMask.setPlaceholderCharacter('_');
+            tfCep = new JFormattedTextField(cepMask);
+            tfCep.setColumns(10);
+        } catch (Exception e) { e.printStackTrace(); }
         gbcEnd.gridx = 3;
         panelEndereco.add(tfCep, gbcEnd);
 
@@ -190,7 +249,6 @@ public class CadastroPacientePanel extends JPanel {
         panelBotoes.add(btnSalvar);
         panelBotoes.add(btnLimpar);
 
-        // Adicionar painéis ao wrapper
         panelWrapper.add(panelPaciente);
         panelWrapper.add(Box.createVerticalStrut(10));
         panelWrapper.add(panelEndereco);
@@ -204,18 +262,30 @@ public class CadastroPacientePanel extends JPanel {
         return panelWrapper;
     }
 
-    private JTextField criarCampo(JPanel painel, String label, int y, int columns, GridBagConstraints gbc) {
-        gbc.gridx = 0;
-        gbc.gridy = y;
+    private JFormattedTextField criarCampoFormatado(JPanel painel, String label, int y, String mask, int columns, GridBagConstraints gbc) {
+        gbc.gridx = 0; gbc.gridy = y;
         painel.add(new JLabel(label), gbc);
-        JTextField tf = new JTextField(columns);
-        gbc.gridx = 1;
-        gbc.gridwidth = 3;
+        JFormattedTextField tf = null;
+        try {
+            MaskFormatter mf = new MaskFormatter(mask);
+            mf.setPlaceholderCharacter('_');
+            tf = new JFormattedTextField(mf);
+            tf.setColumns(columns);
+        } catch (Exception e) { e.printStackTrace(); }
+        gbc.gridx = 1; gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         painel.add(tf, gbc);
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
         return tf;
+    }
+
+    private JLabel criarLabelErro(JPanel painel, int y, GridBagConstraints gbc) {
+        gbc.gridx = 1; gbc.gridy = y; gbc.gridwidth = 3;
+        JLabel lbl = new JLabel(" "); lbl.setForeground(Color.RED);
+        painel.add(lbl, gbc);
+        gbc.gridwidth = 1;
+        return lbl;
     }
 
     // ----------------------------
@@ -286,11 +356,11 @@ public class CadastroPacientePanel extends JPanel {
     // ----------------------------
     private void limparCampos() {
         tfNome.setText("");
-        tfCpf.setText("");
+        tfCpf.setText(""); lblValidaCpf.setText(" ");
         tfTelefone.setText("");
         tfEmail.setText("");
-        tfDataNascimento.setText("");
-        tfRua.setText("");
+        tfDataNascimento.setText(""); lblErroData.setText(" ");
+        tfRua.setText(""); lblErroRua.setText(" ");
         tfNumero.setText("");
         tfComplemento.setText("");
         tfBairro.setText("");
@@ -306,9 +376,13 @@ public class CadastroPacientePanel extends JPanel {
         String email = tfEmail.getText().trim();
         String dataNascimentoStr = tfDataNascimento.getText().trim();
 
-        if (nome.isEmpty() || cpf.isEmpty() || dataNascimentoStr.isEmpty()) {
-            throw new CampoObrigatorioException("Nome, CPF e Data de Nascimento são obrigatórios!");
-        }
+        boolean temErro = false;
+
+        if (nome.isEmpty()) temErro = true;
+        if (cpf.isEmpty()) temErro = true;
+        if (dataNascimentoStr.isEmpty()) { lblErroData.setText("Data obrigatória!"); temErro = true; } else lblErroData.setText(" ");
+
+        if (temErro) throw new CampoObrigatorioException("Preencha os campos obrigatórios!");
 
         LocalDate dataNascimento;
         try {
