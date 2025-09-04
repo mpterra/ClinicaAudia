@@ -171,6 +171,33 @@ public class CadastroPacientePanel extends JPanel {
 
         // Data de nascimento
         tfDataNascimento = criarCampoFormatado(panelPaciente, "Data Nascimento (dd/MM/aaaa):", 7, "##/##/####", campoColumns, gbc);
+        tfDataNascimento.getDocument().addDocumentListener(new DocumentListener() {
+            private void validarData() {
+                String texto = tfDataNascimento.getText().trim();
+                if (texto.isEmpty()) {
+                    lblErroData.setText("Data obrigatória!");
+                    return;
+                }
+                try {
+                    LocalDate data = LocalDate.parse(texto, formatter);
+                    LocalDate hoje = LocalDate.now();
+                    if (data.isAfter(hoje)) {
+                        lblErroData.setText("Data não pode ser futura!");
+                    } else if (data.isBefore(hoje.minusYears(125))) {
+                        lblErroData.setText("Idade máxima permitida: 125 anos!");
+                    } else {
+                        lblErroData.setText(" ");
+                    }
+                } catch (Exception e) {
+                    lblErroData.setText("Formato inválido! Use dd/MM/aaaa");
+                }
+            }
+
+            public void insertUpdate(DocumentEvent e) { validarData(); }
+            public void removeUpdate(DocumentEvent e) { validarData(); }
+            public void changedUpdate(DocumentEvent e) { validarData(); }
+        });
+
         lblErroData = criarLabelErro(panelPaciente, 8, gbc);
 
         // Painel Endereço
@@ -438,9 +465,21 @@ public class CadastroPacientePanel extends JPanel {
         LocalDate dataNascimento;
         try {
             dataNascimento = LocalDate.parse(dataNascimentoStr, formatter);
+
+            LocalDate hoje = LocalDate.now();
+            if (dataNascimento.isAfter(hoje)) {
+                lblErroData.setText("Data não pode ser futura!");
+                throw new CampoObrigatorioException("Data de Nascimento não pode ser futura!");
+            } else if (dataNascimento.isBefore(hoje.minusYears(125))) {
+                lblErroData.setText("Idade máxima permitida: 125 anos!");
+                throw new CampoObrigatorioException("Idade máxima permitida: 125 anos!");
+            } else {
+                lblErroData.setText(" ");
+            }
         } catch (Exception e) {
             throw new CampoObrigatorioException("Data de Nascimento inválida! Use dd/MM/aaaa.");
         }
+
 
 
         Endereco endereco = new Endereco();
