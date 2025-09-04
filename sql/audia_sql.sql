@@ -32,7 +32,7 @@ CREATE TABLE endereco (
     complemento VARCHAR(150),
     bairro VARCHAR(100),
     cidade VARCHAR(100),
-    estado VARCHAR(100),
+    estado CHAR(2),
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50)
@@ -446,4 +446,3 @@ DELIMITER ;
 -- ========================================
 
 SELECT * FROM usuario;
-

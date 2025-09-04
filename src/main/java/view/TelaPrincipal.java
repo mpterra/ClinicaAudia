@@ -53,8 +53,7 @@ public class TelaPrincipal extends JFrame {
 
 		// MENU PACIENTES
 		JMenu menuPacientes = createMenu("Pacientes");
-		menuPacientes.add(createMenuItem("Novo Paciente", e -> {
-		}));
+		menuPacientes.add(createMenuItem("Novo Paciente", e -> abrirCadastroPaciente()));
 		menuPacientes.add(createMenuItem("Pesquisar Pacientes", e -> {
 		}));
 
@@ -142,6 +141,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroUsuario() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroUsuarioPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroPaciente() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroPacientePanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

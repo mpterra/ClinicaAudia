@@ -22,13 +22,15 @@ public class PacienteController {
     // -----------------------------
     // CRUD - Inserir paciente
     // -----------------------------
-    public void salvarPaciente(Paciente paciente) throws SQLException {
+    public boolean salvarPaciente(Paciente paciente) throws SQLException {
         validarPaciente(paciente);
         if (paciente.getId() == 0) {
             pacienteDAO.insert(paciente);
         } else {
             pacienteDAO.update(paciente);
         }
+        
+        return true;
     }
 
     // -----------------------------
