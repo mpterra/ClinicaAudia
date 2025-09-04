@@ -6,6 +6,7 @@ public class Profissional {
 
     private int id;
     private String nome;
+    private String sexo;
     private String cpf;
     private String email;
     private String telefone;
@@ -25,7 +26,7 @@ public class Profissional {
     public Profissional() {}
 
     // Construtor completo (sem datas)
-    public Profissional(int id, String nome, String cpf, String email, String telefone,
+    public Profissional(int id, String nome, String sexo, String cpf, String email, String telefone,
                         TipoProfissional tipo, Endereco endereco, boolean ativo, String usuario) {
         this.id = id;
         this.nome = nome;
@@ -44,6 +45,9 @@ public class Profissional {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+    
+    public String getSexo() { return sexo; }
+    public void setSexo(String sexo) { this.sexo = sexo; }
 
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
@@ -75,6 +79,7 @@ public class Profissional {
         return "Profissional{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
+                ", sexo='" + sexo + '\'' +
                 ", cpf='" + cpf + '\'' +
                 ", email='" + email + '\'' +
                 ", telefone='" + telefone + '\'' +

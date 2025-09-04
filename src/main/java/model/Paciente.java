@@ -7,6 +7,7 @@ public class Paciente {
 
     private int id;
     private String nome;
+    private String sexo;
     private String cpf;
     private String telefone;
     private String email;
@@ -20,10 +21,11 @@ public class Paciente {
     public Paciente() {}
 
     // Construtor completo (sem datas, pois o banco preenche)
-    public Paciente(int id, String nome, String cpf, String telefone,
+    public Paciente(int id, String nome, String sexo, String cpf, String telefone,
                     String email, LocalDate dataNascimento, Endereco endereco, String usuario) {
         this.id = id;
         this.nome = nome;
+        this.sexo = sexo;
         this.cpf = cpf;
         this.telefone = telefone;
         this.email = email;
@@ -38,6 +40,9 @@ public class Paciente {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+    
+    public String getSexo() { return sexo; }
+    public void setSexo(String sexo) { this.sexo = sexo; }
 
     public String getCpf() { return cpf; }
     public void setCpf(String cpf) { this.cpf = cpf; }
@@ -66,6 +71,7 @@ public class Paciente {
         return "Paciente{" +
                 "id=" + id +
                 ", nome='" + nome + '\'' +
+                ", sexo='" + sexo + '\'' +
                 ", cpf='" + cpf + '\'' +
                 ", telefone='" + telefone + '\'' +
                 ", email='" + email + '\'' +

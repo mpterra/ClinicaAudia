@@ -44,6 +44,7 @@ CREATE TABLE endereco (
 CREATE TABLE paciente (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
+    sexo ENUM('M','F') NOT NULL,
     cpf CHAR(14) NOT NULL UNIQUE,
     telefone VARCHAR(30),
     email VARCHAR(60),
@@ -83,6 +84,7 @@ CREATE TABLE documento_paciente (
 CREATE TABLE profissional (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
+    sexo ENUM('M','F') NOT NULL,
     cpf CHAR(11) NOT NULL UNIQUE,
     email VARCHAR(120),
     telefone VARCHAR(30),
@@ -444,3 +446,9 @@ END$$
 DELIMITER ;
 
 -- ========================================
+
+USE audia;
+
+
+
+

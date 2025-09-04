@@ -15,17 +15,18 @@ public class PacienteDAO {
 	// Inserir paciente
 	// -----------------------------
 	public void insert(Paciente paciente) throws SQLException {
-		String sql = "INSERT INTO paciente (nome, cpf, telefone, email, data_nascimento, id_endereco, usuario) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		String sql = "INSERT INTO paciente (nome, sexo, cpf, telefone, email, data_nascimento, id_endereco, usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (Connection conn = Database.getConnection();
 				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
 			stmt.setString(1, paciente.getNome());
-			stmt.setString(2, paciente.getCpf());
-			stmt.setString(3, paciente.getTelefone());
-			stmt.setString(4, paciente.getEmail());
-			stmt.setDate(5, Date.valueOf(paciente.getDataNascimento()));
-			stmt.setInt(6, paciente.getEndereco() != null ? paciente.getEndereco().getId() : 0);
-			stmt.setString(7, paciente.getUsuario());
+			stmt.setString(2, paciente.getSexo());
+			stmt.setString(3, paciente.getCpf());
+			stmt.setString(4, paciente.getTelefone());
+			stmt.setString(5, paciente.getEmail());
+			stmt.setDate(6, Date.valueOf(paciente.getDataNascimento()));
+			stmt.setInt(7, paciente.getEndereco() != null ? paciente.getEndereco().getId() : 0);
+			stmt.setString(8, paciente.getUsuario());
 
 			stmt.executeUpdate();
 			try (ResultSet rs = stmt.getGeneratedKeys()) {
@@ -40,17 +41,18 @@ public class PacienteDAO {
 	// Atualizar paciente
 	// -----------------------------
 	public void update(Paciente paciente) throws SQLException {
-		String sql = "UPDATE paciente SET nome=?, cpf=?, telefone=?, email=?, data_nascimento=?, id_endereco=?, usuario=?, atualizado_em=NOW() WHERE id=?";
+		String sql = "UPDATE paciente SET nome=?, sexo=?, cpf=?, telefone=?, email=?, data_nascimento=?, id_endereco=?, usuario=?, atualizado_em=NOW() WHERE id=?";
 		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
 			stmt.setString(1, paciente.getNome());
-			stmt.setString(2, paciente.getCpf());
-			stmt.setString(3, paciente.getTelefone());
-			stmt.setString(4, paciente.getEmail());
-			stmt.setDate(5, Date.valueOf(paciente.getDataNascimento()));
-			stmt.setInt(6, paciente.getEndereco() != null ? paciente.getEndereco().getId() : 0);
-			stmt.setString(7, paciente.getUsuario());
-			stmt.setInt(8, paciente.getId());
+			stmt.setString(2, paciente.getSexo());
+			stmt.setString(3, paciente.getCpf());
+			stmt.setString(4, paciente.getTelefone());
+			stmt.setString(5, paciente.getEmail());
+			stmt.setDate(6, Date.valueOf(paciente.getDataNascimento()));
+			stmt.setInt(7, paciente.getEndereco() != null ? paciente.getEndereco().getId() : 0);
+			stmt.setString(8, paciente.getUsuario());
+			stmt.setInt(9, paciente.getId());
 
 			stmt.executeUpdate();
 		}
@@ -210,9 +212,9 @@ public class PacienteDAO {
 			endereco.setId(enderecoId);
 		}
 
-		Paciente paciente = new Paciente(rs.getInt("id"), rs.getString("nome"), rs.getString("cpf"),
-				rs.getString("telefone"), rs.getString("email"), rs.getDate("data_nascimento").toLocalDate(), endereco,
-				rs.getString("usuario"));
+		Paciente paciente = new Paciente(rs.getInt("id"), rs.getString("nome"), rs.getString("sexo"),
+				rs.getString("cpf"), rs.getString("telefone"), rs.getString("email"),
+				rs.getDate("data_nascimento").toLocalDate(), endereco, rs.getString("usuario"));
 
 		return paciente;
 	}

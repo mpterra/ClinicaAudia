@@ -32,7 +32,7 @@ public class CadastroPacientePanel extends JPanel {
     private JTextField tfDataNascimento;
     private JTextField tfRua, tfNumero, tfComplemento, tfBairro, tfCidade;
     private JComboBox<String> cbEstado;
-
+    private JComboBox<String> cbSexo;
     private JButton btnSalvar, btnLimpar;
     private JTable tabelaPacientes;
     private DefaultTableModel modeloTabela;
@@ -60,12 +60,10 @@ public class CadastroPacientePanel extends JPanel {
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
 
-        // Forçar tamanho inicial
-        panelCadastro.setPreferredSize(new Dimension(400, 600)); // ajuste conforme seu layout
+        panelCadastro.setPreferredSize(new Dimension(400, 600));
         panelTabela.setPreferredSize(new Dimension(600, 600));
 
         add(splitPane, BorderLayout.CENTER);
-
 
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
@@ -87,9 +85,6 @@ public class CadastroPacientePanel extends JPanel {
         panelWrapper.setLayout(new BoxLayout(panelWrapper, BoxLayout.Y_AXIS));
         panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // ----------------------------
-        // Painel Paciente
-        // ----------------------------
         JPanel panelPaciente = new JPanel(new GridBagLayout());
         panelPaciente.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
@@ -110,6 +105,7 @@ public class CadastroPacientePanel extends JPanel {
         gbc.gridwidth = 1;
 
         int campoColumns = 25;
+        Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
 
         // Nome
         gbc.gridx = 0; gbc.gridy = 1;
@@ -121,15 +117,25 @@ public class CadastroPacientePanel extends JPanel {
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
 
+        // Sexo (logo abaixo do nome)
+        gbc.gridx = 0; gbc.gridy = 2;
+        panelPaciente.add(new JLabel("Sexo:"), gbc);
+        cbSexo = new JComboBox<>(new String[]{"Masculino", "Feminino"});
+        cbSexo.setCursor(handCursor);
+        gbc.gridx = 1; gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelPaciente.add(cbSexo, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+
         // CPF
-        tfCpf = criarCampoFormatado(panelPaciente, "CPF:", 2, "###.###.###-##", campoColumns, gbc);
-        lblValidaCpf = new JLabel(" "); // inicialmente vazio
+        tfCpf = criarCampoFormatado(panelPaciente, "CPF:", 3, "###.###.###-##", campoColumns, gbc);
+        lblValidaCpf = new JLabel(" ");
         lblValidaCpf.setFont(new Font("SansSerif", Font.BOLD, 12));
-        gbc.gridx = 1; gbc.gridy = 3; gbc.gridwidth = 3;
+        gbc.gridx = 1; gbc.gridy = 4; gbc.gridwidth = 3;
         panelPaciente.add(lblValidaCpf, gbc);
         gbc.gridwidth = 1;
 
-        // Listener de validação de CPF
         tfCpf.getDocument().addDocumentListener(new DocumentListener() {
             private void validarCPF() {
                 String cpf = tfCpf.getText().replaceAll("\\D", "");
@@ -151,11 +157,11 @@ public class CadastroPacientePanel extends JPanel {
         });
 
         // Telefone
-        tfTelefone = criarCampoFormatado(panelPaciente, "Telefone:", 4, "(##) #####-####", campoColumns, gbc);
+        tfTelefone = criarCampoFormatado(panelPaciente, "Telefone:", 5, "(##) #####-####", campoColumns, gbc);
 
         // Email
         tfEmail = new JTextField(campoColumns);
-        gbc.gridx = 0; gbc.gridy = 5;
+        gbc.gridx = 0; gbc.gridy = 6;
         panelPaciente.add(new JLabel("Email:"), gbc);
         gbc.gridx = 1; gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -164,12 +170,10 @@ public class CadastroPacientePanel extends JPanel {
         gbc.fill = GridBagConstraints.NONE;
 
         // Data de nascimento
-        tfDataNascimento = criarCampoFormatado(panelPaciente, "Data Nascimento (dd/MM/aaaa):", 6, "##/##/####", campoColumns, gbc);
-        lblErroData = criarLabelErro(panelPaciente, 7, gbc);
+        tfDataNascimento = criarCampoFormatado(panelPaciente, "Data Nascimento (dd/MM/aaaa):", 7, "##/##/####", campoColumns, gbc);
+        lblErroData = criarLabelErro(panelPaciente, 8, gbc);
 
-        // ----------------------------
         // Painel Endereço
-        // ----------------------------
         JPanel panelEndereco = new JPanel(new GridBagLayout());
         panelEndereco.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
@@ -183,7 +187,6 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.anchor = GridBagConstraints.WEST;
         gbcEnd.fill = GridBagConstraints.HORIZONTAL;
 
-        // Rua
         gbcEnd.gridx = 0; gbcEnd.gridy = 0;
         panelEndereco.add(new JLabel("Rua:"), gbcEnd);
         tfRua = new JTextField(20);
@@ -194,7 +197,6 @@ public class CadastroPacientePanel extends JPanel {
         panelEndereco.add(lblErroRua, gbcEnd);
         gbcEnd.gridwidth = 1;
 
-        // Número | Complemento
         gbcEnd.gridy = 2; gbcEnd.gridx = 0;
         panelEndereco.add(new JLabel("Número:"), gbcEnd);
         tfNumero = new JTextField(8);
@@ -207,7 +209,6 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.gridx = 3;
         panelEndereco.add(tfComplemento, gbcEnd);
 
-        // Bairro | Cidade
         gbcEnd.gridy = 3; gbcEnd.gridx = 0;
         panelEndereco.add(new JLabel("Bairro:"), gbcEnd);
         tfBairro = new JTextField(15);
@@ -220,12 +221,12 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.gridx = 3;
         panelEndereco.add(tfCidade, gbcEnd);
 
-        // Estado | CEP
         gbcEnd.gridy = 4; gbcEnd.gridx = 0;
         panelEndereco.add(new JLabel("Estado:"), gbcEnd);
         String[] estados = {"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
                 "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"};
         cbEstado = new JComboBox<>(estados);
+        cbEstado.setCursor(handCursor);
         gbcEnd.gridx = 1;
         panelEndereco.add(cbEstado, gbcEnd);
 
@@ -240,9 +241,6 @@ public class CadastroPacientePanel extends JPanel {
         gbcEnd.gridx = 3;
         panelEndereco.add(tfCep, gbcEnd);
 
-        // ----------------------------
-        // Botões
-        // ----------------------------
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnSalvar = new JButton("Salvar");
         btnLimpar = new JButton("Limpar");
@@ -255,7 +253,6 @@ public class CadastroPacientePanel extends JPanel {
         panelWrapper.add(Box.createVerticalStrut(10));
         panelWrapper.add(panelBotoes);
 
-        Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
         btnSalvar.setCursor(handCursor);
         btnLimpar.setCursor(handCursor);
 
@@ -288,13 +285,10 @@ public class CadastroPacientePanel extends JPanel {
         return lbl;
     }
 
-    // ----------------------------
-    // Tabela e pesquisa
-    // ----------------------------
     private JPanel criarTabelaPacientesComPesquisa() {
         JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
 
-        String[] colunas = {"Nome", "CPF", "Telefone", "Email", "Data Nascimento"};
+        String[] colunas = {"Nome", "Sexo", "CPF", "Telefone", "Email", "Data Nascimento"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -314,6 +308,7 @@ public class CadastroPacientePanel extends JPanel {
 
         JScrollPane scrollTabela = new JScrollPane(tabelaPacientes);
 
+        // Painel de pesquisa
         JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JLabel lblPesquisar = new JLabel("Pesquisar paciente:");
         lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
@@ -334,32 +329,37 @@ public class CadastroPacientePanel extends JPanel {
         });
 
         panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
-        panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
+
+        // Painel com margem direita e inferior de 15px
+        JPanel panelTabelaComMargem = new JPanel(new BorderLayout());
+        panelTabelaComMargem.setBorder(BorderFactory.createEmptyBorder(0,0,15,15));
+        panelTabelaComMargem.add(scrollTabela, BorderLayout.CENTER);
+
+        panelTabelaWrapper.add(panelTabelaComMargem, BorderLayout.CENTER);
 
         panelTabelaWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 int totalWidth = panelTabelaWrapper.getWidth();
-                tabelaPacientes.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.2));
-                tabelaPacientes.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.15));
+                tabelaPacientes.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.25));
+                tabelaPacientes.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.10));
                 tabelaPacientes.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaPacientes.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.25));
+                tabelaPacientes.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.15));
                 tabelaPacientes.getColumnModel().getColumn(4).setPreferredWidth((int)(totalWidth * 0.25));
+                tabelaPacientes.getColumnModel().getColumn(5).setPreferredWidth((int)(totalWidth * 0.20));
             }
         });
 
         return panelTabelaWrapper;
     }
 
-    // ----------------------------
-    // Limpar e salvar
-    // ----------------------------
     private void limparCampos() {
         tfNome.setText("");
         tfCpf.setText(""); lblValidaCpf.setText(" ");
         tfTelefone.setText("");
         tfEmail.setText("");
         tfDataNascimento.setText(""); lblErroData.setText(" ");
+        cbSexo.setSelectedIndex(0);
         tfRua.setText(""); lblErroRua.setText(" ");
         tfNumero.setText("");
         tfComplemento.setText("");
@@ -371,25 +371,32 @@ public class CadastroPacientePanel extends JPanel {
 
     private void salvarPaciente() throws CampoObrigatorioException, SQLException {
         String nome = tfNome.getText().trim();
+        String sexoSelecionado = (String) cbSexo.getSelectedItem();
         String cpf = tfCpf.getText().trim();
         String telefone = tfTelefone.getText().trim();
         String email = tfEmail.getText().trim();
         String dataNascimentoStr = tfDataNascimento.getText().trim();
+        String sexo = sexoSelecionado.equals("Masculino") ? "M" : "F";
+
 
         boolean temErro = false;
 
         if (nome.isEmpty()) temErro = true;
         if (cpf.isEmpty()) temErro = true;
-        if (dataNascimentoStr.isEmpty()) { lblErroData.setText("Data obrigatória!"); temErro = true; } else lblErroData.setText(" ");
+        if (dataNascimentoStr.isEmpty()) { 
+            lblErroData.setText("Data obrigatória!"); 
+            temErro = true; 
+        } else lblErroData.setText(" ");
 
         if (temErro) throw new CampoObrigatorioException("Preencha os campos obrigatórios!");
 
         LocalDate dataNascimento;
         try {
             dataNascimento = LocalDate.parse(dataNascimentoStr, formatter);
-        } catch (DateTimeParseException e) {
+        } catch (Exception e) {
             throw new CampoObrigatorioException("Data de Nascimento inválida! Use dd/MM/aaaa.");
         }
+
 
         Endereco endereco = new Endereco();
         endereco.setRua(tfRua.getText().trim());
@@ -400,14 +407,15 @@ public class CadastroPacientePanel extends JPanel {
         endereco.setEstado((String) cbEstado.getSelectedItem());
         endereco.setCep(tfCep.getText().trim());
 
-        // Verificar se o endereço está minimamente preenchido
+
         boolean enderecoValido = !endereco.getRua().isBlank() && !endereco.getCidade().isBlank() && !endereco.getCep().isBlank();
         if (!enderecoValido) {
-            endereco = null; // Não salva endereço se incompleto
+            endereco = null;
         }
 
         String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
-        Paciente paciente = new Paciente(0, nome, cpf, telefone, email, dataNascimento, endereco, usuarioLogado);
+        Paciente paciente = new Paciente(0, nome, sexo, cpf, telefone, email, dataNascimento, endereco, usuarioLogado);
+        
 
         PacienteController pc = new PacienteController();
         if (pc.salvarPaciente(paciente)) {
@@ -423,16 +431,17 @@ public class CadastroPacientePanel extends JPanel {
             PacienteController pc = new PacienteController();
             List<Paciente> pacientes = pc.listarTodos();
 
-            modeloTabela.setRowCount(0);
+            modeloTabela.setRowCount(0); // limpa tabela
 
             for (Paciente p : pacientes) {
                 String dataFormatada = p.getDataNascimento() != null ? p.getDataNascimento().format(formatter) : "";
                 modeloTabela.addRow(new Object[]{
-                        p.getNome(),
-                        p.getCpf(),
-                        p.getTelefone(),
-                        p.getEmail(),
-                        dataFormatada
+                    p.getNome(),
+                    p.getSexo().equals("M") ? "Masculino" : "Feminino",
+                    p.getCpf(),
+                    p.getTelefone(),
+                    p.getEmail(),
+                    dataFormatada
                 });
             }
 
@@ -441,4 +450,5 @@ public class CadastroPacientePanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Erro ao carregar pacientes: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 }

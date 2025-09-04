@@ -15,12 +15,13 @@ public class ProfissionalDAO {
 	// -----------------------------
 
 	public void salvar(Profissional prof) throws SQLException {
-		String sql = "INSERT INTO profissional (nome, cpf, email, telefone, tipo, endereco_id, ativo, usuario) "
+		String sql = "INSERT INTO profissional (nome, sexo, cpf, email, telefone, tipo, endereco_id, ativo, usuario) "
 				+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (Connection conn = Database.getConnection();
 				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
 			stmt.setString(1, prof.getNome());
+			stmt.setString(2, prof.getSexo());
 			stmt.setString(2, prof.getCpf());
 			stmt.setString(3, prof.getEmail());
 			stmt.setString(4, prof.getTelefone());
@@ -40,10 +41,11 @@ public class ProfissionalDAO {
 	}
 
 	public void atualizar(Profissional prof) throws SQLException {
-		String sql = "UPDATE profissional SET nome=?, cpf=?, email=?, telefone=?, tipo=?, endereco_id=?, ativo=?, usuario=?, atualizado_em=CURRENT_TIMESTAMP WHERE id=?";
+		String sql = "UPDATE profissional SET nome=?, sexo=? cpf=?, email=?, telefone=?, tipo=?, endereco_id=?, ativo=?, usuario=?, atualizado_em=CURRENT_TIMESTAMP WHERE id=?";
 		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
 			stmt.setString(1, prof.getNome());
+			stmt.setString(2, prof.getSexo());
 			stmt.setString(2, prof.getCpf());
 			stmt.setString(3, prof.getEmail());
 			stmt.setString(4, prof.getTelefone());
@@ -173,6 +175,7 @@ public class ProfissionalDAO {
 		Profissional p = new Profissional();
 		p.setId(rs.getInt("id"));
 		p.setNome(rs.getString("nome"));
+		p.setSexo(rs.getString("sexo"));
 		p.setCpf(rs.getString("cpf"));
 		p.setEmail(rs.getString("email"));
 		p.setTelefone(rs.getString("telefone"));
