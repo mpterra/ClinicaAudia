@@ -4,6 +4,7 @@ import java.awt.*;
 import java.net.URL;
 import javax.swing.*;
 
+import util.MenuUtils;
 import util.Sessao;
 
 public class TelaPrincipal extends JFrame {
@@ -52,7 +53,7 @@ public class TelaPrincipal extends JFrame {
 		JMenuBar menuBar = new JMenuBar();
 		
 		//MENU AGENDA
-		JMenu menuAgenda = createMenu("Agenda");
+		menuBar.add(MenuUtils.createClickableMenu("Agenda", () -> abrirAgenda()));
 		
 		// MENU ATENDIMENTO
 		JMenu menuAtendimento = createMenu("Atendimento");
@@ -106,9 +107,8 @@ public class TelaPrincipal extends JFrame {
 		menuCadastro.add(createMenuItem("Profissionais", e -> {		}));
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 		
-		//MONTAGEM DO MENU
+		//MONTAGEM DO RESTANTE DO MENU
 		
-		menuBar.add(menuAgenda);
 		menuBar.add(menuAtendimento);
 		menuBar.add(menuPacientes);
 		menuBar.add(menuOrcamentos);
@@ -156,6 +156,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroPaciente() throws Exception {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroPacientePanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirAgenda() {
+		painelCentral.removeAll();
+		painelCentral.add(new AgendaPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
