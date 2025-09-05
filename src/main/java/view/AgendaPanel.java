@@ -6,6 +6,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -33,7 +35,7 @@ public class AgendaPanel extends JPanel {
 
     public AgendaPanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(15, 15, 15, 15)); // 15% padding
+        setBorder(new EmptyBorder(15, 15, 15, 15)); // padding 15%
 
         JLabel lblTitulo = new JLabel("Agenda de Atendimentos", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
@@ -70,22 +72,48 @@ public class AgendaPanel extends JPanel {
 
         JPanel panelTopo = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
+        // Setas de navegação mês a mês
+        JButton btnPrevMes = new JButton("<");
+        JButton btnNextMes = new JButton(">");
+        btnPrevMes.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnNextMes.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // JComboBox de mês e ano
         cbMes = new JComboBox<>(meses);
         cbAno = new JComboBox<>();
         int anoAtual = LocalDate.now().getYear();
-        for(int i = anoAtual - 5; i <= anoAtual + 5; i++) cbAno.addItem(i);
+        for(int i = anoAtual - 5; i <= 2030; i++) cbAno.addItem(i); // mantido como estava
 
         cbMes.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
         cbAno.setSelectedItem(anoAtual);
 
-        cbMes.addActionListener(e -> atualizarCalendario());
-        cbAno.addActionListener(e -> atualizarCalendario());
-
+        // lblMesAno deve ser inicializado antes de adicionar ao painel
         lblMesAno = new JLabel("", SwingConstants.CENTER);
         lblMesAno.setFont(new Font("SansSerif", Font.BOLD, 16));
 
+        // Ações das setas
+        btnPrevMes.addActionListener(e -> {
+            dataSelecionada = dataSelecionada.minusMonths(1);
+            cbMes.setSelectedIndex(dataSelecionada.getMonthValue() - 1);
+            cbAno.setSelectedItem(dataSelecionada.getYear());
+            atualizarCalendario();
+        });
+
+        btnNextMes.addActionListener(e -> {
+            dataSelecionada = dataSelecionada.plusMonths(1);
+            cbMes.setSelectedIndex(dataSelecionada.getMonthValue() - 1);
+            cbAno.setSelectedItem(dataSelecionada.getYear());
+            atualizarCalendario();
+        });
+
+        // Troca via JComboBox
+        cbMes.addActionListener(e -> atualizarCalendario());
+        cbAno.addActionListener(e -> atualizarCalendario());
+
+        panelTopo.add(btnPrevMes);
         panelTopo.add(cbMes);
         panelTopo.add(cbAno);
+        panelTopo.add(btnNextMes);
         panelTopo.add(lblMesAno);
 
         painelDias = new JPanel(new GridLayout(0, 7, 5, 5));
@@ -117,7 +145,25 @@ public class AgendaPanel extends JPanel {
         JScrollPane scrollTabela = new JScrollPane(tabelaAtendimentos);
         panelTabela.add(scrollTabela, BorderLayout.CENTER);
 
+        // Ajuste relativo das colunas
+        tabelaAtendimentos.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                ajustarLarguraColunas();
+            }
+        });
+
         return panelTabela;
+    }
+
+    private void ajustarLarguraColunas() {
+        int larguraTotal = tabelaAtendimentos.getWidth();
+        if (larguraTotal == 0) return;
+
+        // Horário 20%, Paciente 40%, Descrição 40%
+        tabelaAtendimentos.getColumnModel().getColumn(0).setPreferredWidth((int)(larguraTotal * 0.2));
+        tabelaAtendimentos.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.4));
+        tabelaAtendimentos.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.4));
     }
 
     private void atualizarCalendario() {
@@ -140,7 +186,6 @@ public class AgendaPanel extends JPanel {
         LocalDate primeiraData = anoMes.atDay(1);
         int diaSemanaInicio = primeiraData.getDayOfWeek().getValue() % 7; // domingo = 0
 
-        // Preencher células vazias antes do primeiro dia
         for (int i = 0; i < diaSemanaInicio; i++) painelDias.add(new JLabel(""));
 
         int diasNoMes = anoMes.lengthOfMonth();
@@ -149,7 +194,11 @@ public class AgendaPanel extends JPanel {
             JButton btnDia = new JButton(String.valueOf(dia));
             btnDia.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            if (dataAtual.isBefore(LocalDate.now())) {
+            // Domingo sempre desabilitado
+            if (dataAtual.getDayOfWeek().getValue() == 7) {
+                btnDia.setEnabled(false);
+                btnDia.setBackground(Color.LIGHT_GRAY);
+            } else if (dataAtual.isBefore(LocalDate.now())) {
                 btnDia.setBackground(Color.LIGHT_GRAY);
             } else if (dataAtual.equals(LocalDate.now())) {
                 btnDia.setBackground(new Color(173, 216, 230)); // azul
@@ -186,6 +235,8 @@ public class AgendaPanel extends JPanel {
                         a.getNotas()
                 });
             }
+
+            ajustarLarguraColunas(); // garante que colunas se ajustem ao conteúdo inicial
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);

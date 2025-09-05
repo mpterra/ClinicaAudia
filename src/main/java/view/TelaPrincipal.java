@@ -47,6 +47,7 @@ public class TelaPrincipal extends JFrame {
 		setJMenuBar(createMenuBar());
 
 		// abrir a tela que quero de inicio
+		abrirAgenda();
 	}
 
 	private JMenuBar createMenuBar() {
