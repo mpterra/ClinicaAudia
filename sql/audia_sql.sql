@@ -201,11 +201,61 @@ CREATE TABLE movimento_estoque (
 );
 
 -- ========================================
--- VENDA
+-- TABELA ORCAMENTO
+-- ========================================
+CREATE TABLE orcamento (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NULL,                  -- opcional, se for para um paciente
+    profissional_id INT NULL,             -- opcional, quem fez o orçamento
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    valor_total DECIMAL(10,2) DEFAULT 0,
+    observacoes TEXT,
+    usuario VARCHAR(50),                   -- controle de auditoria
+    venda_id INT NULL,                     -- vinculo futuro a venda
+
+    CONSTRAINT fk_orcamento_paciente
+        FOREIGN KEY (paciente_id) REFERENCES paciente(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_orcamento_profissional
+        FOREIGN KEY (profissional_id) REFERENCES profissional(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_orcamento_venda
+        FOREIGN KEY (venda_id) REFERENCES venda(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+-- ========================================
+-- TABELA ORCAMENTO_PRODUTO (itens do orçamento)
+-- ========================================
+CREATE TABLE orcamento_produto (
+    orcamento_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT NOT NULL DEFAULT 1,
+    preco_unitario DECIMAL(10,2) NOT NULL,
+    data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (orcamento_id, produto_id),
+
+    CONSTRAINT fk_orcprod_orcamento
+        FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_orcprod_produto
+        FOREIGN KEY (produto_id) REFERENCES produto(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- ========================================
+-- TABELA VENDA
 -- ========================================
 CREATE TABLE venda (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    atendimento_id INT,  -- agora pode ser NULL (venda sem atendimento)
+    atendimento_id INT NULL,       -- agora pode ser NULL (venda sem atendimento)
+    orcamento_id INT NULL,         -- vinculo opcional a um orçamento
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) DEFAULT 0,
     usuario VARCHAR(50),
@@ -214,8 +264,15 @@ CREATE TABLE venda (
         FOREIGN KEY (atendimento_id)
         REFERENCES atendimento(id)
         ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_venda_orcamento
+        FOREIGN KEY (orcamento_id)
+        REFERENCES orcamento(id)
+        ON DELETE SET NULL
         ON UPDATE CASCADE
 );
+
 
 -- ========================================
 -- VENDA_PRODUTO
