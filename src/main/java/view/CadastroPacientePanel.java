@@ -56,14 +56,15 @@ public class CadastroPacientePanel extends JPanel {
         JPanel panelTabela = criarTabelaPacientesComPesquisa();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.4); // 40% dados / 60% tabela
+        splitPane.setResizeWeight(0.5); // 50% dados / 50% tabela
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
 
-        panelCadastro.setPreferredSize(new Dimension(400, 600));
-        panelTabela.setPreferredSize(new Dimension(600, 600));
+        panelCadastro.setPreferredSize(new Dimension(500, 600));
+        panelTabela.setPreferredSize(new Dimension(500, 600));
 
         add(splitPane, BorderLayout.CENTER);
+
 
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {

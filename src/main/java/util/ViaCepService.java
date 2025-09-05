@@ -10,29 +10,29 @@ import model.Endereco;
 
 public class ViaCepService {
 
-    public static Endereco buscarEndereco(String cep) throws Exception {
-        String cepLimpo = cep.replaceAll("\\D", "");
-        if (cepLimpo.isBlank() || cepLimpo.length() != 8) {
-            throw new IllegalArgumentException("CEP inválido");
-        }
+	public static Endereco buscarEndereco(String cep) throws Exception {
+		String cepLimpo = cep.replaceAll("\\D", "");
+		if (cepLimpo.isBlank() || cepLimpo.length() != 8) {
+			throw new IllegalArgumentException("CEP inválido");
+		}
 
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://viacep.com.br/ws/" + cepLimpo + "/json/"))
-                .build();
+		HttpClient client = HttpClient.newHttpClient();
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://viacep.com.br/ws/" + cepLimpo + "/json/")).build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JSONObject json = new JSONObject(response.body());
+		HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+		JSONObject json = new JSONObject(response.body());
 
-        if (json.has("erro")) return null;
+		if (json.has("erro"))
+			return null;
 
-        Endereco endereco = new Endereco();
-        endereco.setRua(json.optString("logradouro", ""));
-        endereco.setBairro(json.optString("bairro", ""));
-        endereco.setCidade(json.optString("localidade", ""));
-        endereco.setEstado(json.optString("uf", ""));
-        endereco.setCep(cepLimpo);
+		Endereco endereco = new Endereco();
+		endereco.setRua(json.optString("logradouro", ""));
+		endereco.setBairro(json.optString("bairro", ""));
+		endereco.setCidade(json.optString("localidade", ""));
+		endereco.setEstado(json.optString("uf", ""));
+		endereco.setCep(cepLimpo);
 
-        return endereco;
-    }
+		return endereco;
+	}
 }
