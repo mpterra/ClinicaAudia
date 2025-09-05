@@ -50,74 +50,75 @@ public class TelaPrincipal extends JFrame {
 
 	private JMenuBar createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
+		
+		//MENU AGENDA
+		JMenu menuAgenda = createMenu("Agenda");
+		
+		// MENU ATENDIMENTO
+		JMenu menuAtendimento = createMenu("Atendimento");
+		menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {		}));
+		menuAtendimento.add(createMenuItem("Vender Produto", e -> {		}));
+		menuAtendimento.addSeparator();
+		menuAtendimento.add(createMenuItem("Relatório", e -> {		}));
 
 		// MENU PACIENTES
 		JMenu menuPacientes = createMenu("Pacientes");
-		menuPacientes.add(createMenuItem("Novo Paciente", e -> {
-			try {
-				abrirCadastroPaciente();
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		}));
-		menuPacientes.add(createMenuItem("Pesquisar Pacientes", e -> {
-		}));
+		menuPacientes.add(createMenuItem("Novo Paciente", e -> {try {
+			abrirCadastroPaciente();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}}));
+		menuPacientes.addSeparator();
+		menuPacientes.add(createMenuItem("Prontuários", e -> {		}));
+		
+		//MENU ORÇAMENTOS
+		JMenu menuOrcamentos = createMenu("Orçamentos");
+		menuOrcamentos.add(createMenuItem("Novo Orçamento", e -> {		}));
+		menuOrcamentos.addSeparator();
+		menuOrcamentos.add(createMenuItem("Consultar Orçamentos", e -> {		}));
 
-		// MENU ATENDIMENTO
-		JMenu menuAtendimento = createMenu("Atendimento");
-		menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {
-		}));
-		menuAtendimento.add(createMenuItem("Agenda", e -> {
-		}));
 
 		// MENU FINANCEIRO
 		JMenu menuFinanceiro = createMenu("Financeiro");
-		menuFinanceiro.add(createMenuItem("Caixa", e -> {
-		}));
+		menuFinanceiro.add(createMenuItem("Caixa", e -> {		}));
 		menuFinanceiro.addSeparator();
-		menuFinanceiro.add(createMenuItem("Contas a Pagar", e -> {
-		}));
-		menuFinanceiro.add(createMenuItem("Contas a Receber", e -> {
-		}));
+		menuFinanceiro.add(createMenuItem("Lançar Despesa", e -> {		}));
+		menuFinanceiro.addSeparator();
+		menuFinanceiro.add(createMenuItem("Contas a Pagar", e -> {		}));
+		menuFinanceiro.add(createMenuItem("Contas a Receber", e -> {		}));
+		menuFinanceiro.addSeparator();
+		menuFinanceiro.add(createMenuItem("Relatórios", e -> {		}));
 
 		// MENU ESTOQUE
 		JMenu menuEstoque = createMenu("Estoque");
-		menuEstoque.add(createMenuItem("Consultar Estoque", e -> {
-		}));
-		menuEstoque.add(createMenuItem("Últimos Movimentos", e -> {
-		}));
-
-		// MENU RELATÓRIOS
-		JMenu menuRelatorios = createMenu("Relatórios");
-		menuRelatorios.add(createMenuItem("Atendimentos", e -> {
-		}));
-		menuRelatorios.add(createMenuItem("Vendas", e -> {
-		}));
-		menuRelatorios.add(createMenuItem("Despesas", e -> {
-		}));
+		menuEstoque.add(createMenuItem("Conferir Estoque", e -> {		}));
+		menuEstoque.add(createMenuItem("Comprar Itens", e -> {		}));
+		menuEstoque.addSeparator();
+		menuEstoque.add(createMenuItem("Baixa de Estoque", e -> {		}));
+		menuEstoque.addSeparator();
+		menuEstoque.add(createMenuItem("Relatórios", e -> {		}));
 
 		// MENU CADASTRO
 		JMenu menuCadastro = createMenu("Cadastro");
-		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {
-		}));
-		menuCadastro.add(createMenuItem("Produtos", e -> {
-		}));
+		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {		}));
+		menuCadastro.add(createMenuItem("Produtos", e -> {		}));
 		menuCadastro.addSeparator();
-		menuCadastro.add(createMenuItem("Profissionais", e -> {
-		}));
+		menuCadastro.add(createMenuItem("Profissionais", e -> {		}));
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
-
-		menuBar.add(menuPacientes);
+		
+		//MONTAGEM DO MENU
+		
+		menuBar.add(menuAgenda);
 		menuBar.add(menuAtendimento);
+		menuBar.add(menuPacientes);
+		menuBar.add(menuOrcamentos);
 		menuBar.add(menuFinanceiro);
 		menuBar.add(menuEstoque);
-		menuBar.add(menuRelatorios);
 		menuBar.add(menuCadastro);
 		
 		
 		
-		// espaço flexível para empurrar o label do usuário para a direita
+		// Espaço flexível para empurrar o label do usuário para a direita
 		menuBar.add(Box.createHorizontalGlue());
 
 		// label do usuário logado
