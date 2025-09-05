@@ -194,17 +194,30 @@ public class AgendaPanel extends JPanel {
             JButton btnDia = new JButton(String.valueOf(dia));
             btnDia.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-            // Domingo sempre desabilitado
+         // Domingo sempre desabilitado
             if (dataAtual.getDayOfWeek().getValue() == 7) {
                 btnDia.setEnabled(false);
-                btnDia.setBackground(Color.LIGHT_GRAY);
-            } else if (dataAtual.isBefore(LocalDate.now())) {
-                btnDia.setBackground(Color.LIGHT_GRAY);
-            } else if (dataAtual.equals(LocalDate.now())) {
-                btnDia.setBackground(new Color(173, 216, 230)); // azul
-            } else {
-                btnDia.setBackground(new Color(144, 238, 144)); // verde
+                btnDia.setBackground(Color.decode("#E0E0E0")); // cinza claro
+                btnDia.setForeground(Color.decode("#666666")); // cinza escuro
+            } 
+            // Hoje = verde
+            else if (dataAtual.equals(LocalDate.now())) {
+                btnDia.setBackground(Color.decode("#D5F5E3")); // verde claro
+                btnDia.setForeground(Color.BLACK);
+            } 
+            // Dias passados = branco
+            else if (dataAtual.isBefore(LocalDate.now())) {
+                btnDia.setBackground(Color.WHITE);
+                btnDia.setForeground(Color.BLACK);
+            } 
+            // Dias futuros = azul claro
+            else {
+                btnDia.setBackground(Color.decode("#AED6F1")); // azul claro
+                btnDia.setForeground(Color.BLACK);
             }
+
+            // Opcional: borda sutil para todos os dias habilitados
+            btnDia.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
             btnDia.addActionListener(e -> {
                 dataSelecionada = dataAtual;
