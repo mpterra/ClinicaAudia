@@ -211,7 +211,6 @@ CREATE TABLE orcamento (
     valor_total DECIMAL(10,2) DEFAULT 0,
     observacoes TEXT,
     usuario VARCHAR(50),                   -- controle de auditoria
-    venda_id INT NULL,                     -- vinculo futuro a venda
 
     CONSTRAINT fk_orcamento_paciente
         FOREIGN KEY (paciente_id) REFERENCES paciente(id)
@@ -219,10 +218,6 @@ CREATE TABLE orcamento (
         ON UPDATE CASCADE,
     CONSTRAINT fk_orcamento_profissional
         FOREIGN KEY (profissional_id) REFERENCES profissional(id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE,
-    CONSTRAINT fk_orcamento_venda
-        FOREIGN KEY (venda_id) REFERENCES venda(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
@@ -503,7 +498,3 @@ END$$
 DELIMITER ;
 
 -- ========================================
-
-
-
-
