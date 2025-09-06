@@ -83,6 +83,8 @@ public class CadastroProfissionalPanel extends JPanel {
 	}
 
 	private JPanel criarPainelCadastro() {
+		
+		
 		JPanel panelWrapper = new JPanel();
 		panelWrapper.setLayout(new BoxLayout(panelWrapper, BoxLayout.Y_AXIS));
 		panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -95,8 +97,9 @@ public class CadastroProfissionalPanel extends JPanel {
 		gbc.insets = new Insets(8, 8, 8, 8);
 		gbc.anchor = GridBagConstraints.WEST;
 
-		int campoColumns = 25; // Campos grandes (nome, email, etc.)
-		int campoColumnsCurto = 10; // CPF e Data de Nascimento
+		int campoColumns = 10; // Campos grandes (nome, email, etc.)
+		int campoColumnsCurto = 9; // CPF e Data de Nascimento
+		int campoLabelTipo = 15; // Labels como "Tipo"
 		Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
 
 		// Nome
