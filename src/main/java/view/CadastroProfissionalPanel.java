@@ -68,16 +68,23 @@ public class CadastroProfissionalPanel extends JPanel {
 
 		btnLimpar.addActionListener(e -> limparCampos());
 		btnSalvar.addActionListener(e -> {
-			try {
-				salvarProfissional();
-			} catch (CampoObrigatorioException e1) {
-				JOptionPane.showMessageDialog(this, e1.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-				JOptionPane.showMessageDialog(this, "Erro ao salvar profissional: " + e1.getMessage(), "Erro",
-						JOptionPane.ERROR_MESSAGE);
-			}
+		    try {
+		        salvarProfissional();
+		    } catch (CampoObrigatorioException e1) {
+		        JOptionPane.showMessageDialog(this, e1.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+		    } catch (java.sql.SQLIntegrityConstraintViolationException e1) {
+		        // Mensagem personalizada em português
+		        JOptionPane.showMessageDialog(this,
+		                "Erro: já existe um profissional cadastrado com este CPF!",
+		                "CPF duplicado",
+		                JOptionPane.ERROR_MESSAGE);
+		    } catch (SQLException e1) {
+		        e1.printStackTrace();
+		        JOptionPane.showMessageDialog(this, "Erro ao salvar profissional: " + e1.getMessage(), "Erro",
+		                JOptionPane.ERROR_MESSAGE);
+		    }
 		});
+
 
 		carregarProfissionais();
 	}
