@@ -18,8 +18,8 @@ public class ProfissionalController {
 	// CRUD
 	// -----------------------------
 
-	public void salvar(Profissional prof) throws SQLException {
-		dao.salvar(prof);
+	public boolean salvar(Profissional prof) throws SQLException {
+		return dao.salvar(prof);
 	}
 
 	public void atualizar(Profissional prof) throws SQLException {
@@ -56,6 +56,10 @@ public class ProfissionalController {
 	public List<Profissional> buscarAvancado(String nome, Profissional.TipoProfissional tipo, Boolean ativo)
 			throws SQLException {
 		return dao.buscarAvancado(nome, tipo, ativo);
+	}
+
+	public List<Profissional> listarTodos() {
+		return dao.listarTodos();
 	}
 
 }

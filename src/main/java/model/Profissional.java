@@ -1,94 +1,151 @@
 package model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class Profissional {
 
-    private int id;
-    private String nome;
-    private String sexo;
-    private String cpf;
-    private String email;
-    private String telefone;
-    private TipoProfissional tipo; // enum
-    private Endereco endereco; // referência ao objeto Endereco
-    private boolean ativo; // true = ativo, false = inativo
-    private LocalDateTime criadoEm;
-    private LocalDateTime atualizadoEm;
-    private String usuario;
+	private int id;
+	private String nome;
+	private String sexo;
+	private String cpf;
+	private LocalDate dataNascimento;
+	private String email;
+	private String telefone;
+	private TipoProfissional tipo; // enum
+	private Endereco endereco; // referência ao objeto Endereco
+	private boolean ativo; // true = ativo, false = inativo
+	private LocalDateTime criadoEm;
+	private LocalDateTime atualizadoEm;
+	private String usuario;
 
-    // Enum interno para tipo
-    public enum TipoProfissional {
-    	FONOAUDIOLOGA,SECRETARIA
-    }
+	// Enum interno para tipo
+	public enum TipoProfissional {
+		FONOAUDIOLOGA, SECRETARIA
+	}
 
-    // Construtor vazio
-    public Profissional() {}
+	// Construtor vazio
+	public Profissional() {
+	}
 
-    // Construtor completo (sem datas)
-    public Profissional(int id, String nome, String sexo, String cpf, String email, String telefone,
-                        TipoProfissional tipo, Endereco endereco, boolean ativo, String usuario) {
-        this.id = id;
-        this.nome = nome;
-        this.cpf = cpf;
-        this.email = email;
-        this.telefone = telefone;
-        this.tipo = tipo;
-        this.endereco = endereco;
-        this.ativo = ativo;
-        this.usuario = usuario;
-    }
+	// Construtor completo (sem datas)
+	public Profissional(int id, String nome, String sexo, String cpf, LocalDate danaNascimento, String email,
+			String telefone, TipoProfissional tipo, Endereco endereco, boolean ativo, String usuario) {
+		this.id = id;
+		this.nome = nome;
+		this.cpf = cpf;
+		this.dataNascimento = danaNascimento;
+		this.email = email;
+		this.telefone = telefone;
+		this.tipo = tipo;
+		this.endereco = endereco;
+		this.ativo = ativo;
+		this.usuario = usuario;
+	}
 
-    // Getters e Setters
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+	// Getters e Setters
+	public int getId() {
+		return id;
+	}
 
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-    
-    public String getSexo() { return sexo; }
-    public void setSexo(String sexo) { this.sexo = sexo; }
+	public void setId(int id) {
+		this.id = id;
+	}
 
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
+	public String getNome() {
+		return nome;
+	}
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+	public void setNome(String nome) {
+		this.nome = nome;
+	}
 
-    public String getTelefone() { return telefone; }
-    public void setTelefone(String telefone) { this.telefone = telefone; }
+	public String getSexo() {
+		return sexo;
+	}
 
-    public TipoProfissional getTipo() { return tipo; }
-    public void setTipo(TipoProfissional tipo) { this.tipo = tipo; }
+	public void setSexo(String sexo) {
+		this.sexo = sexo;
+	}
 
-    public Endereco getEndereco() { return endereco; }
-    public void setEndereco(Endereco endereco) { this.endereco = endereco; }
+	public String getCpf() {
+		return cpf;
+	}
 
-    public boolean isAtivo() { return ativo; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
+	}
 
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
+	public LocalDate getDataNascimento() {
+		return dataNascimento;
+	}
 
-    public String getUsuario() { return usuario; }
-    public void setUsuario(String usuario) { this.usuario = usuario; }
+	public void setDataNascimento(LocalDate dataNascimento) {
+		this.dataNascimento = dataNascimento;
+	}
 
-    // Para debug/log
-    @Override
-    public String toString() {
-        return "Profissional{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", sexo='" + sexo + '\'' +
-                ", cpf='" + cpf + '\'' +
-                ", email='" + email + '\'' +
-                ", telefone='" + telefone + '\'' +
-                ", tipo=" + tipo +
-                ", endereco=" + (endereco != null ? endereco.getId() : null) +
-                ", ativo=" + ativo +
-                ", criadoEm=" + criadoEm +
-                ", atualizadoEm=" + atualizadoEm +
-                ", usuario='" + usuario + '\'' +
-                '}';
-    }
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getTelefone() {
+		return telefone;
+	}
+
+	public void setTelefone(String telefone) {
+		this.telefone = telefone;
+	}
+
+	public TipoProfissional getTipo() {
+		return tipo;
+	}
+
+	public void setTipo(TipoProfissional tipo) {
+		this.tipo = tipo;
+	}
+
+	public Endereco getEndereco() {
+		return endereco;
+	}
+
+	public void setEndereco(Endereco endereco) {
+		this.endereco = endereco;
+	}
+
+	public boolean isAtivo() {
+		return ativo;
+	}
+
+	public void setAtivo(boolean ativo) {
+		this.ativo = ativo;
+	}
+
+	public LocalDateTime getCriadoEm() {
+		return criadoEm;
+	}
+
+	public LocalDateTime getAtualizadoEm() {
+		return atualizadoEm;
+	}
+
+	public String getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(String usuario) {
+		this.usuario = usuario;
+	}
+
+	// Para debug/log
+	@Override
+	public String toString() {
+		return "Profissional [id=" + id + ", nome=" + nome + ", sexo=" + sexo + ", cpf=" + cpf + ", dataNascimento="
+				+ dataNascimento + ", email=" + email + ", telefone=" + telefone + ", tipo=" + tipo + ", endereco="
+				+ endereco + ", ativo=" + ativo + ", criadoEm=" + criadoEm + ", atualizadoEm=" + atualizadoEm
+				+ ", usuario=" + usuario + "]";
+	}
 }

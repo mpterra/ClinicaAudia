@@ -105,7 +105,7 @@ public class TelaPrincipal extends JFrame {
 		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {		}));
 		menuCadastro.add(createMenuItem("Produtos", e -> {		}));
 		menuCadastro.addSeparator();
-		menuCadastro.add(createMenuItem("Profissionais", e -> {		}));
+		menuCadastro.add(createMenuItem("Profissionais", e -> {abrirCadastroProfissional();}));
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 		
 		//MONTAGEM DO RESTANTE DO MENU
@@ -164,6 +164,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirAgenda() {
 		painelCentral.removeAll();
 		painelCentral.add(new AgendaPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroProfissional() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroProfissionalPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

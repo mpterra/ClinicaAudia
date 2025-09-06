@@ -14,9 +14,9 @@ public class ProfissionalDAO {
 	// CRUD Básico
 	// -----------------------------
 
-	public void salvar(Profissional prof) throws SQLException {
-		String sql = "INSERT INTO profissional (nome, sexo, cpf, email, telefone, tipo, endereco_id, ativo, usuario) "
-				+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+	public boolean salvar(Profissional prof) throws SQLException {
+		String sql = "INSERT INTO profissional (nome, sexo, cpf, email, telefone, data_nascimento, tipo, endereco_id, ativo, usuario) "
+				+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try (Connection conn = Database.getConnection();
 				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -25,6 +25,7 @@ public class ProfissionalDAO {
 			stmt.setString(2, prof.getCpf());
 			stmt.setString(3, prof.getEmail());
 			stmt.setString(4, prof.getTelefone());
+			stmt.setDate(5, prof.getDataNascimento() != null ? Date.valueOf(prof.getDataNascimento()) : null);
 			stmt.setString(5, prof.getTipo().name());
 			stmt.setInt(6, prof.getEndereco() != null ? prof.getEndereco().getId() : Types.NULL);
 			stmt.setBoolean(7, prof.isAtivo());
@@ -35,13 +36,16 @@ public class ProfissionalDAO {
 			try (ResultSet rs = stmt.getGeneratedKeys()) {
 				if (rs.next()) {
 					prof.setId(rs.getInt(1));
+					return true;
 				}
 			}
+			
+			return false;
 		}
 	}
 
 	public void atualizar(Profissional prof) throws SQLException {
-		String sql = "UPDATE profissional SET nome=?, sexo=? cpf=?, email=?, telefone=?, tipo=?, endereco_id=?, ativo=?, usuario=?, atualizado_em=CURRENT_TIMESTAMP WHERE id=?";
+		String sql = "UPDATE profissional SET nome=?, sexo=? cpf=?, email=?, telefone=?, data_nascimento=?, tipo=?, endereco_id=?, ativo=?, usuario=?, atualizado_em=CURRENT_TIMESTAMP WHERE id=?";
 		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
 			stmt.setString(1, prof.getNome());
@@ -49,6 +53,7 @@ public class ProfissionalDAO {
 			stmt.setString(2, prof.getCpf());
 			stmt.setString(3, prof.getEmail());
 			stmt.setString(4, prof.getTelefone());
+			stmt.setDate(5, prof.getDataNascimento() != null ? Date.valueOf(prof.getDataNascimento()) : null);
 			stmt.setString(5, prof.getTipo().name());
 			stmt.setInt(6, prof.getEndereco() != null ? prof.getEndereco().getId() : Types.NULL);
 			stmt.setBoolean(7, prof.isAtivo());
@@ -179,6 +184,7 @@ public class ProfissionalDAO {
 		p.setCpf(rs.getString("cpf"));
 		p.setEmail(rs.getString("email"));
 		p.setTelefone(rs.getString("telefone"));
+		p.setDataNascimento(rs.getDate("data_nascimento") != null ? rs.getDate("data_nascimento").toLocalDate() : null);
 
 		String tipoStr = rs.getString("tipo");
 		if (tipoStr != null)
@@ -195,5 +201,25 @@ public class ProfissionalDAO {
 		p.setUsuario(rs.getString("usuario"));
 
 		return p;
+	}
+
+	public List<Profissional> listarTodos() {
+		try {
+			String sql = "SELECT * FROM profissional";
+			List<Profissional> lista = new ArrayList<>();
+
+			try (Connection conn = Database.getConnection();
+					PreparedStatement stmt = conn.prepareStatement(sql);
+					ResultSet rs = stmt.executeQuery()) {
+
+				while (rs.next()) {
+					lista.add(mapearProfissional(rs));
+				}
+			}
+			return lista;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
