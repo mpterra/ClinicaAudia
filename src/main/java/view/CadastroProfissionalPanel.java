@@ -97,55 +97,107 @@ public class CadastroProfissionalPanel extends JPanel {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
 
-        int campoColumns = 25;
+        int campoColumns = 25;       // Campos grandes (nome, email, etc.)
+        int campoColumnsCurto = 10;  // CPF e Data de Nascimento
         Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
 
         // Nome
         gbc.gridx = 0; gbc.gridy = 1;
         panelProfissional.add(new JLabel("Nome:"), gbc);
         tfNome = new JTextField(campoColumns);
-        gbc.gridx = 1; gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
         panelProfissional.add(tfNome, gbc);
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
 
         // Sexo
         gbc.gridx = 0; gbc.gridy = 2;
         panelProfissional.add(new JLabel("Sexo:"), gbc);
         cbSexo = new JComboBox<>(new String[]{"Masculino", "Feminino"});
         cbSexo.setCursor(handCursor);
-        gbc.gridx = 1; gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
         panelProfissional.add(cbSexo, gbc);
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
 
         // CPF
-        tfCpf = criarCampoFormatado(panelProfissional, "CPF:", 3, "###.###.###-##", campoColumns, gbc);
-        lblValidaCpf = new JLabel("            ");
+        gbc.gridx = 0; gbc.gridy = 3;
+        panelProfissional.add(new JLabel("CPF:"), gbc);
+        try {
+            MaskFormatter cpfMask = new MaskFormatter("###.###.###-##");
+            cpfMask.setPlaceholderCharacter('_');
+            tfCpf = new JFormattedTextField(cpfMask);
+            tfCpf.setColumns(campoColumnsCurto);
+        } catch (Exception e) { e.printStackTrace(); }
+        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelProfissional.add(tfCpf, gbc);
+        gbc.fill = GridBagConstraints.NONE;
+
+        // Data Nascimento
+        gbc.gridx = 2;
+        panelProfissional.add(new JLabel("Data Nascimento:"), gbc);
+        try {
+            MaskFormatter dataMask = new MaskFormatter("##/##/####");
+            dataMask.setPlaceholderCharacter('_');
+            tfDataNascimento = new JFormattedTextField(dataMask);
+            tfDataNascimento.setColumns(campoColumnsCurto);
+        } catch (Exception e) { e.printStackTrace(); }
+        gbc.gridx = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelProfissional.add(tfDataNascimento, gbc);
+        gbc.fill = GridBagConstraints.NONE;
+
+        // Labels de alerta
+        lblValidaCpf = new JLabel(" ");
         lblValidaCpf.setFont(new Font("SansSerif", Font.BOLD, 12));
-        gbc.gridx = 2; gbc.gridy = 3; // ao lado do campo CPF
+        lblValidaCpf.setForeground(Color.RED);
+        gbc.gridx = 1; gbc.gridy = 4;
         panelProfissional.add(lblValidaCpf, gbc);
 
+        lblErroData = new JLabel(" ");
+        lblErroData.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lblErroData.setForeground(Color.RED);
+        gbc.gridx = 3; gbc.gridy = 4;
+        panelProfissional.add(lblErroData, gbc);
+
+        // Listeners de validação
         tfCpf.getDocument().addDocumentListener(new DocumentListener() {
             private void validarCPF() {
                 String cpf = tfCpf.getText().replaceAll("\\D", "");
                 if (cpf.length() == 11) {
                     if (CPFUtils.isCPFValido(cpf)) {
-                        lblValidaCpf.setText("CPF válido  ");
+                        lblValidaCpf.setText("CPF válido");
                         lblValidaCpf.setForeground(new Color(0, 128, 0));
                     } else {
                         lblValidaCpf.setText("CPF inválido");
                         lblValidaCpf.setForeground(Color.RED);
                     }
                 } else {
-                    lblValidaCpf.setText("            ");
+                    lblValidaCpf.setText(" ");
                 }
             }
             public void insertUpdate(DocumentEvent e) { validarCPF(); }
             public void removeUpdate(DocumentEvent e) { validarCPF(); }
             public void changedUpdate(DocumentEvent e) { validarCPF(); }
+        });
+
+        tfDataNascimento.getDocument().addDocumentListener(new DocumentListener() {
+            private void validarData() {
+                String texto = tfDataNascimento.getText().trim();
+                if (texto.isEmpty()) {
+                    lblErroData.setText("Data obrigatória!");
+                    return;
+                }
+                try {
+                    LocalDate data = LocalDate.parse(texto, formatter);
+                    LocalDate hoje = LocalDate.now();
+                    if (data.isAfter(hoje)) lblErroData.setText("Data não pode ser futura!");
+                    else if (data.isBefore(hoje.minusYears(125))) lblErroData.setText("Idade máxima: 125 anos!");
+                    else lblErroData.setText(" ");
+                } catch (Exception e) {
+                    lblErroData.setText("Formato inválido!");
+                }
+            }
+            public void insertUpdate(DocumentEvent e) { validarData(); }
+            public void removeUpdate(DocumentEvent e) { validarData(); }
+            public void changedUpdate(DocumentEvent e) { validarData(); }
         });
 
         // Telefone
@@ -155,56 +207,18 @@ public class CadastroProfissionalPanel extends JPanel {
         tfEmail = new JTextField(campoColumns);
         gbc.gridx = 0; gbc.gridy = 6;
         panelProfissional.add(new JLabel("Email:"), gbc);
-        gbc.gridx = 1; gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
         panelProfissional.add(tfEmail, gbc);
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
-
-        // Data Nascimento
-        tfDataNascimento = criarCampoFormatado(panelProfissional, "Data Nascimento:", 7, "##/##/####", campoColumns, gbc);
-        lblErroData = new JLabel("   ");
-        lblErroData.setFont(new Font("SansSerif", Font.BOLD, 12));
-        lblErroData.setForeground(Color.RED);
-        gbc.gridx = 2; gbc.gridy = 7; // ao lado do campo de data
-        panelProfissional.add(lblErroData, gbc);
-
-        tfDataNascimento.getDocument().addDocumentListener(new DocumentListener() {
-            private void validarData() {
-                String texto = tfDataNascimento.getText().trim();
-                if (texto.isEmpty()) {
-                    lblErroData.setText("Data obrigatória!       ");
-                    return;
-                }
-                try {
-                    LocalDate data = LocalDate.parse(texto, formatter);
-                    LocalDate hoje = LocalDate.now();
-                    if (data.isAfter(hoje)) {
-                        lblErroData.setText("Data não pode ser futura!");
-                    } else if (data.isBefore(hoje.minusYears(125))) {
-                        lblErroData.setText("Idade máxima: 125 anos!  ");
-                    } else {
-                        lblErroData.setText("                         ");
-                    }
-                } catch (Exception e) {
-                    lblErroData.setText("Formato inválido!        ");
-                }
-            }
-            public void insertUpdate(DocumentEvent e) { validarData(); }
-            public void removeUpdate(DocumentEvent e) { validarData(); }
-            public void changedUpdate(DocumentEvent e) { validarData(); }
-        });
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
 
         // Tipo
-        gbc.gridx = 0; gbc.gridy = 9;
+        gbc.gridx = 0; gbc.gridy = 7;
         panelProfissional.add(new JLabel("Tipo:"), gbc);
         cbTipo = new JComboBox<>(new String[]{"FONOAUDIOLOGA", "SECRETARIA"});
         cbTipo.setCursor(handCursor);
-        gbc.gridx = 1; gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
         panelProfissional.add(cbTipo, gbc);
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
 
         // Painel Endereço
         JPanel panelEndereco = new JPanel(new GridBagLayout());
@@ -308,6 +322,8 @@ public class CadastroProfissionalPanel extends JPanel {
 
         return panelWrapper;
     }
+
+
 
     private JFormattedTextField criarCampoFormatado(JPanel panel, String label, int y, String mask, int columns, GridBagConstraints gbc) {
         gbc.gridx = 0; gbc.gridy = y;
