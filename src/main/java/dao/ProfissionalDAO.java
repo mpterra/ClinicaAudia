@@ -15,7 +15,7 @@ public class ProfissionalDAO {
     // -----------------------------
 
     public boolean salvar(Profissional prof) throws SQLException {
-        String sql = "INSERT INTO profissional (nome, sexo, cpf, email, telefone, data_nascimento, tipo, endereco_id, ativo, usuario, criado_em) "
+        String sql = "INSERT INTO profissional (nome, sexo, cpf, email, telefone, data_nascimento, tipo, id_endereco, ativo, usuario, criado_em) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -49,7 +49,7 @@ public class ProfissionalDAO {
     }
 
     public void atualizar(Profissional prof) throws SQLException {
-        String sql = "UPDATE profissional SET nome=?, sexo=?, cpf=?, email=?, telefone=?, data_nascimento=?, tipo=?, endereco_id=?, ativo=?, usuario=?, atualizado_em=CURRENT_TIMESTAMP WHERE id=?";
+        String sql = "UPDATE profissional SET nome=?, sexo=?, cpf=?, email=?, telefone=?, data_nascimento=?, tipo=?, id_endereco=?, ativo=?, usuario=?, atualizado_em=CURRENT_TIMESTAMP WHERE id=?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -200,7 +200,7 @@ public class ProfissionalDAO {
         p.setDataNascimento(rs.getDate("data_nascimento") != null ? rs.getDate("data_nascimento").toLocalDate() : null);
         p.setTipo(rs.getString("tipo"));
 
-        int enderecoId = rs.getInt("endereco_id");
+        int enderecoId = rs.getInt("id_endereco");
         if (!rs.wasNull()) {
             Endereco e = new Endereco();
             e.setId(enderecoId);

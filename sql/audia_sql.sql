@@ -85,7 +85,7 @@ CREATE TABLE profissional (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(120) NOT NULL,
     sexo ENUM('M','F') NOT NULL,
-    cpf CHAR(11) NOT NULL UNIQUE,
+    cpf CHAR(14) NOT NULL UNIQUE,
     email VARCHAR(120),
     telefone VARCHAR(30),
     data_nascimento DATE,

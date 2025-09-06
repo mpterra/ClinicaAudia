@@ -361,7 +361,7 @@ public class CadastroPacientePanel extends JPanel {
     private JPanel criarTabelaPacientesComPesquisa() {
         JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
 
-        String[] colunas = {"Nome", "Sexo", "CPF", "Telefone", "Email", "Data Nascimento"};
+        String[] colunas = {"Nome", "Sexo", "Telefone", "Email", "Data Nascimento"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -414,12 +414,11 @@ public class CadastroPacientePanel extends JPanel {
             @Override
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 int totalWidth = panelTabelaWrapper.getWidth();
-                tabelaPacientes.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.25));
-                tabelaPacientes.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.10));
-                tabelaPacientes.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaPacientes.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaPacientes.getColumnModel().getColumn(4).setPreferredWidth((int)(totalWidth * 0.25));
-                tabelaPacientes.getColumnModel().getColumn(5).setPreferredWidth((int)(totalWidth * 0.20));
+                tabelaPacientes.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.28));
+                tabelaPacientes.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.12));
+                tabelaPacientes.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.20));
+                tabelaPacientes.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.34));
+                tabelaPacientes.getColumnModel().getColumn(4).setPreferredWidth((int)(totalWidth * 0.20));
             }
         });
 
@@ -433,7 +432,7 @@ public class CadastroPacientePanel extends JPanel {
         tfEmail.setText("");
         tfDataNascimento.setText(""); lblErroData.setText(" ");
         cbSexo.setSelectedIndex(0);
-        tfRua.setText(""); lblErroRua.setText(" ");
+        tfRua.setText("");
         tfNumero.setText("");
         tfComplemento.setText("");
         tfBairro.setText("");
@@ -523,7 +522,6 @@ public class CadastroPacientePanel extends JPanel {
                 modeloTabela.addRow(new Object[]{
                     p.getNome(),
                     p.getSexo().equals("M") ? "Masculino" : "Feminino",
-                    p.getCpf(),
                     p.getTelefone(),
                     p.getEmail(),
                     dataFormatada
