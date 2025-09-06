@@ -97,13 +97,6 @@ public class CadastroProfissionalPanel extends JPanel {
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
-        JLabel lblSubtitulo = new JLabel("Preencha os dados do profissional");
-        lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 13));
-        lblSubtitulo.setForeground(Color.DARK_GRAY);
-        panelProfissional.add(lblSubtitulo, gbc);
-        gbc.gridwidth = 1;
-
         int campoColumns = 25;
         Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
 
@@ -130,25 +123,24 @@ public class CadastroProfissionalPanel extends JPanel {
 
         // CPF
         tfCpf = criarCampoFormatado(panelProfissional, "CPF:", 3, "###.###.###-##", campoColumns, gbc);
-        lblValidaCpf = new JLabel(" ");
+        lblValidaCpf = new JLabel("            ");
         lblValidaCpf.setFont(new Font("SansSerif", Font.BOLD, 12));
-        gbc.gridx = 1; gbc.gridy = 4; gbc.gridwidth = 3;
+        gbc.gridx = 2; gbc.gridy = 3; // ao lado do campo CPF
         panelProfissional.add(lblValidaCpf, gbc);
-        gbc.gridwidth = 1;
 
         tfCpf.getDocument().addDocumentListener(new DocumentListener() {
             private void validarCPF() {
                 String cpf = tfCpf.getText().replaceAll("\\D", "");
                 if (cpf.length() == 11) {
                     if (CPFUtils.isCPFValido(cpf)) {
-                        lblValidaCpf.setText("CPF válido");
+                        lblValidaCpf.setText("CPF válido  ");
                         lblValidaCpf.setForeground(new Color(0, 128, 0));
                     } else {
                         lblValidaCpf.setText("CPF inválido");
                         lblValidaCpf.setForeground(Color.RED);
                     }
                 } else {
-                    lblValidaCpf.setText(" ");
+                    lblValidaCpf.setText("            ");
                 }
             }
             public void insertUpdate(DocumentEvent e) { validarCPF(); }
@@ -170,12 +162,18 @@ public class CadastroProfissionalPanel extends JPanel {
         gbc.fill = GridBagConstraints.NONE;
 
         // Data Nascimento
-        tfDataNascimento = criarCampoFormatado(panelProfissional, "Data Nascimento (dd/MM/aaaa):", 7, "##/##/####", campoColumns, gbc);
+        tfDataNascimento = criarCampoFormatado(panelProfissional, "Data Nascimento:", 7, "##/##/####", campoColumns, gbc);
+        lblErroData = new JLabel("   ");
+        lblErroData.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lblErroData.setForeground(Color.RED);
+        gbc.gridx = 2; gbc.gridy = 7; // ao lado do campo de data
+        panelProfissional.add(lblErroData, gbc);
+
         tfDataNascimento.getDocument().addDocumentListener(new DocumentListener() {
             private void validarData() {
                 String texto = tfDataNascimento.getText().trim();
                 if (texto.isEmpty()) {
-                    lblErroData.setText("Data obrigatória!");
+                    lblErroData.setText("Data obrigatória!       ");
                     return;
                 }
                 try {
@@ -184,20 +182,18 @@ public class CadastroProfissionalPanel extends JPanel {
                     if (data.isAfter(hoje)) {
                         lblErroData.setText("Data não pode ser futura!");
                     } else if (data.isBefore(hoje.minusYears(125))) {
-                        lblErroData.setText("Idade máxima permitida: 125 anos!");
+                        lblErroData.setText("Idade máxima: 125 anos!  ");
                     } else {
-                        lblErroData.setText(" ");
+                        lblErroData.setText("                         ");
                     }
                 } catch (Exception e) {
-                    lblErroData.setText("Formato inválido! Use dd/MM/aaaa");
+                    lblErroData.setText("Formato inválido!        ");
                 }
             }
             public void insertUpdate(DocumentEvent e) { validarData(); }
             public void removeUpdate(DocumentEvent e) { validarData(); }
             public void changedUpdate(DocumentEvent e) { validarData(); }
         });
-
-        lblErroData = criarLabelErro(panelProfissional, 8, gbc);
 
         // Tipo
         gbc.gridx = 0; gbc.gridy = 9;
@@ -321,21 +317,11 @@ public class CadastroProfissionalPanel extends JPanel {
             formatter.setPlaceholderCharacter('_');
             JFormattedTextField field = new JFormattedTextField(formatter);
             field.setColumns(columns);
-            gbc.gridx = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.gridx = 1; gbc.gridwidth = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
             panel.add(field, gbc);
             gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
             return field;
         } catch (Exception e) { e.printStackTrace(); return null; }
-    }
-
-    private JLabel criarLabelErro(JPanel panel, int y, GridBagConstraints gbc) {
-        JLabel lbl = new JLabel(" ");
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 12));
-        lbl.setForeground(Color.RED);
-        gbc.gridx = 1; gbc.gridy = y; gbc.gridwidth = 3;
-        panel.add(lbl, gbc);
-        gbc.gridwidth = 1;
-        return lbl;
     }
 
     private void limparCampos() {
@@ -370,7 +356,6 @@ public class CadastroProfissionalPanel extends JPanel {
         endereco.setEstado((String) cbEstado.getSelectedItem());
         endereco.setCep(tfCep.getText().trim());
 
-
         Profissional profissional = new Profissional();
         profissional.setNome(nome);
         profissional.setEmail(email);
@@ -382,7 +367,9 @@ public class CadastroProfissionalPanel extends JPanel {
         profissional.setAtivo(true);
         profissional.setEndereco(endereco);
         profissional.setUsuario(Sessao.getUsuarioLogado().getLogin());
-        
+
+        ProfissionalController controller = new ProfissionalController();
+        controller.salvar(profissional);
 
         JOptionPane.showMessageDialog(this, "Profissional salvo com sucesso!");
         limparCampos();
@@ -399,7 +386,8 @@ public class CadastroProfissionalPanel extends JPanel {
         // Centralizar colunas
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-        for (int i=0; i<tabelaProfissionais.getColumnCount(); i++) tabelaProfissionais.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        for (int i=0; i<tabelaProfissionais.getColumnCount(); i++)
+            tabelaProfissionais.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 
         sorter = new TableRowSorter<>(modeloTabela);
         tabelaProfissionais.setRowSorter(sorter);
@@ -415,9 +403,17 @@ public class CadastroProfissionalPanel extends JPanel {
             public void changedUpdate(DocumentEvent e) { filtrar(); }
         });
 
-        panel.add(new JLabel("Pesquisar:"), BorderLayout.NORTH);
-        panel.add(tfPesquisar, BorderLayout.NORTH);
+        // Painel para label + campo de pesquisa
+        JPanel painelPesquisa = new JPanel(new BorderLayout(5,5));
+        JLabel lblPesquisar = new JLabel("Pesquisar profissional: ");
+        lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        lblPesquisar.setForeground(Color.DARK_GRAY);
+        painelPesquisa.add(lblPesquisar, BorderLayout.WEST);
+        painelPesquisa.add(tfPesquisar, BorderLayout.CENTER);
+
+        panel.add(painelPesquisa, BorderLayout.NORTH);
         panel.add(new JScrollPane(tabelaProfissionais), BorderLayout.CENTER);
+
         return panel;
     }
 
@@ -425,8 +421,10 @@ public class CadastroProfissionalPanel extends JPanel {
         modeloTabela.setRowCount(0);
         ProfissionalController controller = new ProfissionalController();
         List<Profissional> lista = controller.listarTodos();
-		for (Profissional p : lista) {
-		    modeloTabela.addRow(new Object[]{p.getNome(), p.getCpf(), p.getSexo(), p.getTipo(), p.getEmail()});
-		}
+        for (Profissional p : lista) {
+            modeloTabela.addRow(new Object[]{
+                    p.getNome(), p.getCpf(), p.getSexo(), p.getTipo(), p.getEmail()
+            });
+        }
     }
 }
