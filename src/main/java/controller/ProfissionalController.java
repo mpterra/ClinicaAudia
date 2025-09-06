@@ -8,58 +8,56 @@ import java.util.List;
 
 public class ProfissionalController {
 
-	private final ProfissionalDAO dao;
+    private final ProfissionalDAO dao;
 
-	public ProfissionalController() {
-		this.dao = new ProfissionalDAO();
-	}
+    public ProfissionalController() {
+        this.dao = new ProfissionalDAO();
+    }
 
-	// -----------------------------
-	// CRUD
-	// -----------------------------
+    // -----------------------------
+    // CRUD
+    // -----------------------------
 
-	public boolean salvar(Profissional prof) throws SQLException {
-		return dao.salvar(prof);
-	}
+    public boolean salvar(Profissional prof) throws SQLException {
+        return dao.salvar(prof);
+    }
 
-	public void atualizar(Profissional prof) throws SQLException {
-		dao.atualizar(prof);
-	}
+    public void atualizar(Profissional prof) throws SQLException {
+        dao.atualizar(prof);
+    }
 
-	public void deletar(int id) throws SQLException {
-		dao.deletar(id);
-	}
+    public void deletar(int id) throws SQLException {
+        dao.deletar(id);
+    }
 
-	public Profissional buscarPorId(int id) throws SQLException {
-		return dao.buscarPorId(id);
-	}
+    public Profissional buscarPorId(int id) throws SQLException {
+        return dao.buscarPorId(id);
+    }
 
-	// -----------------------------
-	// Buscas simples
-	// -----------------------------
+    // -----------------------------
+    // Buscas simples
+    // -----------------------------
 
-	public List<Profissional> buscarPorNome(String nome) throws SQLException {
-		return dao.buscarPorNome(nome);
-	}
+    public List<Profissional> buscarPorNome(String nome) throws SQLException {
+        return dao.buscarPorNome(nome);
+    }
 
-	public List<Profissional> buscarPorTipo(Profissional.TipoProfissional tipo) throws SQLException {
-		return dao.buscarPorTipo(tipo);
-	}
+    public List<Profissional> buscarPorTipo(String tipo) throws SQLException {
+        return dao.buscarPorTipo(tipo);
+    }
 
-	public List<Profissional> buscarPorAtivo(boolean ativo) throws SQLException {
-		return dao.buscarPorAtivo(ativo);
-	}
+    public List<Profissional> buscarPorAtivo(boolean ativo) throws SQLException {
+        return dao.buscarPorAtivo(ativo);
+    }
 
-	// -----------------------------
-	// Busca avançada
-	// -----------------------------
-	public List<Profissional> buscarAvancado(String nome, Profissional.TipoProfissional tipo, Boolean ativo)
-			throws SQLException {
-		return dao.buscarAvancado(nome, tipo, ativo);
-	}
+    // -----------------------------
+    // Busca avançada
+    // -----------------------------
+    public List<Profissional> buscarAvancado(String nome, String tipo, Boolean ativo) throws SQLException {
+        return dao.buscarAvancado(nome, tipo, ativo);
+    }
 
-	public List<Profissional> listarTodos() {
-		return dao.listarTodos();
-	}
-
+    public List<Profissional> listarTodos() throws SQLException {
+        return dao.listarTodos();
+    }
 }

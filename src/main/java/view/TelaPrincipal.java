@@ -2,6 +2,8 @@ package view;
 
 import java.awt.*;
 import java.net.URL;
+import java.sql.SQLException;
+
 import javax.swing.*;
 
 import util.MenuUtils;
@@ -105,7 +107,12 @@ public class TelaPrincipal extends JFrame {
 		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {		}));
 		menuCadastro.add(createMenuItem("Produtos", e -> {		}));
 		menuCadastro.addSeparator();
-		menuCadastro.add(createMenuItem("Profissionais", e -> {abrirCadastroProfissional();}));
+		menuCadastro.add(createMenuItem("Profissionais", e -> {try {
+			abrirCadastroProfissional();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}}));
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 		
 		//MONTAGEM DO RESTANTE DO MENU
@@ -168,7 +175,7 @@ public class TelaPrincipal extends JFrame {
 		painelCentral.repaint();
 	}
 	
-	private void abrirCadastroProfissional() {
+	private void abrirCadastroProfissional() throws SQLException {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroProfissionalPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();

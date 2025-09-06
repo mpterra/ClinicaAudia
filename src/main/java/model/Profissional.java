@@ -5,147 +5,143 @@ import java.time.LocalDateTime;
 
 public class Profissional {
 
-	private int id;
-	private String nome;
-	private String sexo;
-	private String cpf;
-	private LocalDate dataNascimento;
-	private String email;
-	private String telefone;
-	private TipoProfissional tipo; // enum
-	private Endereco endereco; // referência ao objeto Endereco
-	private boolean ativo; // true = ativo, false = inativo
-	private LocalDateTime criadoEm;
-	private LocalDateTime atualizadoEm;
-	private String usuario;
+    private int id;
+    private String nome;
+    private String sexo;
+    private String cpf;
+    private LocalDate dataNascimento;
+    private String email;
+    private String telefone;
+    private String tipo;
+    private Endereco endereco; // referência ao objeto Endereco
+    private boolean ativo; // true = ativo, false = inativo
+    private LocalDateTime criadoEm;
+    private LocalDateTime atualizadoEm;
+    private String usuario;
 
-	// Enum interno para tipo
-	public enum TipoProfissional {
-		FONOAUDIOLOGA, SECRETARIA
-	}
+    // Construtor vazio
+    public Profissional() {
+    }
 
-	// Construtor vazio
-	public Profissional() {
-	}
+    // Construtor completo (sem datas)
+    public Profissional(int id, String nome, String sexo, String cpf, LocalDate dataNascimento, String email,
+                        String telefone, String tipo, Endereco endereco, boolean ativo, String usuario) {
+        this.id = id;
+        this.nome = nome;
+        this.sexo = sexo;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+        this.email = email;
+        this.telefone = telefone;
+        this.tipo = tipo;
+        this.endereco = endereco;
+        this.ativo = ativo;
+        this.usuario = usuario;
+    }
 
-	// Construtor completo (sem datas)
-	public Profissional(int id, String nome, String sexo, String cpf, LocalDate danaNascimento, String email,
-			String telefone, TipoProfissional tipo, Endereco endereco, boolean ativo, String usuario) {
-		this.id = id;
-		this.nome = nome;
-		this.cpf = cpf;
-		this.dataNascimento = danaNascimento;
-		this.email = email;
-		this.telefone = telefone;
-		this.tipo = tipo;
-		this.endereco = endereco;
-		this.ativo = ativo;
-		this.usuario = usuario;
-	}
+    // Getters e Setters
+    public int getId() {
+        return id;
+    }
 
-	// Getters e Setters
-	public int getId() {
-		return id;
-	}
+    public void setId(int id) {
+        this.id = id;
+    }
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public String getNome() {
+        return nome;
+    }
 
-	public String getNome() {
-		return nome;
-	}
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
 
-	public void setNome(String nome) {
-		this.nome = nome;
-	}
+    public String getSexo() {
+        return sexo;
+    }
 
-	public String getSexo() {
-		return sexo;
-	}
+    public void setSexo(String sexo) {
+        this.sexo = sexo;
+    }
 
-	public void setSexo(String sexo) {
-		this.sexo = sexo;
-	}
+    public String getCpf() {
+        return cpf;
+    }
 
-	public String getCpf() {
-		return cpf;
-	}
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
 
-	public void setCpf(String cpf) {
-		this.cpf = cpf;
-	}
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
 
-	public LocalDate getDataNascimento() {
-		return dataNascimento;
-	}
+    public void setDataNascimento(LocalDate dataNascimento) {
+        this.dataNascimento = dataNascimento;
+    }
 
-	public void setDataNascimento(LocalDate dataNascimento) {
-		this.dataNascimento = dataNascimento;
-	}
+    public String getEmail() {
+        return email;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public String getTelefone() {
+        return telefone;
+    }
 
-	public String getTelefone() {
-		return telefone;
-	}
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
 
-	public void setTelefone(String telefone) {
-		this.telefone = telefone;
-	}
+    public String getTipo() {
+        return tipo;
+    }
 
-	public TipoProfissional getTipo() {
-		return tipo;
-	}
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
 
-	public void setTipo(TipoProfissional tipo) {
-		this.tipo = tipo;
-	}
+    public Endereco getEndereco() {
+        return endereco;
+    }
 
-	public Endereco getEndereco() {
-		return endereco;
-	}
+    public void setEndereco(Endereco endereco) {
+        this.endereco = endereco;
+    }
 
-	public void setEndereco(Endereco endereco) {
-		this.endereco = endereco;
-	}
+    public boolean isAtivo() {
+        return ativo;
+    }
 
-	public boolean isAtivo() {
-		return ativo;
-	}
+    public void setAtivo(boolean ativo) {
+        this.ativo = ativo;
+    }
 
-	public void setAtivo(boolean ativo) {
-		this.ativo = ativo;
-	}
+    public LocalDateTime getCriadoEm() {
+        return criadoEm;
+    }
 
-	public LocalDateTime getCriadoEm() {
-		return criadoEm;
-	}
+    public LocalDateTime getAtualizadoEm() {
+        return atualizadoEm;
+    }
 
-	public LocalDateTime getAtualizadoEm() {
-		return atualizadoEm;
-	}
+    public String getUsuario() {
+        return usuario;
+    }
 
-	public String getUsuario() {
-		return usuario;
-	}
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
+    }
 
-	public void setUsuario(String usuario) {
-		this.usuario = usuario;
-	}
-
-	// Para debug/log
-	@Override
-	public String toString() {
-		return "Profissional [id=" + id + ", nome=" + nome + ", sexo=" + sexo + ", cpf=" + cpf + ", dataNascimento="
-				+ dataNascimento + ", email=" + email + ", telefone=" + telefone + ", tipo=" + tipo + ", endereco="
-				+ endereco + ", ativo=" + ativo + ", criadoEm=" + criadoEm + ", atualizadoEm=" + atualizadoEm
-				+ ", usuario=" + usuario + "]";
-	}
+    // Para debug/log
+    @Override
+    public String toString() {
+        return "Profissional [id=" + id + ", nome=" + nome + ", sexo=" + sexo + ", cpf=" + cpf + ", dataNascimento="
+                + dataNascimento + ", email=" + email + ", telefone=" + telefone + ", tipo=" + tipo + ", endereco="
+                + endereco + ", ativo=" + ativo + ", criadoEm=" + criadoEm + ", atualizadoEm=" + atualizadoEm
+                + ", usuario=" + usuario + "]";
+    }
 }

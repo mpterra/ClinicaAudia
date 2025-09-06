@@ -7,10 +7,15 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.MaskFormatter;
 
 import controller.ProfissionalController;
+import exception.CampoObrigatorioException;
 import model.Endereco;
 import model.Profissional;
+import util.CPFUtils;
+import util.Sessao;
+import util.ViaCepService;
 
 import java.awt.*;
 import java.sql.SQLException;
@@ -22,302 +27,406 @@ public class CadastroProfissionalPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private JTextField tfNome, tfCPF, tfEmail, tfTelefone, tfPesquisar;
+    private JTextField tfNome, tfEmail;
+    private JFormattedTextField tfCpf, tfTelefone, tfCep;
+    private JTextField tfDataNascimento;
+    private JTextField tfRua, tfNumero, tfComplemento, tfBairro, tfCidade;
+    private JComboBox<String> cbEstado;
     private JComboBox<String> cbSexo, cbTipo;
-    private JFormattedTextField ftfDataNascimento;
-    private JCheckBox chbAtivo;
     private JButton btnSalvar, btnLimpar;
-
     private JTable tabelaProfissionais;
     private DefaultTableModel modeloTabela;
     private TableRowSorter<DefaultTableModel> sorter;
+    private JTextField tfPesquisar;
 
-    public CadastroProfissionalPanel() {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private JLabel lblErroData, lblValidaCpf;
+
+    public CadastroProfissionalPanel() throws SQLException {
         setLayout(new BorderLayout(10, 20));
 
-        // Título
         JLabel lblTitulo = new JLabel("Cadastro de Profissional", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitulo.setForeground(new Color(30, 30, 60));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Painéis
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaProfissionaisComPesquisa();
 
-        // SplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
         splitPane.setResizeWeight(0.5);
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
 
-        JPanel panelWrapper = new JPanel(new BorderLayout());
-        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
-        panelWrapper.add(splitPane, BorderLayout.CENTER);
-        add(panelWrapper, BorderLayout.CENTER);
+        panelCadastro.setPreferredSize(new Dimension(500, 600));
+        panelTabela.setPreferredSize(new Dimension(500, 600));
 
-        // Botões
+        add(splitPane, BorderLayout.CENTER);
+
         btnLimpar.addActionListener(e -> limparCampos());
-        btnSalvar.addActionListener(e -> salvarProfissional());
+        btnSalvar.addActionListener(e -> {
+            try {
+                salvarProfissional();
+            } catch (CampoObrigatorioException e1) {
+                JOptionPane.showMessageDialog(this, e1.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Erro ao salvar profissional: " + e1.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
         carregarProfissionais();
     }
 
     private JPanel criarPainelCadastro() {
-        JPanel panelWrapper = new JPanel(new BorderLayout());
-        JPanel panel = new JPanel(new GridBagLayout());
+        JPanel panelWrapper = new JPanel();
+        panelWrapper.setLayout(new BoxLayout(panelWrapper, BoxLayout.Y_AXIS));
+        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        panel.setBorder(BorderFactory.createTitledBorder(
+        JPanel panelProfissional = new JPanel(new GridBagLayout());
+        panelProfissional.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.BLACK),
                 "Cadastrar novo profissional",
                 TitledBorder.LEADING,
-                TitledBorder.TOP));
-
-        panelWrapper.add(panel, BorderLayout.NORTH);
+                TitledBorder.TOP
+        ));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10,10,10,10);
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Subtítulo
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 4;
         JLabel lblSubtitulo = new JLabel("Preencha os dados do profissional");
         lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 13));
         lblSubtitulo.setForeground(Color.DARK_GRAY);
-        panel.add(lblSubtitulo, gbc);
+        panelProfissional.add(lblSubtitulo, gbc);
         gbc.gridwidth = 1;
 
+        int campoColumns = 25;
+        Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
+
         // Nome
-        gbc.gridy++;
-        gbc.gridx = 0;
-        panel.add(new JLabel("Nome:"), gbc);
-        tfNome = new JTextField();
-        gbc.gridx = 1;
-        gbc.weightx = 0.5;
+        gbc.gridx = 0; gbc.gridy = 1;
+        panelProfissional.add(new JLabel("Nome:"), gbc);
+        tfNome = new JTextField(campoColumns);
+        gbc.gridx = 1; gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(tfNome, gbc);
+        panelProfissional.add(tfNome, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
 
         // Sexo
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Sexo:"), gbc);
-        cbSexo = new JComboBox<>(new String[]{"M", "F"});
-        gbc.gridx = 1;
+        gbc.gridx = 0; gbc.gridy = 2;
+        panelProfissional.add(new JLabel("Sexo:"), gbc);
+        cbSexo = new JComboBox<>(new String[]{"Masculino", "Feminino"});
+        cbSexo.setCursor(handCursor);
+        gbc.gridx = 1; gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(cbSexo, gbc);
+        panelProfissional.add(cbSexo, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
 
         // CPF
-        gbc.gridy++;
-        gbc.gridx = 0;
-        panel.add(new JLabel("CPF:"), gbc);
-        tfCPF = new JTextField();
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(tfCPF, gbc);
+        tfCpf = criarCampoFormatado(panelProfissional, "CPF:", 3, "###.###.###-##", campoColumns, gbc);
+        lblValidaCpf = new JLabel(" ");
+        lblValidaCpf.setFont(new Font("SansSerif", Font.BOLD, 12));
+        gbc.gridx = 1; gbc.gridy = 4; gbc.gridwidth = 3;
+        panelProfissional.add(lblValidaCpf, gbc);
+        gbc.gridwidth = 1;
 
-        // Data de Nascimento
-        gbc.gridy++;
-        gbc.gridx = 0;
-        panel.add(new JLabel("Data Nascimento (yyyy-MM-dd):"), gbc);
-        ftfDataNascimento = new JFormattedTextField();
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(ftfDataNascimento, gbc);
-
-        // Email
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Email:"), gbc);
-        tfEmail = new JTextField();
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(tfEmail, gbc);
+        tfCpf.getDocument().addDocumentListener(new DocumentListener() {
+            private void validarCPF() {
+                String cpf = tfCpf.getText().replaceAll("\\D", "");
+                if (cpf.length() == 11) {
+                    if (CPFUtils.isCPFValido(cpf)) {
+                        lblValidaCpf.setText("CPF válido");
+                        lblValidaCpf.setForeground(new Color(0, 128, 0));
+                    } else {
+                        lblValidaCpf.setText("CPF inválido");
+                        lblValidaCpf.setForeground(Color.RED);
+                    }
+                } else {
+                    lblValidaCpf.setText(" ");
+                }
+            }
+            public void insertUpdate(DocumentEvent e) { validarCPF(); }
+            public void removeUpdate(DocumentEvent e) { validarCPF(); }
+            public void changedUpdate(DocumentEvent e) { validarCPF(); }
+        });
 
         // Telefone
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        panel.add(new JLabel("Telefone:"), gbc);
-        tfTelefone = new JTextField();
-        gbc.gridx = 1;
+        tfTelefone = criarCampoFormatado(panelProfissional, "Telefone:", 5, "(##) #####-####", campoColumns, gbc);
+
+        // Email
+        tfEmail = new JTextField(campoColumns);
+        gbc.gridx = 0; gbc.gridy = 6;
+        panelProfissional.add(new JLabel("Email:"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(tfTelefone, gbc);
+        panelProfissional.add(tfEmail, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+
+        // Data Nascimento
+        tfDataNascimento = criarCampoFormatado(panelProfissional, "Data Nascimento (dd/MM/aaaa):", 7, "##/##/####", campoColumns, gbc);
+        tfDataNascimento.getDocument().addDocumentListener(new DocumentListener() {
+            private void validarData() {
+                String texto = tfDataNascimento.getText().trim();
+                if (texto.isEmpty()) {
+                    lblErroData.setText("Data obrigatória!");
+                    return;
+                }
+                try {
+                    LocalDate data = LocalDate.parse(texto, formatter);
+                    LocalDate hoje = LocalDate.now();
+                    if (data.isAfter(hoje)) {
+                        lblErroData.setText("Data não pode ser futura!");
+                    } else if (data.isBefore(hoje.minusYears(125))) {
+                        lblErroData.setText("Idade máxima permitida: 125 anos!");
+                    } else {
+                        lblErroData.setText(" ");
+                    }
+                } catch (Exception e) {
+                    lblErroData.setText("Formato inválido! Use dd/MM/aaaa");
+                }
+            }
+            public void insertUpdate(DocumentEvent e) { validarData(); }
+            public void removeUpdate(DocumentEvent e) { validarData(); }
+            public void changedUpdate(DocumentEvent e) { validarData(); }
+        });
+
+        lblErroData = criarLabelErro(panelProfissional, 8, gbc);
 
         // Tipo
-        gbc.gridy++;
-        gbc.gridx = 0;
-        panel.add(new JLabel("Tipo:"), gbc);
+        gbc.gridx = 0; gbc.gridy = 9;
+        panelProfissional.add(new JLabel("Tipo:"), gbc);
         cbTipo = new JComboBox<>(new String[]{"FONOAUDIOLOGA", "SECRETARIA"});
-        gbc.gridx = 1;
+        cbTipo.setCursor(handCursor);
+        gbc.gridx = 1; gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(cbTipo, gbc);
+        panelProfissional.add(cbTipo, gbc);
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
 
-        // Ativo
-        gbc.gridy++;
-        gbc.gridx = 0;
-        panel.add(new JLabel("Ativo:"), gbc);
-        chbAtivo = new JCheckBox();
-        chbAtivo.setSelected(true);
-        gbc.gridx = 1;
-        panel.add(chbAtivo, gbc);
+        // Painel Endereço
+        JPanel panelEndereco = new JPanel(new GridBagLayout());
+        panelEndereco.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                "Endereço",
+                TitledBorder.LEADING,
+                TitledBorder.TOP
+        ));
+
+        GridBagConstraints gbcEnd = new GridBagConstraints();
+        gbcEnd.insets = new Insets(5,5,5,5);
+        gbcEnd.anchor = GridBagConstraints.WEST;
+        gbcEnd.fill = GridBagConstraints.HORIZONTAL;
+
+        // CEP
+        gbcEnd.gridx = 0; gbcEnd.gridy = 0;
+        panelEndereco.add(new JLabel("CEP:"), gbcEnd);
+        try {
+            MaskFormatter cepMask = new MaskFormatter("#####-###");
+            cepMask.setPlaceholderCharacter('_');
+            tfCep = new JFormattedTextField(cepMask);
+            tfCep.setColumns(10);
+        } catch (Exception e) { e.printStackTrace(); }
+        gbcEnd.gridx = 1;
+        panelEndereco.add(tfCep, gbcEnd);
+
+        // Rua
+        gbcEnd.gridx = 2;
+        panelEndereco.add(new JLabel("Rua:"), gbcEnd);
+        tfRua = new JTextField(20);
+        gbcEnd.gridx = 3;
+        panelEndereco.add(tfRua, gbcEnd);
+
+        // Buscar endereço via CEP
+        tfCep.getDocument().addDocumentListener(new DocumentListener() {
+            private void buscarEndereco() {
+                String cep = tfCep.getText().replaceAll("\\D", "");
+                if (cep.length() != 8) return;
+
+                new SwingWorker<Endereco, Void>() {
+                    @Override
+                    protected Endereco doInBackground() throws Exception {
+                        return ViaCepService.buscarEndereco(cep);
+                    }
+                    @Override
+                    protected void done() {
+                        try {
+                            Endereco endereco = get();
+                            if (endereco != null) {
+                                tfRua.setText(endereco.getRua());
+                                tfBairro.setText(endereco.getBairro());
+                                tfCidade.setText(endereco.getCidade());
+                                cbEstado.setSelectedItem(endereco.getEstado());
+                            } else {
+                                tfRua.setText(""); tfBairro.setText(""); tfCidade.setText(""); cbEstado.setSelectedIndex(0);
+                            }
+                        } catch (Exception ex) { ex.printStackTrace(); }
+                    }
+                }.execute();
+            }
+            public void insertUpdate(DocumentEvent e) { buscarEndereco(); }
+            public void removeUpdate(DocumentEvent e) { buscarEndereco(); }
+            public void changedUpdate(DocumentEvent e) { buscarEndereco(); }
+        });
+
+        // Número, Complemento, Bairro, Cidade, Estado
+        gbcEnd.gridy = 1; gbcEnd.gridx = 0; panelEndereco.add(new JLabel("Número:"), gbcEnd);
+        tfNumero = new JTextField(8); gbcEnd.gridx = 1; panelEndereco.add(tfNumero, gbcEnd);
+
+        gbcEnd.gridx = 2; panelEndereco.add(new JLabel("Complemento:"), gbcEnd);
+        tfComplemento = new JTextField(15); gbcEnd.gridx = 3; panelEndereco.add(tfComplemento, gbcEnd);
+
+        gbcEnd.gridy = 2; gbcEnd.gridx = 0; panelEndereco.add(new JLabel("Bairro:"), gbcEnd);
+        tfBairro = new JTextField(15); gbcEnd.gridx = 1; panelEndereco.add(tfBairro, gbcEnd);
+
+        gbcEnd.gridx = 2; panelEndereco.add(new JLabel("Cidade:"), gbcEnd);
+        tfCidade = new JTextField(15); gbcEnd.gridx = 3; panelEndereco.add(tfCidade, gbcEnd);
+
+        gbcEnd.gridy = 3; gbcEnd.gridx = 0; panelEndereco.add(new JLabel("Estado:"), gbcEnd);
+        String[] estados = {"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+                "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"};
+        cbEstado = new JComboBox<>(estados); cbEstado.setCursor(handCursor);
+        gbcEnd.gridx = 1; panelEndereco.add(cbEstado, gbcEnd);
 
         // Botões
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnSalvar = new JButton("Salvar");
         btnLimpar = new JButton("Limpar");
         panelBotoes.add(btnSalvar);
         panelBotoes.add(btnLimpar);
-        panel.add(panelBotoes, gbc);
+
+        panelWrapper.add(panelProfissional);
+        panelWrapper.add(Box.createVerticalStrut(10));
+        panelWrapper.add(panelEndereco);
+        panelWrapper.add(Box.createVerticalStrut(10));
+        panelWrapper.add(panelBotoes);
+
+        btnSalvar.setCursor(handCursor);
+        btnLimpar.setCursor(handCursor);
 
         return panelWrapper;
     }
 
+    private JFormattedTextField criarCampoFormatado(JPanel panel, String label, int y, String mask, int columns, GridBagConstraints gbc) {
+        gbc.gridx = 0; gbc.gridy = y;
+        panel.add(new JLabel(label), gbc);
+        try {
+            MaskFormatter formatter = new MaskFormatter(mask);
+            formatter.setPlaceholderCharacter('_');
+            JFormattedTextField field = new JFormattedTextField(formatter);
+            field.setColumns(columns);
+            gbc.gridx = 1; gbc.gridwidth = 3; gbc.fill = GridBagConstraints.HORIZONTAL;
+            panel.add(field, gbc);
+            gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
+            return field;
+        } catch (Exception e) { e.printStackTrace(); return null; }
+    }
+
+    private JLabel criarLabelErro(JPanel panel, int y, GridBagConstraints gbc) {
+        JLabel lbl = new JLabel(" ");
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lbl.setForeground(Color.RED);
+        gbc.gridx = 1; gbc.gridy = y; gbc.gridwidth = 3;
+        panel.add(lbl, gbc);
+        gbc.gridwidth = 1;
+        return lbl;
+    }
+
+    private void limparCampos() {
+        tfNome.setText(""); tfEmail.setText(""); tfCpf.setText(""); tfTelefone.setText(""); tfDataNascimento.setText("");
+        cbSexo.setSelectedIndex(0); cbTipo.setSelectedIndex(0);
+        tfCep.setText(""); tfRua.setText(""); tfNumero.setText(""); tfComplemento.setText("");
+        tfBairro.setText(""); tfCidade.setText(""); cbEstado.setSelectedIndex(0);
+        lblErroData.setText(" "); lblValidaCpf.setText(" ");
+    }
+
+    private void salvarProfissional() throws CampoObrigatorioException, SQLException {
+        String nome = tfNome.getText().trim();
+        String email = tfEmail.getText().trim();
+        String cpf = tfCpf.getText().replaceAll("\\D", "");
+        String telefone = tfTelefone.getText().replaceAll("\\D", "");
+        String dataStr = tfDataNascimento.getText().trim();
+        String sexo = cbSexo.getSelectedItem().toString();
+        String tipo = cbTipo.getSelectedItem().toString();
+
+        if (nome.isEmpty()) throw new CampoObrigatorioException("Nome obrigatório");
+        if (!CPFUtils.isCPFValido(cpf)) throw new CampoObrigatorioException("CPF inválido");
+        if (dataStr.isEmpty()) throw new CampoObrigatorioException("Data obrigatória");
+
+        LocalDate dataNascimento = LocalDate.parse(dataStr, formatter);
+
+        Endereco endereco = new Endereco();
+        endereco.setRua(tfRua.getText().trim());
+        endereco.setNumero(tfNumero.getText().trim());
+        endereco.setComplemento(tfComplemento.getText().trim());
+        endereco.setBairro(tfBairro.getText().trim());
+        endereco.setCidade(tfCidade.getText().trim());
+        endereco.setEstado((String) cbEstado.getSelectedItem());
+        endereco.setCep(tfCep.getText().trim());
+
+
+        Profissional profissional = new Profissional();
+        profissional.setNome(nome);
+        profissional.setEmail(email);
+        profissional.setCpf(cpf);
+        profissional.setTelefone(telefone);
+        profissional.setDataNascimento(dataNascimento);
+        profissional.setSexo(sexo);
+        profissional.setTipo(tipo);
+        profissional.setAtivo(true);
+        profissional.setEndereco(endereco);
+        profissional.setUsuario(Sessao.getUsuarioLogado().getLogin());
+        
+
+        JOptionPane.showMessageDialog(this, "Profissional salvo com sucesso!");
+        limparCampos();
+        carregarProfissionais();
+    }
+
     private JPanel criarTabelaProfissionaisComPesquisa() {
-        JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
-
-        String[] colunas = {"Nome", "Sexo", "CPF", "Data Nascimento", "Tipo", "Status", "Usuário"};
-        modeloTabela = new DefaultTableModel(colunas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
+        JPanel panel = new JPanel(new BorderLayout(5,5));
+        modeloTabela = new DefaultTableModel(new Object[]{"Nome", "CPF", "Sexo", "Tipo", "Email"},0);
         tabelaProfissionais = new JTable(modeloTabela);
-        tabelaProfissionais.setFillsViewportHeight(true);
+        tabelaProfissionais.setDefaultEditor(Object.class, null);
+        tabelaProfissionais.getTableHeader().setReorderingAllowed(false);
 
-        DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
-        centralizado.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < tabelaProfissionais.getColumnCount(); i++) {
-            tabelaProfissionais.getColumnModel().getColumn(i).setCellRenderer(centralizado);
-        }
+        // Centralizar colunas
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i=0; i<tabelaProfissionais.getColumnCount(); i++) tabelaProfissionais.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 
         sorter = new TableRowSorter<>(modeloTabela);
         tabelaProfissionais.setRowSorter(sorter);
 
-        JScrollPane scrollTabela = new JScrollPane(tabelaProfissionais);
-
-        JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel lblPesquisar = new JLabel("Pesquisar nome:");
-        panelPesquisa.add(lblPesquisar);
-        tfPesquisar = new JTextField(20);
-        panelPesquisa.add(tfPesquisar);
+        tfPesquisar = new JTextField();
         tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
             private void filtrar() {
-                String texto = tfPesquisar.getText().trim();
-                if (texto.isEmpty()) sorter.setRowFilter(null);
-                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0));
+                String texto = tfPesquisar.getText();
+                sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
             }
             public void insertUpdate(DocumentEvent e) { filtrar(); }
             public void removeUpdate(DocumentEvent e) { filtrar(); }
             public void changedUpdate(DocumentEvent e) { filtrar(); }
         });
 
-        panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
-        panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
-
-        panelTabelaWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                int totalWidth = panelTabelaWrapper.getWidth();
-                tabelaProfissionais.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.2));
-                tabelaProfissionais.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.1));
-                tabelaProfissionais.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProfissionais.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProfissionais.getColumnModel().getColumn(4).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProfissionais.getColumnModel().getColumn(5).setPreferredWidth((int)(totalWidth * 0.1));
-                tabelaProfissionais.getColumnModel().getColumn(6).setPreferredWidth((int)(totalWidth * 0.15));
-            }
-        });
-
-        return panelTabelaWrapper;
+        panel.add(new JLabel("Pesquisar:"), BorderLayout.NORTH);
+        panel.add(tfPesquisar, BorderLayout.NORTH);
+        panel.add(new JScrollPane(tabelaProfissionais), BorderLayout.CENTER);
+        return panel;
     }
 
-    private void limparCampos() {
-        tfNome.setText("");
-        tfCPF.setText("");
-        ftfDataNascimento.setText("");
-        tfEmail.setText("");
-        tfTelefone.setText("");
-        cbSexo.setSelectedIndex(0);
-        cbTipo.setSelectedIndex(0);
-        chbAtivo.setSelected(true);
-    }
-
-    private void salvarProfissional() {
-        String nome = tfNome.getText().trim();
-        String cpf = tfCPF.getText().trim();
-        String email = tfEmail.getText().trim();
-        String telefone = tfTelefone.getText().trim();
-        String sexo = (String) cbSexo.getSelectedItem();
-        String tipoStr = (String) cbTipo.getSelectedItem();
-        boolean ativo = chbAtivo.isSelected();
-        LocalDate dataNasc = null;
-        if (!ftfDataNascimento.getText().trim().isEmpty()) {
-            dataNasc = LocalDate.parse(ftfDataNascimento.getText().trim());
-        }
-
-        if (nome.isEmpty() || cpf.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Preencha os campos obrigatórios: Nome e CPF", "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        Profissional p = new Profissional();
-        p.setNome(nome);
-        p.setCpf(cpf);
-        p.setEmail(email);
-        p.setTelefone(telefone);
-        p.setSexo(sexo);
-        p.setTipo(Profissional.TipoProfissional.valueOf(tipoStr));
-        p.setDataNascimento(dataNasc);
-        p.setAtivo(ativo);
-
-        ProfissionalController pc = new ProfissionalController();
-        try {
-            if (pc.salvar(p)) {
-                JOptionPane.showMessageDialog(this, "Profissional salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-                limparCampos();
-                carregarProfissionais();
-            } else {
-                JOptionPane.showMessageDialog(this, "Erro ao salvar profissional", "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erro ao salvar profissional: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void carregarProfissionais() {
-        ProfissionalController pc = new ProfissionalController();
-        try {
-            List<Profissional> lista = pc.listarTodos();
-            modeloTabela.setRowCount(0);
-            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-            for (Profissional p : lista) {
-                String dataStr = p.getDataNascimento() != null ? p.getDataNascimento().format(fmt) : "";
-                modeloTabela.addRow(new Object[]{
-                        p.getNome(),
-                        p.getSexo(),
-                        p.getCpf(),
-                        dataStr,
-                        p.getTipo(),
-                        p.isAtivo() ? "Ativo" : "Inativo",
-                        p.getUsuario() != null ? p.getUsuario() : "?"
-                });
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erro ao carregar profissionais: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
+    private void carregarProfissionais() throws SQLException {
+        modeloTabela.setRowCount(0);
+        ProfissionalController controller = new ProfissionalController();
+        List<Profissional> lista = controller.listarTodos();
+		for (Profissional p : lista) {
+		    modeloTabela.addRow(new Object[]{p.getNome(), p.getCpf(), p.getSexo(), p.getTipo(), p.getEmail()});
+		}
     }
 }
