@@ -83,8 +83,6 @@ public class CadastroProfissionalPanel extends JPanel {
 	}
 
 	private JPanel criarPainelCadastro() {
-		
-		
 		JPanel panelWrapper = new JPanel();
 		panelWrapper.setLayout(new BoxLayout(panelWrapper, BoxLayout.Y_AXIS));
 		panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -99,7 +97,6 @@ public class CadastroProfissionalPanel extends JPanel {
 
 		int campoColumns = 10; // Campos grandes (nome, email, etc.)
 		int campoColumnsCurto = 9; // CPF e Data de Nascimento
-		int campoLabelTipo = 15; // Labels como "Tipo"
 		Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
 
 		// Nome
@@ -121,10 +118,18 @@ public class CadastroProfissionalPanel extends JPanel {
 		cbSexo = new JComboBox<>(new String[] { "Masculino", "Feminino" });
 		cbSexo.setCursor(handCursor);
 		gbc.gridx = 1;
-		gbc.gridwidth = 3;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelProfissional.add(cbSexo, gbc);
-		gbc.gridwidth = 1;
+		gbc.fill = GridBagConstraints.NONE;
+
+		// Tipo ao lado de Sexo
+		gbc.gridx = 2;
+		panelProfissional.add(new JLabel("Tipo:"), gbc);
+		cbTipo = new JComboBox<>(new String[] { "FONOAUDIOLOGA", "SECRETARIA" });
+		cbTipo.setCursor(handCursor);
+		gbc.gridx = 3;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		panelProfissional.add(cbTipo, gbc);
 		gbc.fill = GridBagConstraints.NONE;
 
 		// CPF
@@ -192,17 +197,9 @@ public class CadastroProfissionalPanel extends JPanel {
 				}
 			}
 
-			public void insertUpdate(DocumentEvent e) {
-				validarCPF();
-			}
-
-			public void removeUpdate(DocumentEvent e) {
-				validarCPF();
-			}
-
-			public void changedUpdate(DocumentEvent e) {
-				validarCPF();
-			}
+			public void insertUpdate(DocumentEvent e) { validarCPF(); }
+			public void removeUpdate(DocumentEvent e) { validarCPF(); }
+			public void changedUpdate(DocumentEvent e) { validarCPF(); }
 		});
 
 		tfDataNascimento.getDocument().addDocumentListener(new DocumentListener() {
@@ -226,17 +223,9 @@ public class CadastroProfissionalPanel extends JPanel {
 				}
 			}
 
-			public void insertUpdate(DocumentEvent e) {
-				validarData();
-			}
-
-			public void removeUpdate(DocumentEvent e) {
-				validarData();
-			}
-
-			public void changedUpdate(DocumentEvent e) {
-				validarData();
-			}
+			public void insertUpdate(DocumentEvent e) { validarData(); }
+			public void removeUpdate(DocumentEvent e) { validarData(); }
+			public void changedUpdate(DocumentEvent e) { validarData(); }
 		});
 
 		// Telefone
@@ -251,19 +240,6 @@ public class CadastroProfissionalPanel extends JPanel {
 		gbc.gridwidth = 3;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelProfissional.add(tfEmail, gbc);
-		gbc.gridwidth = 1;
-		gbc.fill = GridBagConstraints.NONE;
-
-		// Tipo
-		gbc.gridx = 0;
-		gbc.gridy = 7;
-		panelProfissional.add(new JLabel("Tipo:"), gbc);
-		cbTipo = new JComboBox<>(new String[] { "FONOAUDIOLOGA", "SECRETARIA" });
-		cbTipo.setCursor(handCursor);
-		gbc.gridx = 1;
-		gbc.gridwidth = 3;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		panelProfissional.add(cbTipo, gbc);
 		gbc.gridwidth = 1;
 		gbc.fill = GridBagConstraints.NONE;
 
@@ -303,8 +279,7 @@ public class CadastroProfissionalPanel extends JPanel {
 		tfCep.getDocument().addDocumentListener(new DocumentListener() {
 			private void buscarEndereco() {
 				String cep = tfCep.getText().replaceAll("\\D", "");
-				if (cep.length() != 8)
-					return;
+				if (cep.length() != 8) return;
 
 				new SwingWorker<Endereco, Void>() {
 					@Override
@@ -327,24 +302,14 @@ public class CadastroProfissionalPanel extends JPanel {
 								tfCidade.setText("");
 								cbEstado.setSelectedIndex(0);
 							}
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
+						} catch (Exception ex) { ex.printStackTrace(); }
 					}
 				}.execute();
 			}
 
-			public void insertUpdate(DocumentEvent e) {
-				buscarEndereco();
-			}
-
-			public void removeUpdate(DocumentEvent e) {
-				buscarEndereco();
-			}
-
-			public void changedUpdate(DocumentEvent e) {
-				buscarEndereco();
-			}
+			public void insertUpdate(DocumentEvent e) { buscarEndereco(); }
+			public void removeUpdate(DocumentEvent e) { buscarEndereco(); }
+			public void changedUpdate(DocumentEvent e) { buscarEndereco(); }
 		});
 
 		// Número, Complemento, Bairro, Cidade, Estado
@@ -454,12 +419,9 @@ public class CadastroProfissionalPanel extends JPanel {
 		String sexo = (cbSexo.getSelectedItem().toString().equals("Masculino")) ? "M" : "F";
 		String tipo = cbTipo.getSelectedItem().toString();
 
-		if (nome.isEmpty())
-			throw new CampoObrigatorioException("Nome obrigatório");
-		if (!CPFUtils.isCPFValido(cpf))
-			throw new CampoObrigatorioException("CPF inválido");
-		if (dataStr.isEmpty())
-			throw new CampoObrigatorioException("Data obrigatória");
+		if (nome.isEmpty()) throw new CampoObrigatorioException("Nome obrigatório");
+		if (!CPFUtils.isCPFValido(cpf)) throw new CampoObrigatorioException("CPF inválido");
+		if (dataStr.isEmpty()) throw new CampoObrigatorioException("Data obrigatória");
 
 		LocalDate dataNascimento = LocalDate.parse(dataStr, formatter);
 
@@ -497,7 +459,7 @@ public class CadastroProfissionalPanel extends JPanel {
 
 	private JPanel criarTabelaProfissionaisComPesquisa() {
 		JPanel panel = new JPanel(new BorderLayout(5, 5));
-		modeloTabela = new DefaultTableModel(new Object[] { "Nome", "Telefone", "Email", "Tipo", }, 0);
+		modeloTabela = new DefaultTableModel(new Object[] { "Nome", "Telefone", "Email", "Tipo" }, 0);
 		tabelaProfissionais = new JTable(modeloTabela);
 		tabelaProfissionais.setDefaultEditor(Object.class, null);
 		tabelaProfissionais.getTableHeader().setReorderingAllowed(false);
@@ -518,20 +480,11 @@ public class CadastroProfissionalPanel extends JPanel {
 				sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
 			}
 
-			public void insertUpdate(DocumentEvent e) {
-				filtrar();
-			}
-
-			public void removeUpdate(DocumentEvent e) {
-				filtrar();
-			}
-
-			public void changedUpdate(DocumentEvent e) {
-				filtrar();
-			}
+			public void insertUpdate(DocumentEvent e) { filtrar(); }
+			public void removeUpdate(DocumentEvent e) { filtrar(); }
+			public void changedUpdate(DocumentEvent e) { filtrar(); }
 		});
 
-		// Painel para label + campo de pesquisa
 		JPanel painelPesquisa = new JPanel(new BorderLayout(5, 5));
 		JLabel lblPesquisar = new JLabel("Pesquisar profissional: ");
 		lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
@@ -550,7 +503,7 @@ public class CadastroProfissionalPanel extends JPanel {
 		ProfissionalController controller = new ProfissionalController();
 		List<Profissional> lista = controller.listarTodos();
 		for (Profissional p : lista) {
-			modeloTabela.addRow(new Object[] { p.getNome(), p.getTelefone(), p.getEmail(), p.getTipo(), });
+			modeloTabela.addRow(new Object[] { p.getNome(), p.getTelefone(), p.getEmail(), p.getTipo() });
 		}
 	}
 }
