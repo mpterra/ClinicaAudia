@@ -277,10 +277,6 @@ CREATE TABLE venda (
         ON UPDATE CASCADE
 );
 
-
--- ========================================
--- VENDA_PRODUTO
--- ========================================
 CREATE TABLE venda_produto (
     venda_id INT NOT NULL,
     produto_id INT NOT NULL,
