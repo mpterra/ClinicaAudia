@@ -108,6 +108,26 @@ CREATE TABLE profissional (
     ADD CONSTRAINT fk_usuario_profissional FOREIGN KEY (profissional_id) REFERENCES profissional(id);
 
 -- ========================================
+-- ESCALA FIXA DE PROFISSIONAIS (recorrente por dia da semana)
+-- ========================================
+CREATE TABLE escala_profissional (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    profissional_id INT NOT NULL,
+    dia_semana TINYINT NOT NULL,           -- 1=segunda ... 7=domingo
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
+    disponivel TINYINT DEFAULT 1,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    usuario VARCHAR(50),
+
+    CONSTRAINT fk_escala_profissional FOREIGN KEY (profissional_id)
+        REFERENCES profissional(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- ========================================
 -- TABELA ATENDIMENTO
 -- ========================================
 CREATE TABLE atendimento (
@@ -130,6 +150,23 @@ CREATE TABLE atendimento (
     CONSTRAINT fk_at_profissional
         FOREIGN KEY (profissional_id)
         REFERENCES profissional(id)
+);
+
+-- ========================================
+-- EVOLUCAO DO PACIENTE
+-- ========================================
+CREATE TABLE registro_por_atendimento (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    atendimento_id INT NOT NULL,
+    notas TEXT,
+    arquivo VARCHAR(500),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario VARCHAR(50),
+
+    CONSTRAINT fk_evolucao_atendimento FOREIGN KEY (atendimento_id)
+        REFERENCES atendimento(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 -- ========================================
@@ -315,39 +352,6 @@ CREATE TABLE pagamento_venda (
         ON UPDATE CASCADE
 );
 
--- ========================================
--- EVOLUCAO DO PACIENTE
--- ========================================
-CREATE TABLE evolucao_atendimento (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    atendimento_id INT NOT NULL,
-    notas TEXT,
-    arquivo VARCHAR(500),
-    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    usuario VARCHAR(50),
-
-    CONSTRAINT fk_evolucao_atendimento FOREIGN KEY (atendimento_id)
-        REFERENCES atendimento(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
--- ========================================
--- AGENDA DE PROFISSIONAIS
--- ========================================
-CREATE TABLE agenda_profissional (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    profissional_id INT NOT NULL,
-    data_hora_inicio DATETIME NOT NULL,
-    data_hora_fim DATETIME NOT NULL,
-    disponivel TINYINT DEFAULT 1,
-    usuario VARCHAR(50),
-
-    CONSTRAINT fk_agenda_profissional FOREIGN KEY (profissional_id)
-        REFERENCES profissional(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
 
 -- =====================================================================
 -- =======================  MÓDULO DE CAIXA  ============================
