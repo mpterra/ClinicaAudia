@@ -104,8 +104,8 @@ public class TelaPrincipal extends JFrame {
 
 		// MENU CADASTRO
 		JMenu menuCadastro = createMenu("Cadastro");
-		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {		}));
-		menuCadastro.add(createMenuItem("Produtos", e -> {		}));
+		menuCadastro.add(createMenuItem("Tipos de Produto", e -> { abrirCadastroTipoProduto();}));
+		menuCadastro.add(createMenuItem("Produtos", e -> {abrirCadastroProduto();}));
 		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Profissionais", e -> {try {
 			abrirCadastroProfissional();
@@ -180,6 +180,20 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroProfissional() throws SQLException {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroProfissionalPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroTipoProduto() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroTipoProdutoPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroProduto() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroProdutoPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
