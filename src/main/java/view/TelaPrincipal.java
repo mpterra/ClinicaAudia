@@ -113,6 +113,8 @@ public class TelaPrincipal extends JFrame {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}}));
+		menuCadastro.add(createMenuItem("Agenda por Profissional", e -> {		}));
+		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 		
 		//MONTAGEM DO RESTANTE DO MENU
