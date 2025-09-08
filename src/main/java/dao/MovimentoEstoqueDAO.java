@@ -1,183 +1,115 @@
 package dao;
 
 import model.MovimentoEstoque;
-import model.Produto;
 import util.Database;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MovimentoEstoqueDAO {
 
-	// Inserir novo movimento
-	public void insert(MovimentoEstoque movimento) throws SQLException {
-		String sql = "INSERT INTO movimento_estoque "
-				+ "(produto_id, quantidade, tipo, observacoes, data_hora, usuario) " + "VALUES (?, ?, ?, ?, ?, ?)";
-		try (Connection conn = Database.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-			stmt.setInt(1, movimento.getProduto().getId());
-			stmt.setInt(2, movimento.getQuantidade());
-			stmt.setString(3, movimento.getTipo().name());
-			stmt.setString(4, movimento.getObservacoes());
-			stmt.setTimestamp(5, Timestamp.valueOf(movimento.getDataHora()));
-			stmt.setString(6, movimento.getUsuario());
-			stmt.executeUpdate();
+    // ============================
+    // CREATE
+    // ============================
+    public boolean salvar(MovimentoEstoque mov, String usuarioLogado) throws SQLException {
+        String sql = "INSERT INTO movimento_estoque (produto_id, quantidade, tipo, observacoes, usuario) VALUES (?, ?, ?, ?, ?)";
 
-			try (ResultSet keys = stmt.getGeneratedKeys()) {
-				if (keys.next()) {
-					movimento.setId(keys.getInt(1));
-				}
-			}
-		}
-	}
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-	// Atualizar movimento
-	public void update(MovimentoEstoque movimento) throws SQLException {
-		String sql = "UPDATE movimento_estoque SET produto_id=?, quantidade=?, tipo=?, observacoes=?, data_hora=?, usuario=? WHERE id=?";
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setInt(1, movimento.getProduto().getId());
-			stmt.setInt(2, movimento.getQuantidade());
-			stmt.setString(3, movimento.getTipo().name());
-			stmt.setString(4, movimento.getObservacoes());
-			stmt.setTimestamp(5, Timestamp.valueOf(movimento.getDataHora()));
-			stmt.setString(6, movimento.getUsuario());
-			stmt.setInt(7, movimento.getId());
-			stmt.executeUpdate();
-		}
-	}
+            stmt.setInt(1, mov.getProdutoId());
+            stmt.setInt(2, mov.getQuantidade());
+            stmt.setString(3, mov.getTipo().name());
+            stmt.setString(4, mov.getObservacoes());
+            stmt.setString(5, usuarioLogado);
 
-	// Deletar movimento
-	public void delete(int id) throws SQLException {
-		String sql = "DELETE FROM movimento_estoque WHERE id=?";
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setInt(1, id);
-			stmt.executeUpdate();
-		}
-	}
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Falha ao inserir MovimentoEstoque, nenhuma linha afetada.");
+            }
 
-	// Buscar por ID
-	public MovimentoEstoque findById(int id) throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque WHERE id=?";
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setInt(1, id);
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) {
-					return mapResultSet(rs);
-				}
-			}
-		}
-		return null;
-	}
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    mov.setId(rs.getInt(1));
+                }
+            }
+        }
 
-	// Buscar todos os movimentos
-	public List<MovimentoEstoque> findAll() throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque ORDER BY data_hora";
-		List<MovimentoEstoque> lista = new ArrayList<>();
-		try (Connection conn = Database.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql);
-				ResultSet rs = stmt.executeQuery()) {
-			while (rs.next()) {
-				lista.add(mapResultSet(rs));
-			}
-		}
-		return lista;
-	}
+        return true;
+    }
 
-	// Buscar por produto
-	public List<MovimentoEstoque> findByProduto(Produto produto) throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque WHERE produto_id=? ORDER BY data_hora";
-		List<MovimentoEstoque> lista = new ArrayList<>();
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setInt(1, produto.getId());
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					lista.add(mapResultSet(rs));
-				}
-			}
-		}
-		return lista;
-	}
+    // ============================
+    // READ
+    // ============================
+    public MovimentoEstoque buscarPorId(int id) throws SQLException {
+        String sql = "SELECT * FROM movimento_estoque WHERE id = ?";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-	// Buscar movimentos por faixa de datas
-	public List<MovimentoEstoque> findByDataRange(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque WHERE data_hora BETWEEN ? AND ? ORDER BY data_hora";
-		List<MovimentoEstoque> lista = new ArrayList<>();
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setTimestamp(1, Timestamp.valueOf(inicio));
-			stmt.setTimestamp(2, Timestamp.valueOf(fim));
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					lista.add(mapResultSet(rs));
-				}
-			}
-		}
-		return lista;
-	}
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        }
+        return null;
+    }
 
-	// Buscar movimentos por tipo (ENTRADA, SAIDA, AJUSTE)
-	public List<MovimentoEstoque> findByTipo(MovimentoEstoque.TipoMovimento tipo) throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque WHERE tipo=? ORDER BY data_hora";
-		List<MovimentoEstoque> lista = new ArrayList<>();
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, tipo.name());
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					lista.add(mapResultSet(rs));
-				}
-			}
-		}
-		return lista;
-	}
+    public List<MovimentoEstoque> listarTodos() throws SQLException {
+        List<MovimentoEstoque> lista = new ArrayList<>();
+        String sql = "SELECT * FROM movimento_estoque ORDER BY data_hora DESC";
+        try (Connection conn = Database.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
-	// Buscar movimentos por usuário
-	public List<MovimentoEstoque> findByUsuario(String usuario) throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque WHERE usuario=? ORDER BY data_hora";
-		List<MovimentoEstoque> lista = new ArrayList<>();
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setString(1, usuario);
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					lista.add(mapResultSet(rs));
-				}
-			}
-		}
-		return lista;
-	}
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
 
-	// Buscar por produto + faixa de datas
-	public List<MovimentoEstoque> findByProdutoAndDataRange(Produto produto, LocalDateTime inicio, LocalDateTime fim)
-			throws SQLException {
-		String sql = "SELECT * FROM movimento_estoque WHERE produto_id=? AND data_hora BETWEEN ? AND ? ORDER BY data_hora";
-		List<MovimentoEstoque> lista = new ArrayList<>();
-		try (Connection conn = Database.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-			stmt.setInt(1, produto.getId());
-			stmt.setTimestamp(2, Timestamp.valueOf(inicio));
-			stmt.setTimestamp(3, Timestamp.valueOf(fim));
-			try (ResultSet rs = stmt.executeQuery()) {
-				while (rs.next()) {
-					lista.add(mapResultSet(rs));
-				}
-			}
-		}
-		return lista;
-	}
+    public List<MovimentoEstoque> listarPorProduto(int produtoId) throws SQLException {
+        List<MovimentoEstoque> lista = new ArrayList<>();
+        String sql = "SELECT * FROM movimento_estoque WHERE produto_id = ? ORDER BY data_hora DESC";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-	// Mapear ResultSet para objeto
-	private MovimentoEstoque mapResultSet(ResultSet rs) throws SQLException {
-		MovimentoEstoque m = new MovimentoEstoque();
-		m.setId(rs.getInt("id"));
-		Produto p = new Produto();
-		p.setId(rs.getInt("produto_id"));
-		m.setProduto(p);
-		m.setQuantidade(rs.getInt("quantidade"));
-		m.setTipo(rs.getString("tipo"));
-		m.setObservacoes(rs.getString("observacoes"));
-		Timestamp ts = rs.getTimestamp("data_hora");
-		if (ts != null)
-			m.setDataHora(ts.toLocalDateTime());
-		m.setUsuario(rs.getString("usuario"));
-		return m;
-	}
+            stmt.setInt(1, produtoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        }
+        return lista;
+    }
+
+    // ============================
+    // DELETE
+    // ============================
+    public boolean deletar(int id) throws SQLException {
+        String sql = "DELETE FROM movimento_estoque WHERE id = ?";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    // ============================
+    // MAP ROW
+    // ============================
+    private MovimentoEstoque mapRow(ResultSet rs) throws SQLException {
+        MovimentoEstoque mov = new MovimentoEstoque();
+        mov.setId(rs.getInt("id"));
+        mov.setProdutoId(rs.getInt("produto_id"));
+        mov.setQuantidade(rs.getInt("quantidade"));
+        mov.setTipo(MovimentoEstoque.Tipo.valueOf(rs.getString("tipo")));
+        mov.setObservacoes(rs.getString("observacoes"));
+        mov.setDataHora(rs.getTimestamp("data_hora"));
+        mov.setUsuario(rs.getString("usuario"));
+        return mov;
+    }
 }

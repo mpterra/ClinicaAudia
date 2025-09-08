@@ -3,17 +3,17 @@ package model;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
-public class Venda {
+public class Orcamento {
 
     private int id;
-    private Integer atendimentoId;  // pode ser null
-    private Integer orcamentoId;    // pode ser null
+    private Integer pacienteId;       // opcional
+    private Integer profissionalId;   // opcional
     private Timestamp dataHora;
     private BigDecimal valorTotal;
+    private String observacoes;
     private String usuario;
 
-    // Construtor vazio
-    public Venda() {
+    public Orcamento() {
         this.valorTotal = BigDecimal.ZERO;
     }
 
@@ -21,17 +21,20 @@ public class Venda {
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
-    public Integer getAtendimentoId() { return atendimentoId; }
-    public void setAtendimentoId(Integer atendimentoId) { this.atendimentoId = atendimentoId; }
+    public Integer getPacienteId() { return pacienteId; }
+    public void setPacienteId(Integer pacienteId) { this.pacienteId = pacienteId; }
 
-    public Integer getOrcamentoId() { return orcamentoId; }
-    public void setOrcamentoId(Integer orcamentoId) { this.orcamentoId = orcamentoId; }
+    public Integer getProfissionalId() { return profissionalId; }
+    public void setProfissionalId(Integer profissionalId) { this.profissionalId = profissionalId; }
 
     public Timestamp getDataHora() { return dataHora; }
     public void setDataHora(Timestamp dataHora) { this.dataHora = dataHora; }
 
     public BigDecimal getValorTotal() { return valorTotal; }
     public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
+
+    public String getObservacoes() { return observacoes; }
+    public void setObservacoes(String observacoes) { this.observacoes = observacoes; }
 
     public String getUsuario() { return usuario; }
     public void setUsuario(String usuario) { this.usuario = usuario; }

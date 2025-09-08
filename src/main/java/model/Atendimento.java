@@ -1,112 +1,150 @@
 package model;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 public class Atendimento {
 
-    private int id;
-    private Paciente paciente;
-    private Profissional profissional;
-    private LocalDateTime dataHora;
-    private int duracaoMin;
-    private TipoAtendimento tipo;
-    private Situacao situacao;
-    private String notas;
-    private BigDecimal valor;
-    private LocalDateTime criadoEm;
-    private LocalDateTime atualizadoEm;
-    private String usuario;
+	public enum Tipo {
+		AVALIACAO, RETORNO, REGULAGEM, EXAME, REUNIAO, PESSOAL
+	}
 
-    // Enums internos
-    public enum TipoAtendimento {
-        AVALIACAO, RETORNO, REGULAGEM, EXAME, REUNIAO, PESSOAL
-    }
+	public enum Situacao {
+		AGENDADO, REALIZADO, FALTOU, CANCELADO
+	}
 
-    public enum Situacao {
-        AGENDADO, REALIZADO, FALTOU, CANCELADO
-    }
+	private int id;
+	private int pacienteId;
+	private String pacienteNome; // Adicionado para facilitar exibição
+	private int profissionalId;
+	private String profissionalNome; // Adicionado para facilitar exibição
+	private Timestamp dataHora;
+	private int duracaoMin;
+	private Tipo tipo;
+	private Situacao situacao;
+	private String notas;
+	private BigDecimal valor;
+	private Timestamp criadoEm;
+	private Timestamp atualizadoEm;
+	private String usuario;
 
-    // -------------------------
-    // Construtores
-    // -------------------------
+	// Construtor vazio
+	public Atendimento() {
+		this.duracaoMin = 30;
+		this.situacao = Situacao.AGENDADO;
+		this.valor = BigDecimal.ZERO;
+	}
 
-    // Construtor vazio
-    public Atendimento() {}
+	// Getters e Setters
+	public int getId() {
+		return id;
+	}
 
-    // Construtor completo (sem datas)
-    public Atendimento(int id, Paciente paciente, Profissional profissional, LocalDateTime dataHora,
-                       int duracaoMin, TipoAtendimento tipo, Situacao situacao, String notas,
-                       BigDecimal valor, String usuario) {
-        this.id = id;
-        this.paciente = paciente;
-        this.profissional = profissional;
-        this.dataHora = dataHora;
-        this.duracaoMin = duracaoMin;
-        this.tipo = tipo;
-        this.situacao = situacao;
-        this.notas = notas;
-        this.valor = valor;
-        this.usuario = usuario;
-    }
+	public void setId(int id) {
+		this.id = id;
+	}
 
-    // -------------------------
-    // Getters e Setters
-    // -------------------------
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+	public int getPacienteId() {
+		return pacienteId;
+	}
 
-    public Paciente getPaciente() { return paciente; }
-    public void setPaciente(Paciente paciente) { this.paciente = paciente; }
+	public void setPacienteId(int pacienteId) {
+		this.pacienteId = pacienteId;
+	}
 
-    public Profissional getProfissional() { return profissional; }
-    public void setProfissional(Profissional profissional) { this.profissional = profissional; }
+	public String getPacienteNome() {
+		return pacienteNome;
+	}
 
-    public LocalDateTime getDataHora() { return dataHora; }
-    public void setDataHora(LocalDateTime dataHora) { this.dataHora = dataHora; }
+	public void setPacienteNome(String pacienteNome) {
+		this.pacienteNome = pacienteNome;
+	}
 
-    public int getDuracaoMin() { return duracaoMin; }
-    public void setDuracaoMin(int duracaoMin) { this.duracaoMin = duracaoMin; }
+	public int getProfissionalId() {
+		return profissionalId;
+	}
 
-    public TipoAtendimento getTipo() { return tipo; }
-    public void setTipo(TipoAtendimento tipo) { this.tipo = tipo; }
+	public void setProfissionalId(int profissionalId) {
+		this.profissionalId = profissionalId;
+	}
+	
+	public String getProfissionalNome() {
+		return profissionalNome;
+	}
+	
+	public void setProfissionalNome(String profissionalNome) {
+		this.profissionalNome = profissionalNome;
+	}
 
-    public Situacao getSituacao() { return situacao; }
-    public void setSituacao(Situacao situacao) { this.situacao = situacao; }
+	public Timestamp getDataHora() {
+		return dataHora;
+	}
 
-    public String getNotas() { return notas; }
-    public void setNotas(String notas) { this.notas = notas; }
+	public void setDataHora(Timestamp dataHora) {
+		this.dataHora = dataHora;
+	}
 
-    public BigDecimal getValor() { return valor; }
-    public void setValor(BigDecimal valor) { this.valor = valor; }
+	public int getDuracaoMin() {
+		return duracaoMin;
+	}
 
-    public LocalDateTime getCriadoEm() { return criadoEm; }
-    public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
+	public void setDuracaoMin(int duracaoMin) {
+		this.duracaoMin = duracaoMin;
+	}
 
-    public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
-    public void setAtualizadoEm(LocalDateTime atualizadoEm) { this.atualizadoEm = atualizadoEm; }
+	public Tipo getTipo() {
+		return tipo;
+	}
 
-    public String getUsuario() { return usuario; }
-    public void setUsuario(String usuario) { this.usuario = usuario; }
+	public void setTipo(Tipo tipo) {
+		this.tipo = tipo;
+	}
 
-    // -------------------------
-    // toString
-    // -------------------------
-    @Override
-    public String toString() {
-        return "Atendimento{" +
-                "id=" + id +
-                ", paciente=" + (paciente != null ? paciente.getId() : null) +
-                ", profissional=" + (profissional != null ? profissional.getId() : null) +
-                ", dataHora=" + dataHora +
-                ", duracaoMin=" + duracaoMin +
-                ", tipo=" + tipo +
-                ", situacao=" + situacao +
-                ", notas='" + notas + '\'' +
-                ", valor=" + valor +
-                ", criadoEm=" + criadoEm +
-                ", atualizadoEm=" + atualizadoEm +
-                ", usuario='" + usuario + '\'' +
-                '}';
-    }
+	public Situacao getSituacao() {
+		return situacao;
+	}
+
+	public void setSituacao(Situacao situacao) {
+		this.situacao = situacao;
+	}
+
+	public String getNotas() {
+		return notas;
+	}
+
+	public void setNotas(String notas) {
+		this.notas = notas;
+	}
+
+	public BigDecimal getValor() {
+		return valor;
+	}
+
+	public void setValor(BigDecimal valor) {
+		this.valor = valor;
+	}
+
+	public Timestamp getCriadoEm() {
+		return criadoEm;
+	}
+
+	public void setCriadoEm(Timestamp criadoEm) {
+		this.criadoEm = criadoEm;
+	}
+
+	public Timestamp getAtualizadoEm() {
+		return atualizadoEm;
+	}
+
+	public void setAtualizadoEm(Timestamp atualizadoEm) {
+		this.atualizadoEm = atualizadoEm;
+	}
+
+	public String getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(String usuario) {
+		this.usuario = usuario;
+	}
 }

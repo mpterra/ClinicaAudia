@@ -72,26 +72,22 @@ public class AgendaPanel extends JPanel {
 
         JPanel panelTopo = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
-        // Setas de navegação mês a mês
         JButton btnPrevMes = new JButton("<");
         JButton btnNextMes = new JButton(">");
         btnPrevMes.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnNextMes.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // JComboBox de mês e ano
         cbMes = new JComboBox<>(meses);
         cbAno = new JComboBox<>();
         int anoAtual = LocalDate.now().getYear();
-        for(int i = anoAtual - 5; i <= 2030; i++) cbAno.addItem(i); // mantido como estava
+        for(int i = anoAtual - 5; i <= 2030; i++) cbAno.addItem(i);
 
         cbMes.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
         cbAno.setSelectedItem(anoAtual);
 
-        // lblMesAno deve ser inicializado antes de adicionar ao painel
         lblMesAno = new JLabel("", SwingConstants.CENTER);
         lblMesAno.setFont(new Font("SansSerif", Font.BOLD, 16));
 
-        // Ações das setas
         btnPrevMes.addActionListener(e -> {
             dataSelecionada = dataSelecionada.minusMonths(1);
             cbMes.setSelectedIndex(dataSelecionada.getMonthValue() - 1);
@@ -106,7 +102,6 @@ public class AgendaPanel extends JPanel {
             atualizarCalendario();
         });
 
-        // Troca via JComboBox
         cbMes.addActionListener(e -> atualizarCalendario());
         cbAno.addActionListener(e -> atualizarCalendario());
 
@@ -145,7 +140,6 @@ public class AgendaPanel extends JPanel {
         JScrollPane scrollTabela = new JScrollPane(tabelaAtendimentos);
         panelTabela.add(scrollTabela, BorderLayout.CENTER);
 
-        // Ajuste relativo das colunas
         tabelaAtendimentos.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -160,7 +154,6 @@ public class AgendaPanel extends JPanel {
         int larguraTotal = tabelaAtendimentos.getWidth();
         if (larguraTotal == 0) return;
 
-        // Horário 20%, Paciente 40%, Descrição 40%
         tabelaAtendimentos.getColumnModel().getColumn(0).setPreferredWidth((int)(larguraTotal * 0.2));
         tabelaAtendimentos.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.4));
         tabelaAtendimentos.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.4));
@@ -175,7 +168,6 @@ public class AgendaPanel extends JPanel {
 
         lblMesAno.setText(meses[mes - 1] + " " + ano);
 
-        // Cabeçalho dias da semana
         String[] diasSemana = {"Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"};
         for (String d : diasSemana) {
             JLabel lblDia = new JLabel(d, SwingConstants.CENTER);
@@ -184,7 +176,7 @@ public class AgendaPanel extends JPanel {
         }
 
         LocalDate primeiraData = anoMes.atDay(1);
-        int diaSemanaInicio = primeiraData.getDayOfWeek().getValue() % 7; // domingo = 0
+        int diaSemanaInicio = primeiraData.getDayOfWeek().getValue() % 7;
 
         for (int i = 0; i < diaSemanaInicio; i++) painelDias.add(new JLabel(""));
 
@@ -194,31 +186,22 @@ public class AgendaPanel extends JPanel {
             JButton btnDia = new JButton(String.valueOf(dia));
             btnDia.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-         // Domingo sempre desabilitado
             if (dataAtual.getDayOfWeek().getValue() == 7) {
                 btnDia.setEnabled(false);
-                btnDia.setBackground(Color.decode("#E0E0E0")); // cinza claro
-                btnDia.setForeground(Color.decode("#666666")); // cinza escuro
-            } 
-            // Hoje = verde
-            else if (dataAtual.equals(LocalDate.now())) {
-                btnDia.setBackground(Color.decode("#D5F5E3")); // verde claro
+                btnDia.setBackground(Color.decode("#E0E0E0"));
+                btnDia.setForeground(Color.decode("#666666"));
+            } else if (dataAtual.equals(LocalDate.now())) {
+                btnDia.setBackground(Color.decode("#D5F5E3"));
                 btnDia.setForeground(Color.BLACK);
-            } 
-            // Dias passados = branco
-            else if (dataAtual.isBefore(LocalDate.now())) {
+            } else if (dataAtual.isBefore(LocalDate.now())) {
                 btnDia.setBackground(Color.WHITE);
                 btnDia.setForeground(Color.BLACK);
-            } 
-            // Dias futuros = azul claro
-            else {
-                btnDia.setBackground(Color.decode("#AED6F1")); // azul claro
+            } else {
+                btnDia.setBackground(Color.decode("#AED6F1"));
                 btnDia.setForeground(Color.BLACK);
             }
 
-            // Opcional: borda sutil para todos os dias habilitados
             btnDia.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-
             btnDia.addActionListener(e -> {
                 dataSelecionada = dataAtual;
                 carregarAtendimentosDoDia();
@@ -243,13 +226,13 @@ public class AgendaPanel extends JPanel {
 
             for (Atendimento a : atendimentos) {
                 modeloTabela.addRow(new Object[]{
-                        a.getDataHora().toLocalTime().toString(),
-                        a.getPaciente().getNome(),
+                        a.getDataHora().toLocalDateTime().toString(),
+                        a.getPacienteNome(),
                         a.getNotas()
                 });
             }
 
-            ajustarLarguraColunas(); // garante que colunas se ajustem ao conteúdo inicial
+            ajustarLarguraColunas();
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);

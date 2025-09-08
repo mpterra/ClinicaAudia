@@ -137,31 +137,29 @@ public class TelaLogin {
 		JButton btnEntrar = new JButton("Entrar");
 		btnEntrar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		btnEntrar.addActionListener(new ActionListener() {
-		    public void actionPerformed(ActionEvent e) {
-		        String login = textLogin.getText();
-		        String senha = new String(passwordField.getPassword());
+			public void actionPerformed(ActionEvent e) {
+				String login = textLogin.getText();
+				String senha = new String(passwordField.getPassword());
 
-		        UsuarioController uc = new UsuarioController();
-		        try {
-		            Usuario usuario = uc.login(login, senha);
-		            if (usuario != null) {
-		                Sessao.setUsuario(usuario);  // <-- guarda na sessão
-		                frame.dispose();
-		                new TelaPrincipal().setVisible(true);
-		            } else {
-		                lblUsuarioIncorreto.setVisible(true);
-		            }
-		        } catch (SQLException e1) {
-		            e1.printStackTrace();
-		        }
-		    }
+				UsuarioController uc = new UsuarioController();
+				try {
+					Usuario usuario = uc.login(login, senha);
+					if (usuario != null) {
+						Sessao.setUsuario(usuario); // <-- guarda na sessão
+						frame.dispose();
+						new TelaPrincipal().setVisible(true);
+					} else {
+						lblUsuarioIncorreto.setVisible(true);
+					}
+				} catch (SQLException e1) {
+					e1.printStackTrace();
+				}
+			}
 		});
-
 
 		btnEntrar.setBounds(149, 329, 89, 23);
 		frame.getContentPane().add(btnEntrar);
-		
-		
+
 		// Carrega o ícone da pasta resources/images
 		URL iconURL = getClass().getResource("/images/icon.png");
 		if (iconURL != null) {

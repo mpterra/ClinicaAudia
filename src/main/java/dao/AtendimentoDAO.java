@@ -1,198 +1,176 @@
 package dao;
 
 import model.Atendimento;
-import model.Paciente;
-import model.Profissional;
 import util.Database;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class AtendimentoDAO {
 
-    // -------------------------
-    // CRUD básico
-    // -------------------------
-
-    public void inserir(Atendimento atendimento) throws SQLException {
+    // ============================
+    // CREATE
+    // ============================
+    public boolean salvar(Atendimento at, String usuarioLogado) throws SQLException {
         String sql = "INSERT INTO atendimento (paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, usuario) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setInt(1, atendimento.getPaciente().getId());
-            ps.setInt(2, atendimento.getProfissional().getId());
-            ps.setTimestamp(3, Timestamp.valueOf(atendimento.getDataHora()));
-            ps.setInt(4, atendimento.getDuracaoMin());
-            ps.setString(5, atendimento.getTipo().name());
-            ps.setString(6, atendimento.getSituacao().name());
-            ps.setString(7, atendimento.getNotas());
-            ps.setBigDecimal(8, atendimento.getValor());
-            ps.setString(9, atendimento.getUsuario());
+            stmt.setInt(1, at.getPacienteId());
+            stmt.setInt(2, at.getProfissionalId());
+            stmt.setTimestamp(3, at.getDataHora());
+            stmt.setInt(4, at.getDuracaoMin());
+            stmt.setString(5, at.getTipo().name());
+            stmt.setString(6, at.getSituacao().name());
+            stmt.setString(7, at.getNotas());
+            stmt.setBigDecimal(8, at.getValor());
+            stmt.setString(9, usuarioLogado);
 
-            ps.executeUpdate();
+            int affectedRows = stmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Falha ao inserir Atendimento, nenhuma linha afetada.");
+            }
 
-            try (ResultSet rs = ps.getGeneratedKeys()) {
+            try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) {
-                    atendimento.setId(rs.getInt(1));
+                    at.setId(rs.getInt(1));
                 }
             }
         }
+
+        return true;
     }
 
-    public void atualizar(Atendimento atendimento) throws SQLException {
-        String sql = "UPDATE atendimento SET paciente_id=?, profissional_id=?, data_hora=?, duracao_min=?, tipo=?, situacao=?, notas=?, valor=?, usuario=? " +
-                     "WHERE id=?";
-
-        try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, atendimento.getPaciente().getId());
-            ps.setInt(2, atendimento.getProfissional().getId());
-            ps.setTimestamp(3, Timestamp.valueOf(atendimento.getDataHora()));
-            ps.setInt(4, atendimento.getDuracaoMin());
-            ps.setString(5, atendimento.getTipo().name());
-            ps.setString(6, atendimento.getSituacao().name());
-            ps.setString(7, atendimento.getNotas());
-            ps.setBigDecimal(8, atendimento.getValor());
-            ps.setString(9, atendimento.getUsuario());
-            ps.setInt(10, atendimento.getId());
-
-            ps.executeUpdate();
-        }
-    }
-
-    public void deletar(int id) throws SQLException {
-        String sql = "DELETE FROM atendimento WHERE id=?";
-        try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ps.executeUpdate();
-        }
-    }
-
+    // ============================
+    // READ
+    // ============================
     public Atendimento buscarPorId(int id) throws SQLException {
-        String sql = "SELECT * FROM atendimento WHERE id=?";
-        try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        String sql = "SELECT a.*, p.nome AS pacienteNome, pr.nome AS profissionalNome " +
+                     "FROM atendimento a " +
+                     "JOIN paciente p ON a.paciente_id = p.id " +
+                     "JOIN profissional pr ON a.profissional_id = pr.id " +
+                     "WHERE a.id = ?";
 
-            ps.setInt(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return mapearAtendimento(rs);
-                }
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
             }
         }
         return null;
     }
 
-    // -------------------------
-    // Consultas úteis para usuário
-    // -------------------------
-
-    public List<Atendimento> listarPorPaciente(int pacienteId) throws SQLException {
-        String sql = "SELECT * FROM atendimento WHERE paciente_id=?";
+    public List<Atendimento> listarTodos() throws SQLException {
         List<Atendimento> lista = new ArrayList<>();
+        String sql = "SELECT a.*, p.nome AS pacienteNome, pr.nome AS profissionalNome " +
+                     "FROM atendimento a " +
+                     "JOIN paciente p ON a.paciente_id = p.id " +
+                     "JOIN profissional pr ON a.profissional_id = pr.id " +
+                     "ORDER BY a.data_hora";
 
         try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
-            ps.setInt(1, pacienteId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapearAtendimento(rs));
-                }
+            while (rs.next()) {
+                lista.add(mapRow(rs));
             }
         }
         return lista;
     }
 
-    public List<Atendimento> listarPorProfissional(int profissionalId) throws SQLException {
-        String sql = "SELECT * FROM atendimento WHERE profissional_id=?";
-        List<Atendimento> lista = new ArrayList<>();
-
-        try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, profissionalId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapearAtendimento(rs));
-                }
-            }
-        }
-        return lista;
-    }
-
+    // ============================
+    // LISTAR POR PERÍODO
+    // ============================
     public List<Atendimento> listarPorPeriodo(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
-        String sql = "SELECT * FROM atendimento WHERE data_hora BETWEEN ? AND ?";
         List<Atendimento> lista = new ArrayList<>();
+        String sql = "SELECT a.*, p.nome AS pacienteNome, pr.nome AS profissionalNome " +
+                     "FROM atendimento a " +
+                     "JOIN paciente p ON a.paciente_id = p.id " +
+                     "JOIN profissional pr ON a.profissional_id = pr.id " +
+                     "WHERE a.data_hora BETWEEN ? AND ? " +
+                     "ORDER BY a.data_hora";
 
         try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            ps.setTimestamp(1, Timestamp.valueOf(inicio));
-            ps.setTimestamp(2, Timestamp.valueOf(fim));
+            stmt.setTimestamp(1, Timestamp.valueOf(inicio));
+            stmt.setTimestamp(2, Timestamp.valueOf(fim));
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapearAtendimento(rs));
+                    lista.add(mapRow(rs));
                 }
             }
         }
         return lista;
     }
 
-    public List<Atendimento> listarPorSituacao(Atendimento.Situacao situacao) throws SQLException {
-        String sql = "SELECT * FROM atendimento WHERE situacao=?";
-        List<Atendimento> lista = new ArrayList<>();
+    // ============================
+    // UPDATE
+    // ============================
+    public boolean atualizar(Atendimento at, String usuarioLogado) throws SQLException {
+        String sql = "UPDATE atendimento SET paciente_id = ?, profissional_id = ?, data_hora = ?, duracao_min = ?, tipo = ?, situacao = ?, notas = ?, valor = ?, usuario = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?";
 
         try (Connection conn = Database.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            ps.setString(1, situacao.name());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapearAtendimento(rs));
-                }
-            }
+            stmt.setInt(1, at.getPacienteId());
+            stmt.setInt(2, at.getProfissionalId());
+            stmt.setTimestamp(3, at.getDataHora());
+            stmt.setInt(4, at.getDuracaoMin());
+            stmt.setString(5, at.getTipo().name());
+            stmt.setString(6, at.getSituacao().name());
+            stmt.setString(7, at.getNotas());
+            stmt.setBigDecimal(8, at.getValor());
+            stmt.setString(9, usuarioLogado);
+            stmt.setInt(10, at.getId());
+
+            return stmt.executeUpdate() > 0;
         }
-        return lista;
     }
 
-    // -------------------------
-    // Mapeamento do ResultSet
-    // -------------------------
-    private Atendimento mapearAtendimento(ResultSet rs) throws SQLException {
-        Atendimento atendimento = new Atendimento();
-        atendimento.setId(rs.getInt("id"));
+    // ============================
+    // DELETE
+    // ============================
+    public boolean deletar(int id) throws SQLException {
+        String sql = "DELETE FROM atendimento WHERE id = ?";
 
-        // Criar objetos Paciente e Profissional com ID
-        Paciente p = new Paciente();
-        p.setId(rs.getInt("paciente_id"));
-        atendimento.setPaciente(p);
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-        Profissional prof = new Profissional();
-        prof.setId(rs.getInt("profissional_id"));
-        atendimento.setProfissional(prof);
+            stmt.setInt(1, id);
+            return stmt.executeUpdate() > 0;
+        }
+    }
 
-        atendimento.setDataHora(rs.getTimestamp("data_hora").toLocalDateTime());
-        atendimento.setDuracaoMin(rs.getInt("duracao_min"));
-        atendimento.setTipo(Atendimento.TipoAtendimento.valueOf(rs.getString("tipo")));
-        atendimento.setSituacao(Atendimento.Situacao.valueOf(rs.getString("situacao")));
-        atendimento.setNotas(rs.getString("notas"));
-        atendimento.setValor(rs.getBigDecimal("valor"));
-        atendimento.setUsuario(rs.getString("usuario"));
-
-        Timestamp criadoTs = rs.getTimestamp("criado_em");
-        if (criadoTs != null) atendimento.setCriadoEm(criadoTs.toLocalDateTime());
-
-        Timestamp atualizadoTs = rs.getTimestamp("atualizado_em");
-        if (atualizadoTs != null) atendimento.setAtualizadoEm(atualizadoTs.toLocalDateTime());
-
-        return atendimento;
+    // ============================
+    // MAP ROW
+    // ============================
+    private Atendimento mapRow(ResultSet rs) throws SQLException {
+        Atendimento at = new Atendimento();
+        at.setId(rs.getInt("id"));
+        at.setPacienteId(rs.getInt("paciente_id"));
+        at.setPacienteNome(rs.getString("pacienteNome"));
+        at.setProfissionalId(rs.getInt("profissional_id"));
+        at.setProfissionalNome(rs.getString("profissionalNome"));
+        at.setDataHora(rs.getTimestamp("data_hora"));
+        at.setDuracaoMin(rs.getInt("duracao_min"));
+        at.setTipo(Atendimento.Tipo.valueOf(rs.getString("tipo")));
+        at.setSituacao(Atendimento.Situacao.valueOf(rs.getString("situacao")));
+        at.setNotas(rs.getString("notas"));
+        at.setValor(rs.getBigDecimal("valor"));
+        at.setCriadoEm(rs.getTimestamp("criado_em"));
+        at.setAtualizadoEm(rs.getTimestamp("atualizado_em"));
+        at.setUsuario(rs.getString("usuario"));
+        return at;
     }
 }

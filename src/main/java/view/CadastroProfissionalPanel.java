@@ -132,7 +132,7 @@ public class CadastroProfissionalPanel extends JPanel {
 		// Tipo ao lado de Sexo
 		gbc.gridx = 2;
 		panelProfissional.add(new JLabel("Tipo:"), gbc);
-		cbTipo = new JComboBox<>(new String[] { "FONOAUDIOLOGA", "SECRETARIA" });
+		cbTipo = new JComboBox<>(new String[] { "FONOAUDIOLOGA", "SECRETARIA", "FINANCEIRO"});
 		cbTipo.setCursor(handCursor);
 		gbc.gridx = 3;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -465,45 +465,64 @@ public class CadastroProfissionalPanel extends JPanel {
 	}
 
 	private JPanel criarTabelaProfissionaisComPesquisa() {
-		JPanel panel = new JPanel(new BorderLayout(5, 5));
-		modeloTabela = new DefaultTableModel(new Object[] { "Nome", "Telefone", "Email", "Tipo" }, 0);
-		tabelaProfissionais = new JTable(modeloTabela);
-		tabelaProfissionais.setDefaultEditor(Object.class, null);
-		tabelaProfissionais.getTableHeader().setReorderingAllowed(false);
+	    // Painel principal com padding
+	    JPanel panel = new JPanel(new BorderLayout());
+	    panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15)); // padding inferior e direita
 
-		// Centralizar colunas
-		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment(JLabel.CENTER);
-		for (int i = 0; i < tabelaProfissionais.getColumnCount(); i++)
-			tabelaProfissionais.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+	    // Painel interno para organizar label + campo de pesquisa e tabela
+	    JPanel innerPanel = new JPanel(new BorderLayout(5, 5));
 
-		sorter = new TableRowSorter<>(modeloTabela);
-		tabelaProfissionais.setRowSorter(sorter);
+	    // Modelo e tabela
+	    modeloTabela = new DefaultTableModel(new Object[] { "Nome", "Telefone", "Email", "Tipo" }, 0);
+	    tabelaProfissionais = new JTable(modeloTabela);
+	    tabelaProfissionais.setDefaultEditor(Object.class, null);
+	    tabelaProfissionais.getTableHeader().setReorderingAllowed(false);
 
-		tfPesquisar = new JTextField();
-		tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
-			private void filtrar() {
-				String texto = tfPesquisar.getText();
-				sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
-			}
+	    // Centralizar colunas
+	    DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+	    centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+	    for (int i = 0; i < tabelaProfissionais.getColumnCount(); i++)
+	        tabelaProfissionais.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
 
-			public void insertUpdate(DocumentEvent e) { filtrar(); }
-			public void removeUpdate(DocumentEvent e) { filtrar(); }
-			public void changedUpdate(DocumentEvent e) { filtrar(); }
-		});
+	    sorter = new TableRowSorter<>(modeloTabela);
+	    tabelaProfissionais.setRowSorter(sorter);
 
-		JPanel painelPesquisa = new JPanel(new BorderLayout(5, 5));
-		JLabel lblPesquisar = new JLabel("Pesquisar profissional: ");
-		lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
-		lblPesquisar.setForeground(Color.DARK_GRAY);
-		painelPesquisa.add(lblPesquisar, BorderLayout.WEST);
-		painelPesquisa.add(tfPesquisar, BorderLayout.CENTER);
+	    // Campo de pesquisa
+	    tfPesquisar = new JTextField();
+	    tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
+	        private void filtrar() {
+	            String texto = tfPesquisar.getText();
+	            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto));
+	        }
+	        public void insertUpdate(DocumentEvent e) { filtrar(); }
+	        public void removeUpdate(DocumentEvent e) { filtrar(); }
+	        public void changedUpdate(DocumentEvent e) { filtrar(); }
+	    });
 
-		panel.add(painelPesquisa, BorderLayout.NORTH);
-		panel.add(new JScrollPane(tabelaProfissionais), BorderLayout.CENTER);
+	    // Painel de pesquisa com label
+	    JPanel painelPesquisa = new JPanel(new BorderLayout(5, 5));
+	    JLabel lblPesquisar = new JLabel("Pesquisar profissional: ");
+	    lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
+	    lblPesquisar.setForeground(Color.DARK_GRAY);
+	    painelPesquisa.add(lblPesquisar, BorderLayout.WEST);
 
-		return panel;
+	    // Wrapper do campo de pesquisa com largura fixa
+	    JPanel tfPesquisarWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+	    tfPesquisar.setPreferredSize(new Dimension(250, 25)); // largura fixa
+	    tfPesquisarWrapper.add(tfPesquisar);
+	    painelPesquisa.add(tfPesquisarWrapper, BorderLayout.CENTER);
+
+	    // Adiciona painel de pesquisa e tabela ao innerPanel
+	    innerPanel.add(painelPesquisa, BorderLayout.NORTH);
+	    innerPanel.add(new JScrollPane(tabelaProfissionais), BorderLayout.CENTER);
+
+	    // Adiciona innerPanel ao painel principal com padding
+	    panel.add(innerPanel, BorderLayout.CENTER);
+
+	    return panel;
 	}
+
+
 
 	private void carregarProfissionais() throws SQLException {
 		modeloTabela.setRowCount(0);

@@ -12,20 +12,17 @@ import controller.ProdutoController;
 import controller.TipoProdutoController;
 import model.Produto;
 import model.TipoProduto;
-import util.FiltroProduto;
 import util.Sessao;
 
 import java.awt.*;
-import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class CadastroProdutoPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private JTextField tfNome, tfCodigoSerial, tfPreco, tfEstoque, tfPesquisar;
+    private JTextField tfNome, tfCodigoSerial, tfPesquisar;
     private JTextArea taDescricao;
     private JComboBox<TipoProduto> cbTipoProduto;
     private JButton btnSalvar, btnLimpar;
@@ -44,15 +41,20 @@ public class CadastroProdutoPanel extends JPanel {
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Criar painéis
+        // Criar os painéis
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaComPesquisa();
 
+        // Divisor horizontal
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.5);
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
 
+        // Ajuste de 40%-60% após a tela aparecer
+        splitPane.setDividerLocation(0.4); // valor inicial qualquer
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4));
+
+        // Wrapper para espaçamento
         JPanel panelWrapper = new JPanel(new BorderLayout());
         panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
         panelWrapper.add(splitPane, BorderLayout.CENTER);
@@ -70,8 +72,8 @@ public class CadastroProdutoPanel extends JPanel {
             }
         });
 
-        carregarTipos();
         carregarProdutos();
+        carregarTiposProduto();
     }
 
     private JPanel criarPainelCadastro() {
@@ -90,7 +92,7 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // SUBTÍTULO elegante dentro do painel
+        // SUBTÍTULO elegante
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -106,6 +108,17 @@ public class CadastroProdutoPanel extends JPanel {
         panelCadastro.add(new JLabel("Tipo de Produto:"), gbc);
 
         cbTipoProduto = new JComboBox<>();
+        cbTipoProduto.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof TipoProduto) setText(((TipoProduto) value).getNome());
+                else setText("");
+                return this;
+            }
+        });
+
         gbc.gridx = 1;
         gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -114,8 +127,8 @@ public class CadastroProdutoPanel extends JPanel {
         // NOME
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Nome:"), gbc);
 
         tfNome = new JTextField();
@@ -153,33 +166,7 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(scrollDescricao, gbc);
 
-        // PREÇO
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        panelCadastro.add(new JLabel("Preço:"), gbc);
-
-        tfPreco = new JTextField();
-        gbc.gridx = 1;
-        gbc.weightx = 0.5;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panelCadastro.add(tfPreco, gbc);
-
-        // ESTOQUE
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        panelCadastro.add(new JLabel("Estoque:"), gbc);
-
-        tfEstoque = new JTextField();
-        gbc.gridx = 1;
-        gbc.weightx = 0.5;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panelCadastro.add(tfEstoque, gbc);
-
-        // BOTOES
+        // BOTÕES
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnSalvar = new JButton("Salvar");
         btnLimpar = new JButton("Limpar");
@@ -187,13 +174,12 @@ public class CadastroProdutoPanel extends JPanel {
         panelBotoes.add(btnLimpar);
 
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 5;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.EAST;
         panelCadastro.add(panelBotoes, gbc);
 
-        // Cursor de mãozinha
         Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
         btnSalvar.setCursor(handCursor);
         btnLimpar.setCursor(handCursor);
@@ -204,9 +190,8 @@ public class CadastroProdutoPanel extends JPanel {
     private JPanel criarTabelaComPesquisa() {
         JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
 
-        String[] colunas = {"Tipo", "Nome", "Código Serial", "Descrição", "Preço", "Estoque", "Criado", "Atualizado", "Usuário"};
+        String[] colunas = {"Tipo", "Nome", "Código Serial", "Descrição"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
-            private static final long serialVersionUID = 1L;
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -216,9 +201,8 @@ public class CadastroProdutoPanel extends JPanel {
 
         DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
         centralizado.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < tabelaProdutos.getColumnCount(); i++) {
+        for (int i = 0; i < tabelaProdutos.getColumnCount(); i++)
             tabelaProdutos.getColumnModel().getColumn(i).setCellRenderer(centralizado);
-        }
 
         sorter = new TableRowSorter<>(modeloTabela);
         tabelaProdutos.setRowSorter(sorter);
@@ -237,7 +221,7 @@ public class CadastroProdutoPanel extends JPanel {
             private void filtrar() {
                 String texto = tfPesquisar.getText().trim();
                 if (texto.isEmpty()) sorter.setRowFilter(null);
-                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 1)); // pesquisa pelo nome
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 1));
             }
             public void insertUpdate(DocumentEvent e) { filtrar(); }
             public void removeUpdate(DocumentEvent e) { filtrar(); }
@@ -252,14 +236,9 @@ public class CadastroProdutoPanel extends JPanel {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 int totalWidth = panelTabelaWrapper.getWidth();
                 tabelaProdutos.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProdutos.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.15));
+                tabelaProdutos.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.2));
                 tabelaProdutos.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProdutos.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.25));
-                tabelaProdutos.getColumnModel().getColumn(4).setPreferredWidth((int)(totalWidth * 0.1));
-                tabelaProdutos.getColumnModel().getColumn(5).setPreferredWidth((int)(totalWidth * 0.1));
-                tabelaProdutos.getColumnModel().getColumn(6).setPreferredWidth((int)(totalWidth * 0.1));
-                tabelaProdutos.getColumnModel().getColumn(7).setPreferredWidth((int)(totalWidth * 0.1));
-                tabelaProdutos.getColumnModel().getColumn(8).setPreferredWidth((int)(totalWidth * 0.1));
+                tabelaProdutos.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.3));
             }
         });
 
@@ -270,56 +249,67 @@ public class CadastroProdutoPanel extends JPanel {
         tfNome.setText("");
         tfCodigoSerial.setText("");
         taDescricao.setText("");
-        tfPreco.setText("");
-        tfEstoque.setText("");
         cbTipoProduto.setSelectedIndex(-1);
     }
 
     private void salvarProduto() throws SQLException {
-        TipoProduto tipo = (TipoProduto) cbTipoProduto.getSelectedItem();
-        if (tipo == null) {
-            JOptionPane.showMessageDialog(this, "Selecione o tipo de produto!", "Erro", JOptionPane.ERROR_MESSAGE);
+        TipoProduto tipoSelecionado = (TipoProduto) cbTipoProduto.getSelectedItem();
+        String nome = tfNome.getText().trim();
+        String codigoSerial = tfCodigoSerial.getText().trim();
+        String descricao = taDescricao.getText().trim();
+
+        if (tipoSelecionado == null) {
+            JOptionPane.showMessageDialog(this, "Selecione um tipo de produto!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        String nome = tfNome.getText().trim();
         if (nome.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Preencha o nome do produto!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        BigDecimal preco;
-        try { preco = new BigDecimal(tfPreco.getText().trim()); }
-        catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Preço inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        int estoque;
-        try { estoque = Integer.parseInt(tfEstoque.getText().trim()); }
-        catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Estoque inválido!", "Erro", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
         Produto produto = new Produto();
-        produto.setTipoProduto(tipo);
+        produto.setTipoProdutoId(tipoSelecionado.getId());
         produto.setNome(nome);
-        produto.setCodigoSerial(tfCodigoSerial.getText().trim());
-        produto.setDescricao(taDescricao.getText().trim());
-        produto.setPreco(preco);
-        produto.setEstoque(estoque);
+        produto.setCodigoSerial(codigoSerial);
+        produto.setDescricao(descricao);
         produto.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
         ProdutoController controller = new ProdutoController();
-        controller.inserir(produto);
+        boolean sucesso = controller.criarProduto(produto, Sessao.getUsuarioLogado().getLogin());
 
-        JOptionPane.showMessageDialog(this, "Produto salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-        limparCampos();
-        carregarProdutos();
+        if (sucesso) {
+            JOptionPane.showMessageDialog(this, "Produto salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            limparCampos();
+            carregarProdutos();
+        }
     }
 
-    private void carregarTipos() {
+    private void carregarProdutos() {
+        try {
+            ProdutoController controller = new ProdutoController();
+            List<Produto> produtos = controller.listarTodos();
+            modeloTabela.setRowCount(0);
+
+            for (Produto p : produtos) {
+                String tipoNome = "?";
+                try {
+                    TipoProdutoController tipoController = new TipoProdutoController();
+                    TipoProduto tipo = tipoController.buscarPorId(p.getTipoProdutoId());
+                    if (tipo != null) tipoNome = tipo.getNome();
+                } catch (SQLException ignored) {}
+                modeloTabela.addRow(new Object[]{
+                        tipoNome, p.getNome(), p.getCodigoSerial(),
+                        p.getDescricao()
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao carregar produtos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void carregarTiposProduto() {
         try {
             TipoProdutoController controller = new TipoProdutoController();
             List<TipoProduto> tipos = controller.listarTodos();
@@ -329,37 +319,6 @@ public class CadastroProdutoPanel extends JPanel {
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Erro ao carregar tipos de produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void carregarProdutos() {
-        try {
-            ProdutoController controller = new ProdutoController();
-            List<Produto> produtos = controller.listarTodos();
-
-            modeloTabela.setRowCount(0);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-            for (Produto p : produtos) {
-                String criado = p.getCriadoEm() != null ? p.getCriadoEm().format(formatter) : "";
-                String atualizado = p.getAtualizadoEm() != null ? p.getAtualizadoEm().format(formatter) : "";
-
-                modeloTabela.addRow(new Object[]{
-                        p.getTipoProduto() != null ? p.getTipoProduto().getNome() : "?",
-                        p.getNome(),
-                        p.getCodigoSerial(),
-                        p.getDescricao(),
-                        p.getPreco(),
-                        p.getEstoque(),
-                        criado,
-                        atualizado,
-                        p.getUsuario() != null ? p.getUsuario() : "?"
-                });
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erro ao carregar produtos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

@@ -54,80 +54,101 @@ public class TelaPrincipal extends JFrame {
 
 	private JMenuBar createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
-		
-		//MENU AGENDA
+
+		// MENU AGENDA
 		menuBar.add(MenuUtils.createClickableMenu("Agenda", () -> abrirAgenda()));
-		
+
 		// MENU ATENDIMENTO
 		JMenu menuAtendimento = createMenu("Atendimento");
-		menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {		}));
-		menuAtendimento.add(createMenuItem("Vender Produto", e -> {		}));
+		menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {
+		}));
+		menuAtendimento.add(createMenuItem("Vender Produto", e -> {
+		}));
 		menuAtendimento.addSeparator();
-		menuAtendimento.add(createMenuItem("Relatório", e -> {		}));
+		menuAtendimento.add(createMenuItem("Relatório", e -> {
+		}));
 
 		// MENU PACIENTES
 		JMenu menuPacientes = createMenu("Pacientes");
-		menuPacientes.add(createMenuItem("Novo Paciente", e -> {try {
-			abrirCadastroPaciente();
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}}));
+		menuPacientes.add(createMenuItem("Novo Paciente", e -> {
+			try {
+				abrirCadastroPaciente();
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}));
 		menuPacientes.addSeparator();
-		menuPacientes.add(createMenuItem("Prontuários", e -> {		}));
-		
-		//MENU ORÇAMENTOS
-		JMenu menuOrcamentos = createMenu("Orçamentos");
-		menuOrcamentos.add(createMenuItem("Novo Orçamento", e -> {		}));
-		menuOrcamentos.addSeparator();
-		menuOrcamentos.add(createMenuItem("Consultar Orçamentos", e -> {		}));
+		menuPacientes.add(createMenuItem("Prontuários", e -> {
+		}));
 
+		// MENU ORÇAMENTOS
+		JMenu menuOrcamentos = createMenu("Orçamentos");
+		menuOrcamentos.add(createMenuItem("Novo Orçamento", e -> {
+		}));
+		menuOrcamentos.addSeparator();
+		menuOrcamentos.add(createMenuItem("Consultar Orçamentos", e -> {
+		}));
 
 		// MENU FINANCEIRO
 		JMenu menuFinanceiro = createMenu("Financeiro");
-		menuFinanceiro.add(createMenuItem("Caixa", e -> {		}));
+		menuFinanceiro.add(createMenuItem("Caixa", e -> {
+		}));
 		menuFinanceiro.addSeparator();
-		menuFinanceiro.add(createMenuItem("Lançar Despesa", e -> {		}));
+		menuFinanceiro.add(createMenuItem("Lançar Despesa", e -> {
+		}));
 		menuFinanceiro.addSeparator();
-		menuFinanceiro.add(createMenuItem("Contas a Pagar", e -> {		}));
-		menuFinanceiro.add(createMenuItem("Contas a Receber", e -> {		}));
+		menuFinanceiro.add(createMenuItem("Contas a Pagar", e -> {
+		}));
+		menuFinanceiro.add(createMenuItem("Contas a Receber", e -> {
+		}));
 		menuFinanceiro.addSeparator();
-		menuFinanceiro.add(createMenuItem("Relatórios", e -> {		}));
+		menuFinanceiro.add(createMenuItem("Relatórios", e -> {
+		}));
 
 		// MENU ESTOQUE
 		JMenu menuEstoque = createMenu("Estoque");
-		menuEstoque.add(createMenuItem("Conferir Estoque", e -> {		}));
-		menuEstoque.add(createMenuItem("Comprar Itens", e -> {		}));
+		menuEstoque.add(createMenuItem("Conferir Estoque", e -> {
+		}));
+		menuEstoque.add(createMenuItem("Comprar Itens", e -> {
+		}));
 		menuEstoque.addSeparator();
-		menuEstoque.add(createMenuItem("Baixa de Estoque", e -> {		}));
+		menuEstoque.add(createMenuItem("Baixa de Estoque", e -> {
+		}));
 		menuEstoque.addSeparator();
-		menuEstoque.add(createMenuItem("Relatórios", e -> {		}));
+		menuEstoque.add(createMenuItem("Relatórios", e -> {
+		}));
 
 		// MENU CADASTRO
 		JMenu menuCadastro = createMenu("Cadastro");
-		menuCadastro.add(createMenuItem("Tipos de Produto", e -> { abrirCadastroTipoProduto();}));
-		menuCadastro.add(createMenuItem("Produtos", e -> {abrirCadastroProduto();}));
+		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {
+			abrirCadastroTipoProduto();
+		}));
+		menuCadastro.add(createMenuItem("Produtos", e -> {
+			abrirCadastroProduto();
+		}));
 		menuCadastro.addSeparator();
-		menuCadastro.add(createMenuItem("Profissionais", e -> {try {
-			abrirCadastroProfissional();
-		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}}));
-		menuCadastro.add(createMenuItem("Agenda por Profissional", e -> {		}));
+		menuCadastro.add(createMenuItem("Profissionais", e -> {
+			try {
+				abrirCadastroProfissional();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}));
+		menuCadastro.add(createMenuItem("Agenda por Profissional", e -> {
+		}));
 		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
-		
-		//MONTAGEM DO RESTANTE DO MENU
-		
+
+		// MONTAGEM DO RESTANTE DO MENU
+
 		menuBar.add(menuAtendimento);
 		menuBar.add(menuPacientes);
 		menuBar.add(menuOrcamentos);
 		menuBar.add(menuFinanceiro);
 		menuBar.add(menuEstoque);
 		menuBar.add(menuCadastro);
-		
-		
-		
+
 		// Espaço flexível para empurrar o label do usuário para a direita
 		menuBar.add(Box.createHorizontalGlue());
 
@@ -162,35 +183,35 @@ public class TelaPrincipal extends JFrame {
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
-	
+
 	private void abrirCadastroPaciente() throws Exception {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroPacientePanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
-	
+
 	private void abrirAgenda() {
 		painelCentral.removeAll();
 		painelCentral.add(new AgendaPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
-	
+
 	private void abrirCadastroProfissional() throws SQLException {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroProfissionalPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
-	
+
 	private void abrirCadastroTipoProduto() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroTipoProdutoPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
-	
+
 	private void abrirCadastroProduto() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroProdutoPanel(), BorderLayout.CENTER);

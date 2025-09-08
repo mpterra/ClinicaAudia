@@ -9,69 +9,39 @@ import java.util.List;
 
 public class AtendimentoController {
 
-    private final AtendimentoDAO atendimentoDAO;
+    private final AtendimentoDAO dao;
 
     public AtendimentoController() {
-        this.atendimentoDAO = new AtendimentoDAO();
+        this.dao = new AtendimentoDAO();
     }
 
-    // -------------------------
-    // CREATE
-    // -------------------------
-    public void criarAtendimento(Atendimento atendimento) throws SQLException {
-        // Aqui você pode colocar validações de negócio, exemplo:
-        if (atendimento.getDataHora() == null) {
-            throw new IllegalArgumentException("Data/Hora do atendimento não pode ser nula.");
+    public boolean criarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
+        if (at.getDuracaoMin() <= 0) {
+            throw new IllegalArgumentException("Duração deve ser maior que zero.");
         }
-        atendimentoDAO.inserir(atendimento);
+        return dao.salvar(at, usuarioLogado);
     }
 
-    // -------------------------
-    // UPDATE
-    // -------------------------
-    public void atualizarAtendimento(Atendimento atendimento) throws SQLException {
-        if (atendimento.getId() <= 0) {
-            throw new IllegalArgumentException("ID inválido para atualização.");
+    public boolean atualizarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
+        if (at.getDuracaoMin() <= 0) {
+            throw new IllegalArgumentException("Duração deve ser maior que zero.");
         }
-        atendimentoDAO.atualizar(atendimento);
+        return dao.atualizar(at, usuarioLogado);
     }
 
-    // -------------------------
-    // DELETE
-    // -------------------------
-    public void removerAtendimento(int id) throws SQLException {
-        if (id <= 0) {
-            throw new IllegalArgumentException("ID inválido para remoção.");
-        }
-        atendimentoDAO.deletar(id);
+    public boolean removerAtendimento(int id) throws SQLException {
+        return dao.deletar(id);
     }
 
-    // -------------------------
-    // READ
-    // -------------------------
     public Atendimento buscarPorId(int id) throws SQLException {
-        if (id <= 0) return null;
-        return atendimentoDAO.buscarPorId(id);
+        return dao.buscarPorId(id);
     }
 
-    public List<Atendimento> listarPorPaciente(int pacienteId) throws SQLException {
-        if (pacienteId <= 0) throw new IllegalArgumentException("ID do paciente inválido.");
-        return atendimentoDAO.listarPorPaciente(pacienteId);
-    }
-
-    public List<Atendimento> listarPorProfissional(int profissionalId) throws SQLException {
-        if (profissionalId <= 0) throw new IllegalArgumentException("ID do profissional inválido.");
-        return atendimentoDAO.listarPorProfissional(profissionalId);
+    public List<Atendimento> listarTodos() throws SQLException {
+        return dao.listarTodos();
     }
 
     public List<Atendimento> listarPorPeriodo(LocalDateTime inicio, LocalDateTime fim) throws SQLException {
-        if (inicio == null || fim == null) throw new IllegalArgumentException("Período inválido.");
-        return atendimentoDAO.listarPorPeriodo(inicio, fim);
+        return dao.listarPorPeriodo(inicio, fim);
     }
-
-    public List<Atendimento> listarPorSituacao(Atendimento.Situacao situacao) throws SQLException {
-        if (situacao == null) throw new IllegalArgumentException("Situação inválida.");
-        return atendimentoDAO.listarPorSituacao(situacao);
-    }
-
 }

@@ -1,113 +1,40 @@
 package model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 public class VendaProduto {
 
-    // -------------------------
-    // Atributos
-    // -------------------------
-    private Venda venda;
-    private Produto produto;
-    private int quantidade;
+    private int vendaId;
+    private int produtoId;
+    private int quantidade = 1;
     private BigDecimal precoUnitario;
-    private LocalDateTime dataVenda;
-    private int garantiaMeses;
-    private LocalDate fimGarantia;
+    private Timestamp dataVenda;
+    private int garantiaMeses = 0;
+    private Date fimGarantia;
 
-    // -------------------------
-    // Construtores
-    // -------------------------
-
-    // Construtor vazio
     public VendaProduto() {}
 
-    // Construtor completo
-    public VendaProduto(Venda venda, Produto produto, int quantidade, BigDecimal precoUnitario,
-                        LocalDateTime dataVenda, int garantiaMeses, LocalDate fimGarantia) {
-        this.venda = venda;
-        this.produto = produto;
-        this.quantidade = quantidade;
-        this.precoUnitario = precoUnitario;
-        this.dataVenda = dataVenda;
-        this.garantiaMeses = garantiaMeses;
-        this.fimGarantia = fimGarantia;
-    }
-
-    // -------------------------
     // Getters e Setters
-    // -------------------------
-    public Venda getVenda() {
-        return venda;
-    }
+    public int getVendaId() { return vendaId; }
+    public void setVendaId(int vendaId) { this.vendaId = vendaId; }
 
-    public void setVenda(Venda venda) {
-        this.venda = venda;
-    }
+    public int getProdutoId() { return produtoId; }
+    public void setProdutoId(int produtoId) { this.produtoId = produtoId; }
 
-    public Produto getProduto() {
-        return produto;
-    }
+    public int getQuantidade() { return quantidade; }
+    public void setQuantidade(int quantidade) { this.quantidade = quantidade; }
 
-    public void setProduto(Produto produto) {
-        this.produto = produto;
-    }
+    public BigDecimal getPrecoUnitario() { return precoUnitario; }
+    public void setPrecoUnitario(BigDecimal precoUnitario) { this.precoUnitario = precoUnitario; }
 
-    public int getQuantidade() {
-        return quantidade;
-    }
+    public Timestamp getDataVenda() { return dataVenda; }
+    public void setDataVenda(Timestamp dataVenda) { this.dataVenda = dataVenda; }
 
-    public void setQuantidade(int quantidade) {
-        this.quantidade = quantidade;
-    }
+    public int getGarantiaMeses() { return garantiaMeses; }
+    public void setGarantiaMeses(int garantiaMeses) { this.garantiaMeses = garantiaMeses; }
 
-    public BigDecimal getPrecoUnitario() {
-        return precoUnitario;
-    }
-
-    public void setPrecoUnitario(BigDecimal precoUnitario) {
-        this.precoUnitario = precoUnitario;
-    }
-
-    public LocalDateTime getDataVenda() {
-        return dataVenda;
-    }
-
-    public void setDataVenda(LocalDateTime dataVenda) {
-        this.dataVenda = dataVenda;
-    }
-
-    public int getGarantiaMeses() {
-        return garantiaMeses;
-    }
-
-    public void setGarantiaMeses(int garantiaMeses) {
-        this.garantiaMeses = garantiaMeses;
-    }
-
-    public LocalDate getFimGarantia() {
-        return fimGarantia;
-    }
-
-    public void setFimGarantia(LocalDate fimGarantia) {
-        this.fimGarantia = fimGarantia;
-    }
-
-    // -------------------------
-    // toString
-    // -------------------------
-    @Override
-    public String toString() {
-        return "VendaProduto{" +
-                "vendaId=" + (venda != null ? venda.getId() : "null") +
-                ", produtoId=" + (produto != null ? produto.getId() : "null") +
-                ", quantidade=" + quantidade +
-                ", precoUnitario=" + precoUnitario +
-                ", dataVenda=" + dataVenda +
-                ", garantiaMeses=" + garantiaMeses +
-                ", fimGarantia=" + fimGarantia +
-                '}';
-    }
+    public Date getFimGarantia() { return fimGarantia; }
+    public void setFimGarantia(Date fimGarantia) { this.fimGarantia = fimGarantia; }
 }

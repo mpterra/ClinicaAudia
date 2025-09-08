@@ -89,7 +89,7 @@ CREATE TABLE profissional (
     email VARCHAR(120),
     telefone VARCHAR(30),
     data_nascimento DATE,
-    tipo ENUM('FONOAUDIOLOGA','SECRETARIA') NOT NULL,
+    tipo ENUM('FONOAUDIOLOGA','SECRETARIA', 'FINANCEIRO') NOT NULL,
     id_endereco INT,
     ativo TINYINT NOT NULL DEFAULT 1,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -254,6 +254,49 @@ CREATE TABLE compra_produto (
 );
 
 -- ========================================
+-- TABELA ORCAMENTO
+-- ========================================
+CREATE TABLE orcamento (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    paciente_id INT NULL,                  -- opcional, se for para um paciente
+    profissional_id INT NULL,             -- opcional, quem fez o orçamento
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    valor_total DECIMAL(10,2) DEFAULT 0,
+    observacoes TEXT,
+    usuario VARCHAR(50),                   -- controle de auditoria
+
+    CONSTRAINT fk_orcamento_paciente
+        FOREIGN KEY (paciente_id) REFERENCES paciente(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_orcamento_profissional
+        FOREIGN KEY (profissional_id) REFERENCES profissional(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+-- ========================================
+-- TABELA ORCAMENTO_PRODUTO (itens do orçamento)
+-- ========================================
+CREATE TABLE orcamento_produto (
+    orcamento_id INT NOT NULL,
+    produto_id INT NOT NULL,
+    quantidade INT NOT NULL DEFAULT 1,
+    preco_unitario DECIMAL(10,2) NOT NULL,
+    data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (orcamento_id, produto_id),
+
+    CONSTRAINT fk_orcprod_orcamento
+        FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_orcprod_produto
+        FOREIGN KEY (produto_id) REFERENCES produto(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+-- ========================================
 -- MÓDULO DE VENDAS
 -- ========================================
 CREATE TABLE venda (
@@ -295,50 +338,6 @@ CREATE TABLE venda_produto (
     CONSTRAINT fk_vendaprod_produto
         FOREIGN KEY (produto_id)
         REFERENCES produto(id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE
-);
-
-
--- ========================================
--- TABELA ORCAMENTO
--- ========================================
-CREATE TABLE orcamento (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT NULL,                  -- opcional, se for para um paciente
-    profissional_id INT NULL,             -- opcional, quem fez o orçamento
-    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    valor_total DECIMAL(10,2) DEFAULT 0,
-    observacoes TEXT,
-    usuario VARCHAR(50),                   -- controle de auditoria
-
-    CONSTRAINT fk_orcamento_paciente
-        FOREIGN KEY (paciente_id) REFERENCES paciente(id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE,
-    CONSTRAINT fk_orcamento_profissional
-        FOREIGN KEY (profissional_id) REFERENCES profissional(id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE
-);
-
--- ========================================
--- TABELA ORCAMENTO_PRODUTO (itens do orçamento)
--- ========================================
-CREATE TABLE orcamento_produto (
-    orcamento_id INT NOT NULL,
-    produto_id INT NOT NULL,
-    quantidade INT NOT NULL DEFAULT 1,
-    preco_unitario DECIMAL(10,2) NOT NULL,
-    data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (orcamento_id, produto_id),
-
-    CONSTRAINT fk_orcprod_orcamento
-        FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    CONSTRAINT fk_orcprod_produto
-        FOREIGN KEY (produto_id) REFERENCES produto(id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
 );
