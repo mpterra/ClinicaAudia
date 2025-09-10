@@ -123,4 +123,34 @@ public class EscalaProfissionalDAO {
         e.setUsuario(rs.getString("usuario"));
         return e;
     }
+
+	public List<EscalaProfissional> listarPorProfissional(int id) {
+		List<EscalaProfissional> lista = new ArrayList<>();
+		String sql = "SELECT * FROM escala_profissional WHERE profissional_id = ? ORDER BY dia_semana, hora_inicio";
+		try (Connection conn = Database.getConnection();
+			 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, id);
+			try (ResultSet rs = stmt.executeQuery()) {
+				while (rs.next()) {
+					lista.add(mapRow(rs));
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return lista;
+	}
+
+	public void removerTodasEscalasDoProfissional(int id) {
+		String sql = "DELETE FROM escala_profissional WHERE profissional_id = ?";
+		try (Connection conn = Database.getConnection();
+			 PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+			stmt.setInt(1, id);
+			stmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}		
+	}
 }

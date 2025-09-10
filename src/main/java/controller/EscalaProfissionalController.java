@@ -45,4 +45,13 @@ public class EscalaProfissionalController {
                 .filter(e -> e.getProfissionalId() == profissionalId && e.getDiaSemana() == diaSemana && e.isDisponivel())
                 .toList();
     }
+
+	public List<EscalaProfissional> listarPorProfissional(int id) {
+		return dao.listarPorProfissional(id);
+	}
+
+	public void removerTodasEscalasDoProfissional(int id) {
+		dao.removerTodasEscalasDoProfissional(id);
+		
+	}
 }
