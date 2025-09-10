@@ -246,7 +246,8 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
 	private JPanel criarTabelaComPesquisa() {
 		JPanel panelWrapper = new JPanel(new BorderLayout());
 
-		String[] colunas = { "ID", "Profissional", "Dia", "Hora Início", "Hora Fim", "Disponível" };
+		// Removida a coluna "ID"
+		String[] colunas = { "Profissional", "Dia", "Hora Início", "Hora Fim", "Disponível" };
 		modeloTabelaEscalas = new DefaultTableModel(colunas, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -282,7 +283,7 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
 				if (texto.isEmpty())
 					sorter.setRowFilter(null);
 				else
-					sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 1));
+					sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0)); // Índice 0 agora é "Profissional"
 			}
 
 			public void insertUpdate(DocumentEvent e) {
@@ -305,12 +306,11 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
 			@Override
 			public void componentResized(java.awt.event.ComponentEvent evt) {
 				int totalWidth = panelWrapper.getWidth();
-				tabelaEscalas.getColumnModel().getColumn(0).setPreferredWidth((int) (totalWidth * 0.05));
-				tabelaEscalas.getColumnModel().getColumn(1).setPreferredWidth((int) (totalWidth * 0.25));
-				tabelaEscalas.getColumnModel().getColumn(2).setPreferredWidth((int) (totalWidth * 0.15));
-				tabelaEscalas.getColumnModel().getColumn(3).setPreferredWidth((int) (totalWidth * 0.15));
-				tabelaEscalas.getColumnModel().getColumn(4).setPreferredWidth((int) (totalWidth * 0.15));
-				tabelaEscalas.getColumnModel().getColumn(5).setPreferredWidth((int) (totalWidth * 0.10));
+				tabelaEscalas.getColumnModel().getColumn(0).setPreferredWidth((int) (totalWidth * 0.30)); // Profissional
+				tabelaEscalas.getColumnModel().getColumn(1).setPreferredWidth((int) (totalWidth * 0.20)); // Dia
+				tabelaEscalas.getColumnModel().getColumn(2).setPreferredWidth((int) (totalWidth * 0.20)); // Hora Início
+				tabelaEscalas.getColumnModel().getColumn(3).setPreferredWidth((int) (totalWidth * 0.20)); // Hora Fim
+				tabelaEscalas.getColumnModel().getColumn(4).setPreferredWidth((int) (totalWidth * 0.10)); // Disponível
 			}
 		});
 
@@ -407,9 +407,12 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
 					JOptionPane.WARNING_MESSAGE);
 			return;
 		}
-		int idEscala = (int) tabelaEscalas.getValueAt(tabelaEscalas.convertRowIndexToModel(linha), 0);
-
+		// Obter a escala correspondente à linha selecionada
 		try {
+			List<EscalaProfissional> escalas = escalaController.listarTodas();
+			int modelRow = tabelaEscalas.convertRowIndexToModel(linha);
+			int idEscala = escalas.get(modelRow).getId(); // Acessar o ID diretamente da lista de escalas
+
 			escalaController.removerEscala(idEscala);
 			JOptionPane.showMessageDialog(this, "Escala excluída com sucesso!", "Sucesso",
 					JOptionPane.INFORMATION_MESSAGE);
@@ -469,9 +472,9 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
 					continue;
 				}
 				Profissional p = new ProfissionalController().buscarPorId(e.getProfissionalId());
-				modeloTabelaEscalas.addRow(new Object[] { e.getId(), p != null ? p.getNome() : "?",
-						DIAS_SEMANA[e.getDiaSemana()], e.getHoraInicio().toString(), e.getHoraFim().toString(),
-						e.isDisponivel() ? "Sim" : "Não" });
+				// Removida a coluna "ID"
+				modeloTabelaEscalas.addRow(new Object[] { p != null ? p.getNome() : "?", DIAS_SEMANA[e.getDiaSemana()],
+						e.getHoraInicio().toString(), e.getHoraFim().toString(), e.isDisponivel() ? "Sim" : "Não" });
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
