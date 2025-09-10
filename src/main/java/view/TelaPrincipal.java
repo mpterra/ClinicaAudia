@@ -135,8 +135,7 @@ public class TelaPrincipal extends JFrame {
 				e1.printStackTrace();
 			}
 		}));
-		menuCadastro.add(createMenuItem("Agenda por Profissional", e -> {
-		}));
+		menuCadastro.add(createMenuItem("Agenda por Profissional", e -> {abrirCadastroEscalaProfissional();}));
 		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 
@@ -215,6 +214,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroProduto() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroProdutoPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroEscalaProfissional() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroEscalaProfissionalPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
