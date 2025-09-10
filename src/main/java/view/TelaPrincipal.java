@@ -60,8 +60,7 @@ public class TelaPrincipal extends JFrame {
 
 		// MENU ATENDIMENTO
 		JMenu menuAtendimento = createMenu("Atendimento");
-		menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {
-		}));
+		menuAtendimento.add(createMenuItem("Marcar Atendimento", e -> {abrirMarcacaoAtendimentoPanel();}));
 		menuAtendimento.add(createMenuItem("Vender Produto", e -> {
 		}));
 		menuAtendimento.addSeparator();
@@ -221,6 +220,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroEscalaProfissional() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroEscalaProfissionalPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirMarcacaoAtendimentoPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new MarcacaoAtendimentoPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
