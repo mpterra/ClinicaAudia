@@ -98,7 +98,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JPanel criarPainelFormulario() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true), "Cadastro", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true), "Agendar Consulta", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
 
