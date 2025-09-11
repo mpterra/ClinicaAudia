@@ -117,34 +117,52 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         buscaPanel.setBackground(backgroundColor);
         panelPaciente.add(buscaPanel, BorderLayout.NORTH);
 
-        JPanel panelDados = new JPanel(new GridLayout(5, 1, 0, 5));
+        JPanel panelDados = new JPanel(new GridBagLayout());
         panelDados.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
         lblNomePaciente = new JLabel("Nome:");
         lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
+        gbc.gridx = 0; gbc.gridy = 0;
+        panelDados.add(lblNomePaciente, gbc);
+
         lblTelefone = new JLabel("Telefone:");
-        lblIdade = new JLabel("Idade:");
-        lblEmail = new JLabel("Email:");
         lblTelefone.setFont(labelFont);
+        gbc.gridy = 1;
+        panelDados.add(lblTelefone, gbc);
+
+        lblIdade = new JLabel("Idade:");
         lblIdade.setFont(labelFont);
+        gbc.gridy = 2;
+        panelDados.add(lblIdade, gbc);
+
+        lblEmail = new JLabel("Email:");
         lblEmail.setFont(labelFont);
+        gbc.gridy = 3;
+        panelDados.add(lblEmail, gbc);
+
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
-        txtObservacoes = new JTextArea(5, 20);
+        gbc.gridy = 4;
+        panelDados.add(lblObservacoes, gbc);
+
+        txtObservacoes = new JTextArea(8, 20);
         txtObservacoes.setLineWrap(true);
         txtObservacoes.setWrapStyleWord(true);
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
-        scrollObservacoes.setPreferredSize(new Dimension(300, 100));
-        panelDados.add(lblNomePaciente);
-        panelDados.add(lblTelefone);
-        panelDados.add(lblIdade);
-        panelDados.add(lblEmail);
-        panelDados.add(scrollObservacoes);
+        scrollObservacoes.setPreferredSize(new Dimension(300, 200));
+        gbc.gridy = 5;
+        panelDados.add(scrollObservacoes, gbc);
+
         panelPaciente.add(panelDados, BorderLayout.CENTER);
 
         // Parte 2: Profissional e Tipo
         JPanel panelSelecao = new JPanel(new GridBagLayout());
         panelSelecao.setBackground(backgroundColor);
-        GridBagConstraints gbc = new GridBagConstraints();
+        gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
