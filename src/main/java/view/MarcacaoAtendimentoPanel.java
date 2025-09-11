@@ -40,6 +40,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JLabel lblTelefone;
     private JLabel lblIdade;
     private JLabel lblEmail;
+    private JTextArea txtObservacoes;
     private JComboBox<Profissional> cbProfissional;
     private JComboBox<Atendimento.Tipo> cbTipo;
     private JComboBox<LocalTime> cbHorario;
@@ -116,7 +117,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         buscaPanel.setBackground(backgroundColor);
         panelPaciente.add(buscaPanel, BorderLayout.NORTH);
 
-        JPanel panelDados = new JPanel(new GridLayout(4, 1, 0, 5));
+        JPanel panelDados = new JPanel(new GridLayout(5, 1, 0, 5));
         panelDados.setBackground(backgroundColor);
         lblNomePaciente = new JLabel("Nome:");
         lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -126,10 +127,18 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         lblTelefone.setFont(labelFont);
         lblIdade.setFont(labelFont);
         lblEmail.setFont(labelFont);
+        JLabel lblObservacoes = new JLabel("Observações:");
+        lblObservacoes.setFont(labelFont);
+        txtObservacoes = new JTextArea(3, 20);
+        txtObservacoes.setLineWrap(true);
+        txtObservacoes.setWrapStyleWord(true);
+        JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
+        scrollObservacoes.setPreferredSize(new Dimension(300, 60));
         panelDados.add(lblNomePaciente);
         panelDados.add(lblTelefone);
         panelDados.add(lblIdade);
         panelDados.add(lblEmail);
+        panelDados.add(scrollObservacoes);
         panelPaciente.add(panelDados, BorderLayout.CENTER);
 
         // Parte 2: Profissional e Tipo
@@ -429,13 +438,19 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
-                Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
-                switch (situacao) {
-                    case AGENDADO -> c.setBackground(new Color(173, 216, 230));
-                    case REALIZADO -> c.setBackground(new Color(144, 238, 144));
-                    case FALTOU -> c.setBackground(new Color(255, 255, 153));
-                    case CANCELADO -> c.setBackground(new Color(255, 182, 193));
-                    default -> c.setBackground(Color.WHITE);
+                LocalDate dataAtendimento = (LocalDate) getValueAt(row, 0);
+                LocalDate hoje = LocalDate.now();
+                if (dataAtendimento.isBefore(hoje)) {
+                    c.setBackground(new Color(220, 220, 220)); // Cinza claro para datas passadas
+                } else {
+                    Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
+                    switch (situacao) {
+                        case AGENDADO -> c.setBackground(new Color(173, 216, 230));
+                        case REALIZADO -> c.setBackground(new Color(144, 238, 144));
+                        case FALTOU -> c.setBackground(new Color(255, 255, 153));
+                        case CANCELADO -> c.setBackground(new Color(255, 182, 193));
+                        default -> c.setBackground(Color.WHITE);
+                    }
                 }
                 c.setForeground(Color.BLACK);
                 return c;
@@ -564,6 +579,14 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             if (prof == null || hora == null || dataSelecionada == null || tipo == null)
                 throw new CampoObrigatorioException("Preencha todos os campos!");
 
+            // Validação de data/hora passada
+            LocalDate hoje = LocalDate.now();
+            LocalTime agora = LocalTime.now();
+            if (dataSelecionada.isBefore(hoje) || 
+                (dataSelecionada.equals(hoje) && hora.isBefore(agora))) {
+                throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
+            }
+
             Atendimento at = new Atendimento();
             at.setPaciente(p);
             at.setProfissional(prof);
@@ -572,6 +595,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             at.setTipo(tipo);
             at.setSituacao(Atendimento.Situacao.AGENDADO);
             at.setUsuario(Sessao.getUsuarioLogado().getLogin());
+            at.setNotas(txtObservacoes.getText());
 
             if (atendimentoController.criarAtendimento(at, Sessao.getUsuarioLogado().getLogin())) {
                 JOptionPane.showMessageDialog(this, "Atendimento salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
@@ -588,6 +612,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         cbProfissional.setSelectedIndex(-1);
         cbTipo.setSelectedIndex(0);
         cbHorario.removeAllItems();
+        txtObservacoes.setText("");
         atualizarPaciente();
     }
 }
