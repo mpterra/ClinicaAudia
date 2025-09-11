@@ -139,9 +139,6 @@ public class Profissional {
     // Para debug/log
     @Override
     public String toString() {
-        return "Profissional [id=" + id + ", nome=" + nome + ", sexo=" + sexo + ", cpf=" + cpf + ", dataNascimento="
-                + dataNascimento + ", email=" + email + ", telefone=" + telefone + ", tipo=" + tipo + ", endereco="
-                + endereco + ", ativo=" + ativo + ", criadoEm=" + criadoEm + ", atualizadoEm=" + atualizadoEm
-                + ", usuario=" + usuario + "]";
+        return nome;
     }
 }

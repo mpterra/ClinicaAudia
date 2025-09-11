@@ -5,6 +5,7 @@ import model.EscalaProfissional;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EscalaProfissionalController {
 
@@ -41,9 +42,9 @@ public class EscalaProfissionalController {
     }
 
     public List<EscalaProfissional> listarDisponiveis(int profissionalId, int diaSemana) throws SQLException {
-        return dao.listarTodos().stream()
-                .filter(e -> e.getProfissionalId() == profissionalId && e.getDiaSemana() == diaSemana && e.isDisponivel())
-                .toList();
+        return dao.listarPorProfissional(profissionalId).stream()
+                .filter(e -> e.getDiaSemana() == diaSemana && e.isDisponivel())
+                .collect(Collectors.toList());
     }
 
 	public List<EscalaProfissional> listarPorProfissional(int id) {

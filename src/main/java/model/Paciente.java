@@ -68,18 +68,6 @@ public class Paciente {
     // Para debug/log
     @Override
     public String toString() {
-        return "Paciente{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", sexo='" + sexo + '\'' +
-                ", cpf='" + cpf + '\'' +
-                ", telefone='" + telefone + '\'' +
-                ", email='" + email + '\'' +
-                ", dataNascimento=" + dataNascimento +
-                ", endereco=" + endereco +
-                ", criadoEm=" + criadoEm +
-                ", atualizadoEm=" + atualizadoEm +
-                ", usuario='" + usuario + '\'' +
-                '}';
+        return nome;
     }
 }

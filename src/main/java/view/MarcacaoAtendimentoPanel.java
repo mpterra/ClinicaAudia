@@ -1,13 +1,10 @@
 package view;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
-
+import com.toedter.calendar.JCalendar;
 import controller.AtendimentoController;
 import controller.PacienteController;
 import controller.ProfissionalController;
@@ -20,123 +17,108 @@ import model.EscalaProfissional;
 import util.Sessao;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class MarcacaoAtendimentoPanel extends JPanel {
 
-    private static final long serialVersionUID = 1L;
-
     private JComboBox<Paciente> cbPaciente;
     private JComboBox<Profissional> cbProfissional;
-    private JComboBox<LocalDate> cbData;
+    private JCalendar calendar;
     private JComboBox<LocalTime> cbHorario;
     private JButton btnSalvar, btnLimpar;
-
     private JTable tabelaAtendimentos;
     private DefaultTableModel modeloTabela;
-    private TableRowSorter<DefaultTableModel> sorter;
     private JTextField tfPesquisar;
+
+    private final PacienteController pacienteController = new PacienteController();
+    private final ProfissionalController profissionalController = new ProfissionalController();
+    private final EscalaProfissionalController escalaController = new EscalaProfissionalController();
+    private final AtendimentoController atendimentoController = new AtendimentoController();
 
     private final DateTimeFormatter formatterData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter formatterHora = DateTimeFormatter.ofPattern("HH:mm");
 
     public MarcacaoAtendimentoPanel() {
-        setLayout(new BorderLayout(10, 20));
+        setLayout(new BorderLayout(10, 10));
+        setBackground(new Color(245, 245, 245));
 
-        JLabel lblTitulo = new JLabel("Marcação de Atendimento", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
-        lblTitulo.setForeground(new Color(30, 30, 60));
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
-        add(lblTitulo, BorderLayout.NORTH);
+        // Título
+        JLabel titulo = new JLabel("Marcação de Atendimento", JLabel.CENTER);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        add(titulo, BorderLayout.NORTH);
 
-        JPanel panelFormulario = criarPainelFormulario();
-        JPanel panelTabela = criarTabelaAtendimentosComPesquisa();
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelFormulario, panelTabela);
+        // Painéis
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(400);
         splitPane.setResizeWeight(0.5);
-        splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
-
-        panelFormulario.setPreferredSize(new Dimension(500, 600));
-        panelTabela.setPreferredSize(new Dimension(500, 600));
-
         add(splitPane, BorderLayout.CENTER);
 
-        btnLimpar.addActionListener(e -> limparCampos());
-        btnSalvar.addActionListener(e -> {
-            try {
-                salvarAtendimento();
-            } catch (CampoObrigatorioException | SQLException ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        });
+        splitPane.setLeftComponent(criarPainelFormulario());
+        splitPane.setRightComponent(criarPainelTabela());
 
-        carregarPacientes();
-        carregarProfissionais();
-        carregarDatas();
-        carregarAtendimentos();
+        carregarDadosIniciais();
     }
 
     private JPanel criarPainelFormulario() {
         JPanel panelWrapper = new JPanel();
         panelWrapper.setLayout(new BoxLayout(panelWrapper, BoxLayout.Y_AXIS));
-        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); // apenas padding
 
-        JPanel panelForm = new JPanel(new GridBagLayout());
-        panelForm.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                "Marcar Atendimento",
-                TitledBorder.LEADING,
-                TitledBorder.TOP
-        ));
-
+        JPanel panelFormulario = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
 
         // Paciente
-        gbc.gridx = 0; gbc.gridy = 0;
-        panelForm.add(new JLabel("Paciente:"), gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panelFormulario.add(new JLabel("Paciente:"), gbc);
         cbPaciente = new JComboBox<>();
-        cbPaciente.setCursor(handCursor);
+        cbPaciente.setPreferredSize(new Dimension(300, 30));
         gbc.gridx = 1;
-        panelForm.add(cbPaciente, gbc);
+        panelFormulario.add(cbPaciente, gbc);
 
         // Profissional
-        gbc.gridx = 0; gbc.gridy = 1;
-        panelForm.add(new JLabel("Profissional:"), gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panelFormulario.add(new JLabel("Profissional:"), gbc);
         cbProfissional = new JComboBox<>();
-        cbProfissional.setCursor(handCursor);
+        cbProfissional.setPreferredSize(new Dimension(300, 30));
         gbc.gridx = 1;
-        panelForm.add(cbProfissional, gbc);
+        panelFormulario.add(cbProfissional, gbc);
 
         // Data
-        gbc.gridx = 0; gbc.gridy = 2;
-        panelForm.add(new JLabel("Data:"), gbc);
-        cbData = new JComboBox<>();
-        cbData.setCursor(handCursor);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panelFormulario.add(new JLabel("Data:"), gbc);
+        calendar = new JCalendar();
+        calendar.setPreferredSize(new Dimension(320, 150));
         gbc.gridx = 1;
-        panelForm.add(cbData, gbc);
+        panelFormulario.add(calendar, gbc);
 
         // Horário
-        gbc.gridx = 0; gbc.gridy = 3;
-        panelForm.add(new JLabel("Horário:"), gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panelFormulario.add(new JLabel("Horário:"), gbc);
         cbHorario = new JComboBox<>();
-        cbHorario.setCursor(handCursor);
+        cbHorario.setPreferredSize(new Dimension(300, 30));
+        cbHorario.setEnabled(false);
         gbc.gridx = 1;
-        panelForm.add(cbHorario, gbc);
-
-        // Atualiza horários sempre que Profissional ou Data mudar
-        cbProfissional.addActionListener(e -> atualizarHorariosDisponiveis());
-        cbData.addActionListener(e -> atualizarHorariosDisponiveis());
+        panelFormulario.add(cbHorario, gbc);
 
         // Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -145,200 +127,191 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panelBotoes.add(btnSalvar);
         panelBotoes.add(btnLimpar);
 
-        panelWrapper.add(panelForm);
-        panelWrapper.add(Box.createVerticalStrut(10));
+        panelWrapper.add(panelFormulario);
+        panelWrapper.add(Box.createVerticalStrut(15));
         panelWrapper.add(panelBotoes);
 
-        btnSalvar.setCursor(handCursor);
-        btnLimpar.setCursor(handCursor);
+        // Listeners
+        calendar.addPropertyChangeListener("calendar", evt -> atualizarHorarios());
+        cbProfissional.addActionListener(e -> atualizarHorarios());
+        btnSalvar.addActionListener(e -> salvarAtendimento());
+        btnLimpar.addActionListener(e -> limparCampos());
 
         return panelWrapper;
     }
 
-    private JPanel criarTabelaAtendimentosComPesquisa() {
-        JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
+    private JPanel criarPainelTabela() {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 15));
 
-        String[] colunas = {"Paciente", "Profissional", "Data", "Horário", "Situação"};
-        modeloTabela = new DefaultTableModel(colunas, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
-        };
+        JPanel innerPanel = new JPanel(new BorderLayout(5, 5));
 
+        modeloTabela = new DefaultTableModel(new String[]{"Paciente", "Profissional", "Data", "Horário", "Situação"}, 0);
         tabelaAtendimentos = new JTable(modeloTabela);
-        tabelaAtendimentos.setFillsViewportHeight(true);
+        tabelaAtendimentos.getColumnModel().getColumn(4).setCellRenderer(new SituacaoRenderer());
 
-        DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
-        centralizado.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < tabelaAtendimentos.getColumnCount(); i++) {
-            tabelaAtendimentos.getColumnModel().getColumn(i).setCellRenderer(centralizado);
-        }
+        tfPesquisar = new JTextField();
+        tfPesquisar.setPreferredSize(new Dimension(250, 25));
 
-        sorter = new TableRowSorter<>(modeloTabela);
-        tabelaAtendimentos.setRowSorter(sorter);
+        JPanel painelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        painelPesquisa.add(new JLabel("Pesquisar: "));
+        painelPesquisa.add(tfPesquisar);
 
-        JScrollPane scrollTabela = new JScrollPane(tabelaAtendimentos);
+        innerPanel.add(painelPesquisa, BorderLayout.NORTH);
+        innerPanel.add(new JScrollPane(tabelaAtendimentos), BorderLayout.CENTER);
 
-        // Painel de pesquisa
-        JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel lblPesquisar = new JLabel("Pesquisar atendimento:");
-        lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
-        lblPesquisar.setForeground(Color.DARK_GRAY);
-        panelPesquisa.add(lblPesquisar);
-
-        tfPesquisar = new JTextField(20);
-        panelPesquisa.add(tfPesquisar);
-        tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
+        tfPesquisar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filtrar(); }
             private void filtrar() {
-                String texto = tfPesquisar.getText().trim();
-                if (texto.isEmpty()) sorter.setRowFilter(null);
-                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0));
+                String text = tfPesquisar.getText();
+                TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(modeloTabela);
+                tabelaAtendimentos.setRowSorter(sorter);
+                if (text.isEmpty()) sorter.setRowFilter(null);
+                else sorter.setRowFilter(javax.swing.RowFilter.regexFilter("(?i)" + text));
             }
-            public void insertUpdate(DocumentEvent e) { filtrar(); }
-            public void removeUpdate(DocumentEvent e) { filtrar(); }
-            public void changedUpdate(DocumentEvent e) { filtrar(); }
         });
 
-        panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
-
-        JPanel panelTabelaComMargem = new JPanel(new BorderLayout());
-        panelTabelaComMargem.setBorder(BorderFactory.createEmptyBorder(0,0,15,15));
-        panelTabelaComMargem.add(scrollTabela, BorderLayout.CENTER);
-
-        panelTabelaWrapper.add(panelTabelaComMargem, BorderLayout.CENTER);
-
-        return panelTabelaWrapper;
+        panel.add(innerPanel, BorderLayout.CENTER);
+        return panel;
     }
 
-    private void carregarPacientes() {
+    private void carregarDadosIniciais() {
         try {
-            PacienteController pc = new PacienteController();
-            List<Paciente> pacientes = pc.listarTodos();
             cbPaciente.removeAllItems();
-            for (Paciente p : pacientes) {
-                cbPaciente.addItem(p);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+            pacienteController.listarTodos().forEach(cbPaciente::addItem);
 
-    private void carregarProfissionais() {
-        try {
-            ProfissionalController profController = new ProfissionalController();
-            List<Profissional> profissionais = profController.listarTodos();
             cbProfissional.removeAllItems();
-            for (Profissional p : profissionais) {
-                cbProfissional.addItem(p);
-            }
+            profissionalController.listarTodos().stream().filter(Profissional::isAtivo).forEach(cbProfissional::addItem);
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage());
         }
+        carregarAtendimentos();
     }
 
-    private void carregarDatas() {
-        cbData.removeAllItems();
-        LocalDate hoje = LocalDate.now();
-        for (int i = 0; i <= 30; i++) { // próximos 30 dias
-            cbData.addItem(hoje.plusDays(i));
-        }
-    }
-
-    private void atualizarHorariosDisponiveis() {
+    private void atualizarHorarios() {
         cbHorario.removeAllItems();
+        cbHorario.setEnabled(false);
+
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
-        LocalDate data = (LocalDate) cbData.getSelectedItem();
-        if (prof == null || data == null) return;
+        if (prof == null) return;
+
+        Calendar cal = calendar.getCalendar();
+        if (cal == null) return;
+
+        LocalDate data = cal.getTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        // Ajuste: Java DayOfWeek -> 1=segunda ... 7=domingo
+        int diaSemana = data.getDayOfWeek().getValue(); 
 
         try {
-            EscalaProfissionalController escalaController = new EscalaProfissionalController();
-            AtendimentoController atendimentoController = new AtendimentoController();
-
-            int diaSemana = data.getDayOfWeek().getValue(); // 1=Segunda ... 7=Domingo
-            List<EscalaProfissional> escalas = escalaController.listarDisponiveis(prof.getId(), diaSemana);
-
-            List<LocalTime> horariosOcupados = atendimentoController.listarTodos().stream()
-                    .filter(a -> a.getProfissional().getId() == prof.getId() && a.getData().equals(data))
-                    .map(Atendimento::getHora)
+            // 1) filtrar escalas do profissional e dia correto
+            List<EscalaProfissional> escalas = escalaController.listarTodas().stream()
+                    .filter(e -> e.getProfissionalId() == prof.getId()
+                            && e.getDiaSemana() == diaSemana
+                            && e.isDisponivel())
                     .collect(Collectors.toList());
 
+            // 2) pegar horários já ocupados
+            List<LocalTime> ocupados = atendimentoController.listarTodos().stream()
+                    .filter(a -> a.getProfissional().getId() == prof.getId()
+                            && a.getDataHora().toLocalDateTime().toLocalDate().isEqual(data))
+                    .map(a -> a.getDataHora().toLocalDateTime().toLocalTime())
+                    .collect(Collectors.toList());
+
+            // 3) popular combobox de horários
             for (EscalaProfissional e : escalas) {
-                LocalTime hora = e.getHoraInicio();
-                while (!hora.isAfter(e.getHoraFim().minusMinutes(30))) {
-                    if (!horariosOcupados.contains(hora)) {
+                LocalTime hora = e.getHoraInicio().toLocalTime();
+                LocalTime fim = e.getHoraFim().toLocalTime();
+                while (!hora.isAfter(fim.minusMinutes(30))) {
+                    if (!ocupados.contains(hora)) {
                         cbHorario.addItem(hora);
                     }
                     hora = hora.plusMinutes(30);
                 }
             }
 
+            cbHorario.setEnabled(cbHorario.getItemCount() > 0);
+
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Erro ao atualizar horários: " + ex.getMessage());
         }
     }
+
+
+
 
     private void limparCampos() {
-        cbPaciente.setSelectedIndex(0);
-        cbProfissional.setSelectedIndex(0);
-        cbData.setSelectedIndex(0);
+        cbPaciente.setSelectedIndex(-1);
+        cbProfissional.setSelectedIndex(-1);
+        calendar.setCalendar(null);
         cbHorario.removeAllItems();
+        tfPesquisar.setText("");
     }
 
-    private void salvarAtendimento() throws CampoObrigatorioException, SQLException {
-        Paciente paciente = (Paciente) cbPaciente.getSelectedItem();
-        Profissional profissional = (Profissional) cbProfissional.getSelectedItem();
-        LocalDate data = (LocalDate) cbData.getSelectedItem();
-        LocalTime hora = (LocalTime) cbHorario.getSelectedItem();
+    private void salvarAtendimento() {
+        try {
+            Paciente paciente = (Paciente) cbPaciente.getSelectedItem();
+            Profissional profissional = (Profissional) cbProfissional.getSelectedItem();
+            Calendar cal = calendar.getCalendar();
+            if (cal == null || paciente == null || profissional == null || cbHorario.getSelectedItem() == null) {
+                throw new CampoObrigatorioException("Preencha todos os campos!");
+            }
+            LocalDate data = cal.getTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            LocalTime hora = (LocalTime) cbHorario.getSelectedItem();
 
-        if (paciente == null || profissional == null || data == null || hora == null) {
-            throw new CampoObrigatorioException("Preencha todos os campos obrigatórios!");
-        }
+            Atendimento at = new Atendimento();
+            at.setPaciente(paciente);
+            at.setProfissional(profissional);
+            at.setDataHora(Timestamp.valueOf(data.atTime(hora)));
+            at.setDuracaoMin(30);
+            at.setTipo(Atendimento.Tipo.AVALIACAO);
+            at.setSituacao(Atendimento.Situacao.AGENDADO);
+            at.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
-        AtendimentoController ac = new AtendimentoController();
-
-        // valida sobreposição
-        boolean existe = ac.listarTodos().stream()
-                .anyMatch(a -> a.getProfissional().getId() == profissional.getId()
-                        && a.getData().equals(data)
-                        && a.getHora().equals(hora));
-
-        if (existe) {
-            throw new CampoObrigatorioException("Horário já ocupado!");
-        }
-
-        Atendimento atendimento = new Atendimento();
-        atendimento.setPaciente(paciente);
-        atendimento.setProfissional(profissional);
-        atendimento.setData(data);
-        atendimento.setHora(hora);
-        atendimento.setUsuario(Sessao.getUsuarioLogado().getLogin());
-
-        if (ac.salvar(atendimento)) {
-            JOptionPane.showMessageDialog(this, "Atendimento salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-            limparCampos();
-            atualizarHorariosDisponiveis();
-            carregarAtendimentos();
+            if (atendimentoController.criarAtendimento(at, Sessao.getUsuarioLogado().getLogin())) {
+                JOptionPane.showMessageDialog(this, "Atendimento salvo!");
+                limparCampos();
+                carregarAtendimentos();
+            }
+        } catch (CampoObrigatorioException | SQLException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void carregarAtendimentos() {
         try {
-            AtendimentoController ac = new AtendimentoController();
-            List<Atendimento> atendimentos = ac.listarTodos();
-
             modeloTabela.setRowCount(0);
-            for (Atendimento a : atendimentos) {
-                modeloTabela.addRow(new Object[]{
-                        a.getPaciente().getNome(),
-                        a.getProfissional().getNome(),
-                        a.getData().format(formatterData),
-                        a.getHora().format(formatterHora),
-                        a.getSituacao()
-                });
-            }
-
+            atendimentoController.listarTodos().forEach(a ->
+                    modeloTabela.addRow(new Object[]{
+                            a.getPacienteNome(),
+                            a.getProfissionalNome(),
+                            a.getData().format(formatterData),
+                            a.getHora().format(formatterHora),
+                            a.getSituacao()
+                    })
+            );
         } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage());
+        }
+    }
+
+    private static class SituacaoRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            if (value instanceof Atendimento.Situacao) {
+                Atendimento.Situacao sit = (Atendimento.Situacao) value;
+                switch (sit) {
+                    case AGENDADO -> setBackground(new Color(144, 238, 144));
+                    case REALIZADO -> setBackground(new Color(135, 206, 250));
+                    case FALTOU -> setBackground(new Color(255, 165, 0));
+                    case CANCELADO -> setBackground(new Color(255, 99, 71));
+                }
+                setForeground(Color.BLACK);
+            }
+            return this;
         }
     }
 }
