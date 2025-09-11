@@ -146,6 +146,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panelSelecao.add(lblProf, gbc);
         cbProfissional = new JComboBox<>();
         cbProfissional.setPreferredSize(new Dimension(300, 30));
+        cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
         panelSelecao.add(cbProfissional, gbc);
 
@@ -155,6 +156,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panelSelecao.add(lblTipo, gbc);
         cbTipo = new JComboBox<>(Atendimento.Tipo.values());
         cbTipo.setPreferredSize(new Dimension(300, 30));
+        cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
         panelSelecao.add(cbTipo, gbc);
 
@@ -170,6 +172,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         cbHorario = new JComboBox<>();
         cbHorario.setPreferredSize(new Dimension(150, 30));
         cbHorario.setEnabled(false);
+        cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         horarioPanel.add(lblHorario);
         horarioPanel.add(cbHorario);
         panelDataHora.add(horarioPanel, BorderLayout.SOUTH);
@@ -191,22 +194,23 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setPreferredSize(new Dimension(100, 35));
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
         btnLimpar.setPreferredSize(new Dimension(100, 35));
+        btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         panelBotoes.add(btnSalvar);
         panelBotoes.add(btnLimpar);
 
         btnSalvar.addActionListener(e -> salvarAtendimento());
         btnLimpar.addActionListener(e -> {
-			try {
-				limparCampos();
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		});
+            try {
+                limparCampos();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+        });
 
         panel.add(panelVertical, BorderLayout.CENTER);
         panel.add(panelBotoes, BorderLayout.SOUTH);
@@ -214,23 +218,20 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         cbProfissional.addActionListener(e -> atualizarHorarios());
         txtBuscaPaciente.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { try {
-				atualizarPaciente();
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} }
+                atualizarPaciente();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            } }
             public void removeUpdate(DocumentEvent e) { try {
-				atualizarPaciente();
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} }
+                atualizarPaciente();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            } }
             public void changedUpdate(DocumentEvent e) { try {
-				atualizarPaciente();
-			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} }
+                atualizarPaciente();
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            } }
         });
 
         return panel;
@@ -266,8 +267,10 @@ public class MarcacaoAtendimentoPanel extends JPanel {
 
         cbMes = new JComboBox<>(meses);
         cbMes.setPreferredSize(new Dimension(120, 30));
+        cbMes.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cbAno = new JComboBox<>();
         cbAno.setPreferredSize(new Dimension(80, 30));
+        cbAno.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         int anoAtual = LocalDate.now().getYear();
         for (int i = anoAtual - 5; i <= anoAtual + 5; i++) cbAno.addItem(i);
         cbMes.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
@@ -331,6 +334,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         for (int i = 0; i < diaSemanaInicio; i++) painelDias.add(new JLabel(""));
 
         int diasNoMes = ym.lengthOfMonth();
+        LocalDate hoje = LocalDate.now();
         for (int dia = 1; dia <= diasNoMes; dia++) {
             LocalDate d = ym.atDay(dia);
             JButton btn = new JButton(String.valueOf(dia));
@@ -340,28 +344,45 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             btn.setBorder(BorderFactory.createEmptyBorder());
             btn.setFocusPainted(false);
 
-            if (d.equals(LocalDate.now())) {
-                btn.setBackground(new Color(144, 238, 144)); // Verde suave
+            // Definir cores com base na data
+            if (d.equals(dataSelecionada)) {
+                btn.setBackground(new Color(255, 204, 153)); // Laranja suave para dia selecionado
+                btn.setForeground(Color.BLACK);
+                btn.setBorder(BorderFactory.createLineBorder(primaryColor, 2)); // Borda para efeito pressionado
+            } else if (d.isBefore(hoje)) {
+                btn.setBackground(new Color(220, 220, 220)); // Cinza claro para dias passados
+                btn.setForeground(Color.BLACK);
+            } else if (d.equals(hoje)) {
+                btn.setBackground(new Color(144, 238, 144)); // Verde suave para o dia atual
                 btn.setForeground(Color.BLACK);
             } else {
-                btn.setBackground(Color.WHITE);
+                btn.setBackground(new Color(173, 216, 230)); // Azul suave para dias futuros
                 btn.setForeground(Color.BLACK);
             }
 
             btn.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    btn.setBackground(primaryColor);
-                    btn.setForeground(Color.WHITE);
+                    if (!d.equals(dataSelecionada)) {
+                        btn.setBackground(primaryColor);
+                        btn.setForeground(Color.WHITE);
+                    }
                 }
 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    if (d.equals(LocalDate.now())) {
-                        btn.setBackground(new Color(144, 238, 144));
+                    if (d.equals(dataSelecionada)) {
+                        btn.setBackground(new Color(255, 204, 153)); // Laranja suave
+                        btn.setForeground(Color.BLACK);
+                        btn.setBorder(BorderFactory.createLineBorder(primaryColor, 2));
+                    } else if (d.isBefore(hoje)) {
+                        btn.setBackground(new Color(220, 220, 220)); // Cinza claro
+                        btn.setForeground(Color.BLACK);
+                    } else if (d.equals(hoje)) {
+                        btn.setBackground(new Color(144, 238, 144)); // Verde suave
                         btn.setForeground(Color.BLACK);
                     } else {
-                        btn.setBackground(Color.WHITE);
+                        btn.setBackground(new Color(173, 216, 230)); // Azul suave
                         btn.setForeground(Color.BLACK);
                     }
                 }
@@ -370,6 +391,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             btn.addActionListener(e -> {
                 dataSelecionada = d;
                 atualizarHorarios();
+                atualizarCalendario(); // Atualiza para destacar o novo dia selecionado
             });
             painelDias.add(btn);
         }
