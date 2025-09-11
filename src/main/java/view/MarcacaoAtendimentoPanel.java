@@ -129,11 +129,11 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         lblEmail.setFont(labelFont);
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
-        txtObservacoes = new JTextArea(3, 20);
+        txtObservacoes = new JTextArea(5, 20);
         txtObservacoes.setLineWrap(true);
         txtObservacoes.setWrapStyleWord(true);
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
-        scrollObservacoes.setPreferredSize(new Dimension(300, 60));
+        scrollObservacoes.setPreferredSize(new Dimension(300, 100));
         panelDados.add(lblNomePaciente);
         panelDados.add(lblTelefone);
         panelDados.add(lblIdade);
