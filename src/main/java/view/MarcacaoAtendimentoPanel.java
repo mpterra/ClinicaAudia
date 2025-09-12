@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +55,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JComboBox<Integer> cbAno;
 
     private JTextField txtBuscaProfissional;
+    
+    private DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final String[] meses = { "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto",
             "Setembro", "Outubro", "Novembro", "Dezembro" };
@@ -83,8 +86,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         JPanel painelTabela = criarPainelTabela();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
-        splitPane.setResizeWeight(0.48);
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.48));
+        splitPane.setResizeWeight(0.495);
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.495));
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
 
@@ -523,24 +526,34 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
-                LocalDate dataAtendimento = (LocalDate) getValueAt(row, 0);
-                LocalDate hoje = LocalDate.now();
-                if (dataAtendimento.isBefore(hoje)) {
-                    c.setBackground(new Color(220, 220, 220));
-                } else {
-                    Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
-                    switch (situacao) {
-                        case AGENDADO -> c.setBackground(new Color(173, 216, 230));
-                        case REALIZADO -> c.setBackground(new Color(144, 238, 144));
-                        case FALTOU -> c.setBackground(new Color(255, 255, 153));
-                        case CANCELADO -> c.setBackground(new Color(255, 182, 193));
-                        default -> c.setBackground(backgroundColor);
+
+                try {
+                    // Converte a String de volta para LocalDate para comparar
+                    String dataStr = (String) getValueAt(row, 0);
+                    LocalDate dataAtendimento = LocalDate.parse(dataStr, formatoData);
+                    LocalDate hoje = LocalDate.now();
+
+                    if (dataAtendimento.isBefore(hoje)) {
+                        c.setBackground(new Color(220, 220, 220));
+                    } else {
+                        Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
+                        switch (situacao) {
+                            case AGENDADO -> c.setBackground(new Color(173, 216, 230));
+                            case REALIZADO -> c.setBackground(new Color(144, 238, 144));
+                            case FALTOU -> c.setBackground(new Color(255, 255, 153));
+                            case CANCELADO -> c.setBackground(new Color(255, 182, 193));
+                            default -> c.setBackground(backgroundColor);
+                        }
                     }
+                } catch (Exception e) {
+                    c.setBackground(backgroundColor); // fallback se algo der errado
                 }
+
                 c.setForeground(Color.BLACK);
                 return c;
             }
         };
+
         tabelaAtendimentos.setFillsViewportHeight(true);
         tabelaAtendimentos.setRowHeight(25);
         tabelaAtendimentos.setFont(labelFont);
@@ -654,9 +667,14 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         try {
             List<Atendimento> atendimentos = atendimentoController.listarTodos();
             for (Atendimento a : atendimentos) {
-                modeloTabela.addRow(new Object[] { a.getDataHora().toLocalDateTime().toLocalDate(),
-                        a.getDataHora().toLocalDateTime().toLocalTime(), a.getPacienteNome(),
-                        a.getProfissional().getNome(), a.getTipo(), a.getSituacao() });
+            	modeloTabela.addRow(new Object[] {
+            		    a.getDataHora().toLocalDateTime().toLocalDate().format(formatoData),
+            		    a.getDataHora().toLocalDateTime().toLocalTime(),
+            		    a.getPacienteNome(),
+            		    a.getProfissional().getNome(),
+            		    a.getTipo(),
+            		    a.getSituacao()
+            		});
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro",
