@@ -29,13 +29,14 @@ public class AgendaPanel extends JPanel {
     private JComboBox<String> cbMes;
     private JComboBox<Integer> cbAno;
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final DateTimeFormatter formatterData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private final DateTimeFormatter formatterHora = DateTimeFormatter.ofPattern("HH:mm");
     private final String[] meses = {"Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                                     "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"};
 
     public AgendaPanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(15, 15, 15, 15)); // padding 15%
+        setBorder(new EmptyBorder(15, 15, 15, 15));
 
         JLabel lblTitulo = new JLabel("Agenda de Atendimentos", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
@@ -47,12 +48,16 @@ public class AgendaPanel extends JPanel {
         JPanel panelDireito = criarTabelaAtendimentos();
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelEsquerdo, panelDireito);
-        splitPane.setResizeWeight(0.67); // 67% calendário / 33% tabela
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
+        splitPane.setDividerLocation(0.55); // 55% calendário, 45% tabela
 
-        panelEsquerdo.setPreferredSize(new Dimension(600, 600));
-        panelDireito.setPreferredSize(new Dimension(300, 600));
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                splitPane.setDividerLocation(0.55);
+            }
+        });
 
         add(splitPane, BorderLayout.CENTER);
 
@@ -122,14 +127,56 @@ public class AgendaPanel extends JPanel {
     private JPanel criarTabelaAtendimentos() {
         JPanel panelTabela = new JPanel(new BorderLayout());
 
-        String[] colunas = {"Horário", "Paciente", "Descrição"};
+        String[] colunas = {"Dia", "Hora", "Paciente", "Observação"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
 
-        tabelaAtendimentos = new JTable(modeloTabela);
+        tabelaAtendimentos = new JTable(modeloTabela) {
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+
+                if (isRowSelected(row)) {
+                    c.setBackground(new Color(135, 206, 250)); // azul claro seleção
+                    c.setForeground(Color.BLACK);
+                    return c;
+                }
+
+                String dataStr = (String) getValueAt(row, 0);
+                LocalDate dataLinha = LocalDate.parse(dataStr, formatterData);
+
+                Color bg = Color.WHITE;
+                Color fg = Color.BLACK;
+
+                LocalDate hoje = LocalDate.now();
+
+                if (dataLinha.isBefore(hoje)) bg = new Color(220, 220, 220); // passado
+                else if (dataLinha.equals(hoje)) bg = new Color(144, 238, 144); // hoje
+                else bg = new Color(173, 216, 230); // futuro
+
+                Object obsObj = getValueAt(row, 3);
+                if (obsObj != null) {
+                    String obs = obsObj.toString().toUpperCase();
+                    switch (obs) {
+                        case "REALIZADO": bg = new Color(144, 238, 144); break;
+                        case "FALTOU": bg = new Color(255, 255, 153); break;
+                        case "CANCELADO": bg = new Color(255, 182, 193); break;
+                        case "AGENDADO": bg = new Color(173, 216, 230); break;
+                    }
+                }
+
+                c.setBackground(bg);
+                c.setForeground(fg);
+                return c;
+            }
+        };
+
         tabelaAtendimentos.setFillsViewportHeight(true);
+        tabelaAtendimentos.getTableHeader().setBackground(new Color(30, 144, 255)); // azul escuro
+        tabelaAtendimentos.getTableHeader().setForeground(Color.WHITE);
+        tabelaAtendimentos.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
 
         DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
         centralizado.setHorizontalAlignment(SwingConstants.CENTER);
@@ -155,8 +202,9 @@ public class AgendaPanel extends JPanel {
         if (larguraTotal == 0) return;
 
         tabelaAtendimentos.getColumnModel().getColumn(0).setPreferredWidth((int)(larguraTotal * 0.2));
-        tabelaAtendimentos.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.4));
-        tabelaAtendimentos.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.4));
+        tabelaAtendimentos.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.15));
+        tabelaAtendimentos.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.35));
+        tabelaAtendimentos.getColumnModel().getColumn(3).setPreferredWidth((int)(larguraTotal * 0.3));
     }
 
     private void atualizarCalendario() {
@@ -190,6 +238,11 @@ public class AgendaPanel extends JPanel {
                 btnDia.setEnabled(false);
                 btnDia.setBackground(Color.decode("#E0E0E0"));
                 btnDia.setForeground(Color.decode("#666666"));
+            } else if (dataAtual.equals(dataSelecionada)) {
+                btnDia.setBackground(Color.decode("#FAD7A0"));
+                btnDia.setForeground(Color.BLACK);
+                btnDia.getModel().setPressed(true);
+                btnDia.getModel().setArmed(true);
             } else if (dataAtual.equals(LocalDate.now())) {
                 btnDia.setBackground(Color.decode("#D5F5E3"));
                 btnDia.setForeground(Color.BLACK);
@@ -202,8 +255,10 @@ public class AgendaPanel extends JPanel {
             }
 
             btnDia.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
             btnDia.addActionListener(e -> {
                 dataSelecionada = dataAtual;
+                atualizarCalendario();
                 carregarAtendimentosDoDia();
             });
 
@@ -226,9 +281,10 @@ public class AgendaPanel extends JPanel {
 
             for (Atendimento a : atendimentos) {
                 modeloTabela.addRow(new Object[]{
-                        a.getDataHora().toLocalDateTime().toString(),
-                        a.getPacienteNome(),
-                        a.getNotas()
+                        a.getDataHora().toLocalDateTime().format(formatterData), // Dia
+                        a.getDataHora().toLocalDateTime().format(formatterHora),  // Hora
+                        a.getPacienteNome(),                                        // Paciente
+                        a.getSituacao()                               // Observação / Status
                 });
             }
 

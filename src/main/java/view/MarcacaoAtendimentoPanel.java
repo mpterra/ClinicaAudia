@@ -336,16 +336,24 @@ public class MarcacaoAtendimentoPanel extends JPanel {
 
     private void atualizarPaciente() throws SQLException {
         String busca = txtBuscaPaciente.getText().toLowerCase();
-        Paciente p = pacienteController.listarTodos().stream().filter(pa -> pa.getNome().toLowerCase().contains(busca))
-                .findFirst().orElse(null);
-        if (p != null) {
-            lblNomePaciente.setText("Nome: " + p.getNome());
-            lblTelefone.setText("Telefone: " + (p.getTelefone() != null ? p.getTelefone() : "N/A"));
-            long idade = p.getDataNascimento() != null
-                    ? ChronoUnit.YEARS.between(p.getDataNascimento(), LocalDate.now())
+        Paciente ultimoPaciente = null;
+
+        for (Paciente p : pacienteController.listarTodos()) {
+            if (p.getNome().toLowerCase().contains(busca)) {
+                if (ultimoPaciente == null || p.getId() > ultimoPaciente.getId()) {
+                    ultimoPaciente = p;
+                }
+            }
+        }
+
+        if (ultimoPaciente != null) {
+            lblNomePaciente.setText("Nome: " + ultimoPaciente.getNome());
+            lblTelefone.setText("Telefone: " + (ultimoPaciente.getTelefone() != null ? ultimoPaciente.getTelefone() : "N/A"));
+            long idade = ultimoPaciente.getDataNascimento() != null
+                    ? ChronoUnit.YEARS.between(ultimoPaciente.getDataNascimento(), LocalDate.now())
                     : 0;
             lblIdade.setText("Idade: " + idade);
-            lblEmail.setText("Email: " + (p.getEmail() != null ? p.getEmail() : "N/A"));
+            lblEmail.setText("Email: " + (ultimoPaciente.getEmail() != null ? ultimoPaciente.getEmail() : "N/A"));
         } else {
             lblNomePaciente.setText("Nome:");
             lblTelefone.setText("Telefone:");
@@ -353,6 +361,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             lblEmail.setText("Email:");
         }
     }
+
 
     private JPanel criarMiniCalendario() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
