@@ -635,7 +635,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             return;
 
         try {
-            int diaSemana = dataSelecionada.getDayOfWeek().getValue();
+            int diaSemana = dataSelecionada.getDayOfWeek().getValue()-1;
 
             List<EscalaProfissional> escalas = escalaController.listarTodas().stream().filter(
                     e -> e.getProfissionalId() == prof.getId() && e.getDiaSemana() == diaSemana && e.isDisponivel())
