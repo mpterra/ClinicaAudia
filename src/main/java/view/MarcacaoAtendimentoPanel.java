@@ -31,6 +31,7 @@ import model.EscalaProfissional;
 import model.Paciente;
 import model.Profissional;
 import util.Sessao;
+import view.dialogs.AtendimentoEditDialog;
 
 public class MarcacaoAtendimentoPanel extends JPanel {
 
@@ -562,6 +563,34 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 return c;
             }
         };
+        
+        tabelaAtendimentos.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && tabelaAtendimentos.getSelectedRow() != -1) {
+                    int row = tabelaAtendimentos.convertRowIndexToModel(tabelaAtendimentos.getSelectedRow());
+                    String dataStr = (String) modeloTabela.getValueAt(row, 0);
+                    LocalTime horario = (LocalTime) modeloTabela.getValueAt(row, 1);
+                    String pacienteNome = (String) modeloTabela.getValueAt(row, 2);
+                    try {
+                        LocalDate data = LocalDate.parse(dataStr, formatoData);
+                        Atendimento atendimento = atendimentoController.listarTodos().stream()
+                                .filter(a -> a.getPaciente().getNome().equals(pacienteNome)
+                                        && a.getDataHora().toLocalDateTime().toLocalDate().equals(data)
+                                        && a.getDataHora().toLocalDateTime().toLocalTime().equals(horario))
+                                .findFirst()
+                                .orElse(null);
+                        if (atendimento != null) {
+                            AtendimentoEditDialog dialog = new AtendimentoEditDialog((Frame) SwingUtilities.getWindowAncestor(MarcacaoAtendimentoPanel.this), atendimento);
+                            dialog.setVisible(true);
+                            carregarAtendimentos(); // Atualiza a tabela após fechar o dialog
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(MarcacaoAtendimentoPanel.this, "Erro ao abrir atendimento: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
 
         tabelaAtendimentos.setFillsViewportHeight(true);
         tabelaAtendimentos.setRowHeight(25);
