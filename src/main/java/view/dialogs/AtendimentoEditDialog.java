@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import controller.AtendimentoController;
 import controller.EscalaProfissionalController;
-import controller.PacienteController;
 import controller.ProfissionalController;
 import exception.CampoObrigatorioException;
 import model.Atendimento;
@@ -54,7 +53,7 @@ public class AtendimentoEditDialog extends JDialog {
         super(parent, "Editar Atendimento", true);
         this.atendimento = atendimento;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(700, 600); // Aumentado para 700x600
+        setSize(700, 600);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         setBackground(backgroundColor);
@@ -66,22 +65,22 @@ public class AtendimentoEditDialog extends JDialog {
 
     private void initComponents() {
         // Painel principal
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
 
         // Título
         JLabel lblTitulo = new JLabel("Editar Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(0, 0, 15, 0));
+        lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         // Formulário
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.anchor = GridBagConstraints.CENTER;
@@ -92,9 +91,9 @@ public class AtendimentoEditDialog extends JDialog {
         pacientePanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor), "Dados do Paciente",
                         TitledBorder.CENTER, TitledBorder.TOP, labelFont, primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
+                new EmptyBorder(15, 15, 15, 15)));
         GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(5, 0, 5, 0);
+        gbcP.insets = new Insets(10, 0, 10, 0);
         gbcP.anchor = GridBagConstraints.CENTER;
 
         lblNomePaciente = new JLabel();
@@ -194,7 +193,7 @@ public class AtendimentoEditDialog extends JDialog {
         gbc.gridwidth = 2;
         formPanel.add(cbHorario, gbc);
 
-        // Observações (maior)
+        // Observações (melhorado)
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
         gbc.gridx = 0;
@@ -202,18 +201,18 @@ public class AtendimentoEditDialog extends JDialog {
         gbc.gridwidth = 1;
         formPanel.add(lblObservacoes, gbc);
 
-        txtObservacoes = new JTextArea(6, 25); // Aumentado para 6 linhas e 25 colunas
+        txtObservacoes = new JTextArea(6, 30); // Aumentado para 6 linhas e 30 colunas
         txtObservacoes.setLineWrap(true);
         txtObservacoes.setWrapStyleWord(true);
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
-        scrollObservacoes.setPreferredSize(new Dimension(400, 150)); // Aumentado o tamanho
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH; // Permite expansão vertical e horizontal
         formPanel.add(scrollObservacoes, gbc);
 
         // Botões
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         buttonPanel.setBackground(backgroundColor);
 
         JButton btnSalvar = new JButton("Salvar");
@@ -251,42 +250,46 @@ public class AtendimentoEditDialog extends JDialog {
 
     private void preencherCampos() {
         Paciente paciente = atendimento.getPaciente();
-        lblNomePaciente.setText("Nome: " + paciente.getNome());
-        lblTelefone.setText("Telefone: " + (paciente.getTelefone() != null ? paciente.getTelefone() : "N/A"));
-        long idade = paciente.getDataNascimento() != null
-                ? java.time.temporal.ChronoUnit.YEARS.between(paciente.getDataNascimento(), LocalDate.now())
-                : 0;
-        lblIdade.setText("Idade: " + idade);
-        lblEmail.setText("Email: " + (paciente.getEmail() != null ? paciente.getEmail() : "N/A"));
+        if (paciente != null) {
+            lblNomePaciente.setText("Nome: " + (paciente.getNome() != null ? paciente.getNome() : "Não informado"));
+            lblTelefone.setText("Telefone: " + (paciente.getTelefone() != null ? paciente.getTelefone() : "Não informado"));
+            long idade = paciente.getDataNascimento() != null
+                    ? java.time.temporal.ChronoUnit.YEARS.between(paciente.getDataNascimento(), LocalDate.now())
+                    : 0;
+            lblIdade.setText("Idade: " + (idade > 0 ? String.valueOf(idade) : "Não informada"));
+            lblEmail.setText("Email: " + (paciente.getEmail() != null ? paciente.getEmail() : "Não informado"));
+        } else {
+            lblNomePaciente.setText("Nome: Não informado");
+            lblTelefone.setText("Telefone: Não informado");
+            lblIdade.setText("Idade: Não informada");
+            lblEmail.setText("Email: Não informado");
+        }
         cbProfissional.setSelectedItem(atendimento.getProfissional());
         cbTipo.setSelectedItem(atendimento.getTipo());
         cbSituacao.setSelectedItem(atendimento.getSituacao());
         String dataStr = atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData);
         cbData.addItem(dataStr);
-        cbData.setSelectedItem(dataStr); // Define o item inicial corretamente
+        cbData.setSelectedItem(dataStr);
         cbHorario.addItem(atendimento.getDataHora().toLocalDateTime().toLocalTime());
-        cbHorario.setSelectedItem(atendimento.getDataHora().toLocalDateTime().toLocalTime()); // Define o horário inicial
-        txtObservacoes.setText(atendimento.getNotas());
+        cbHorario.setSelectedItem(atendimento.getDataHora().toLocalDateTime().toLocalTime());
+        txtObservacoes.setText(atendimento.getNotas() != null ? atendimento.getNotas() : "");
     }
 
     private void carregarDadosIniciais() {
         try {
-            // Carregar profissionais
             cbProfissional.removeAllItems();
             profissionalController.listarTodos().stream()
                     .filter(Profissional::isAtivo)
                     .forEach(cbProfissional::addItem);
 
-            // Carregar datas próximas (hoje e futuro)
-            cbData.removeAllItems(); // Limpa antes de preencher
+            cbData.removeAllItems();
             LocalDate hoje = LocalDate.now();
             for (int i = 0; i < 30; i++) {
                 LocalDate data = hoje.plusDays(i);
                 String dataFormatted = data.format(formatoData);
                 cbData.addItem(dataFormatted);
             }
-            cbData.setSelectedItem(atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData)); // Define a data inicial
-
+            cbData.setSelectedItem(atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData));
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
@@ -311,7 +314,7 @@ public class AtendimentoEditDialog extends JDialog {
             List<LocalTime> ocupados = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getProfissional().getId() == prof.getId()
                             && a.getDataHora().toLocalDateTime().toLocalDate().equals(data)
-                            && a.getId() != atendimento.getId()) // Exclui o próprio atendimento
+                            && a.getId() != atendimento.getId())
                     .map(a -> a.getDataHora().toLocalDateTime().toLocalTime())
                     .collect(Collectors.toList());
 
@@ -325,7 +328,6 @@ public class AtendimentoEditDialog extends JDialog {
                     hora = hora.plusMinutes(30);
                 }
             }
-            // Tenta selecionar o horário original se ainda estiver disponível
             LocalTime horarioOriginal = atendimento.getDataHora().toLocalDateTime().toLocalTime();
             if (cbHorario.getItemCount() > 0) {
                 cbHorario.setSelectedItem(horarioOriginal);
@@ -360,7 +362,6 @@ public class AtendimentoEditDialog extends JDialog {
             atendimento.setTipo(tipo);
             atendimento.setSituacao(situacao);
             atendimento.setNotas(txtObservacoes.getText());
-            atendimento.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
             if (atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin())) {
                 JOptionPane.showMessageDialog(this, "Atendimento atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
