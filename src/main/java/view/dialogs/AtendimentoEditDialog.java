@@ -5,7 +5,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -17,6 +16,7 @@ import java.util.stream.Collectors;
 import controller.AtendimentoController;
 import controller.EscalaProfissionalController;
 import controller.ProfissionalController;
+import controller.PacienteController;
 import exception.CampoObrigatorioException;
 import model.Atendimento;
 import model.EscalaProfissional;
@@ -27,10 +27,12 @@ import util.Sessao;
 public class AtendimentoEditDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
-    private final Atendimento atendimento;
+    // agora não é final porque recarrego o objeto a partir do DB
+    private Atendimento atendimento;
     private final AtendimentoController atendimentoController = new AtendimentoController();
     private final ProfissionalController profissionalController = new ProfissionalController();
     private final EscalaProfissionalController escalaController = new EscalaProfissionalController();
+    private final PacienteController pacienteController = new PacienteController();
 
     private JLabel lblNomePaciente;
     private JLabel lblTelefone;
@@ -59,8 +61,26 @@ public class AtendimentoEditDialog extends JDialog {
         setBackground(backgroundColor);
 
         initComponents();
+
+        // carregar dados iniciais primeiro (popula combos)
+        try {
+            carregarDadosIniciais();
+            // tentar recarregar o atendimento completo do banco (se possível)
+            try {
+                Atendimento full = atendimentoController.buscarPorId(this.atendimento.getId());
+                if (full != null) {
+                    this.atendimento = full;
+                }
+            } catch (SQLException ex) {
+                // não interrompe a UI, apenas informa que houve problema ao recarregar
+                JOptionPane.showMessageDialog(this, "Aviso: falha ao recarregar atendimento: " + ex.getMessage(),
+                        "Aviso", JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar dados iniciais: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+
         preencherCampos();
-        carregarDadosIniciais();
     }
 
     private void initComponents() {
@@ -243,55 +263,115 @@ public class AtendimentoEditDialog extends JDialog {
         btnExcluir.addActionListener(e -> excluir());
         btnCancelar.addActionListener(e -> dispose());
 
-        // Listener para mudança de profissional
+        // Listener para mudança de profissional/data
         cbProfissional.addActionListener(e -> atualizarHorarios());
         cbData.addActionListener(e -> atualizarHorarios());
     }
 
     private void preencherCampos() {
-        Paciente paciente = atendimento.getPaciente();
-        if (paciente != null) {
-            lblNomePaciente.setText("Nome: " + (paciente.getNome() != null ? paciente.getNome() : "Não informado"));
-            lblTelefone.setText("Telefone: " + (paciente.getTelefone() != null ? paciente.getTelefone() : "Não informado"));
-            long idade = paciente.getDataNascimento() != null
-                    ? java.time.temporal.ChronoUnit.YEARS.between(paciente.getDataNascimento(), LocalDate.now())
-                    : 0;
-            lblIdade.setText("Idade: " + (idade > 0 ? String.valueOf(idade) : "Não informada"));
-            lblEmail.setText("Email: " + (paciente.getEmail() != null ? paciente.getEmail() : "Não informado"));
-        } else {
+        // atualiza labels do paciente — tenta garantir dados completos
+        try {
+            Paciente paciente = atendimento.getPaciente();
+            if (paciente == null) {
+                // tentar buscar pelo id do paciente (se existir)
+                // não assumimos método getPacienteId; tentamos recuperar via atendimentoController
+                // Atendimento foi recarregado no construtor, então se ainda null, tentamos via pacienteController por nome (fallback).
+                // Simples fallback: se paciente for null, mantemos rótulos "Não informado".
+            } else {
+                // se o paciente veio incompleto (sem endereço etc.), podemos recarregar
+                if (paciente.getId() > 0) {
+                    try {
+                        Paciente completo = pacienteController.buscarPorId(paciente.getId());
+                        if (completo != null) paciente = completo;
+                    } catch (SQLException ignored) { }
+                }
+
+                lblNomePaciente.setText("Nome: " + (paciente.getNome() != null ? paciente.getNome() : "Não informado"));
+                lblTelefone.setText("Telefone: " + (paciente.getTelefone() != null ? paciente.getTelefone() : "Não informado"));
+                long idade = paciente.getDataNascimento() != null
+                        ? java.time.temporal.ChronoUnit.YEARS.between(paciente.getDataNascimento(), LocalDate.now())
+                        : 0;
+                lblIdade.setText("Idade: " + (idade > 0 ? String.valueOf(idade) : "Não informada"));
+                lblEmail.setText("Email: " + (paciente.getEmail() != null ? paciente.getEmail() : "Não informado"));
+            }
+        } catch (Exception ex) {
             lblNomePaciente.setText("Nome: Não informado");
             lblTelefone.setText("Telefone: Não informado");
             lblIdade.setText("Idade: Não informada");
             lblEmail.setText("Email: Não informado");
         }
-        cbProfissional.setSelectedItem(atendimento.getProfissional());
+
+        // Seleciona profissional no combo por id (mais robusto que setSelectedItem)
+        if (atendimento.getProfissional() != null) {
+            selectProfissionalById(atendimento.getProfissional().getId());
+        } else {
+            cbProfissional.setSelectedIndex(-1);
+        }
+
         cbTipo.setSelectedItem(atendimento.getTipo());
         cbSituacao.setSelectedItem(atendimento.getSituacao());
+
+        // Seleciona data: garante que a data do atendimento esteja presente no combo
         String dataStr = atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData);
-        cbData.addItem(dataStr);
+        boolean found = false;
+        for (int i = 0; i < cbData.getItemCount(); i++) {
+            if (cbData.getItemAt(i).equals(dataStr)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // insere no início para fácil seleção
+            cbData.insertItemAt(dataStr, 0);
+        }
         cbData.setSelectedItem(dataStr);
-        cbHorario.addItem(atendimento.getDataHora().toLocalDateTime().toLocalTime());
-        cbHorario.setSelectedItem(atendimento.getDataHora().toLocalDateTime().toLocalTime());
+
+        // Atualizar horários com base no profissional/data selecionados (chama atualizarHorarios)
+        atualizarHorarios();
+
+        // Seleciona horário original; se não existir entre os horários disponíveis, adiciona-o
+        LocalTime horarioOriginal = atendimento.getDataHora().toLocalDateTime().toLocalTime();
+        boolean foundHorario = false;
+        for (int i = 0; i < cbHorario.getItemCount(); i++) {
+            if (cbHorario.getItemAt(i).equals(horarioOriginal)) {
+                foundHorario = true;
+                break;
+            }
+        }
+        if (!foundHorario) {
+            cbHorario.addItem(horarioOriginal);
+        }
+        cbHorario.setSelectedItem(horarioOriginal);
+
         txtObservacoes.setText(atendimento.getNotas() != null ? atendimento.getNotas() : "");
     }
 
-    private void carregarDadosIniciais() {
-        try {
-            cbProfissional.removeAllItems();
-            profissionalController.listarTodos().stream()
-                    .filter(Profissional::isAtivo)
-                    .forEach(cbProfissional::addItem);
+    private void carregarDadosIniciais() throws SQLException {
+        cbProfissional.removeAllItems();
+        profissionalController.listarTodos().stream()
+                .filter(Profissional::isAtivo)
+                .forEach(cbProfissional::addItem);
 
-            cbData.removeAllItems();
-            LocalDate hoje = LocalDate.now();
-            for (int i = 0; i < 30; i++) {
-                LocalDate data = hoje.plusDays(i);
-                String dataFormatted = data.format(formatoData);
-                cbData.addItem(dataFormatted);
+        cbData.removeAllItems();
+        LocalDate hoje = LocalDate.now();
+        for (int i = 0; i < 30; i++) {
+            LocalDate data = hoje.plusDays(i);
+            String dataFormatted = data.format(formatoData);
+            cbData.addItem(dataFormatted);
+        }
+
+        // garante que a data do atendimento esteja presente
+        if (atendimento != null && atendimento.getDataHora() != null) {
+            String dataAt = atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData);
+            boolean achou = false;
+            for (int i = 0; i < cbData.getItemCount(); i++) {
+                if (cbData.getItemAt(i).equals(dataAt)) {
+                    achou = true;
+                    break;
+                }
             }
-            cbData.setSelectedItem(atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData));
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            if (!achou) cbData.insertItemAt(dataAt, 0);
+            cbData.setSelectedItem(dataAt);
         }
     }
 
@@ -328,7 +408,21 @@ public class AtendimentoEditDialog extends JDialog {
                     hora = hora.plusMinutes(30);
                 }
             }
+
+            // habilita e tenta selecionar o horário original (se existir)
             LocalTime horarioOriginal = atendimento.getDataHora().toLocalDateTime().toLocalTime();
+            boolean contains = false;
+            for (int i = 0; i < cbHorario.getItemCount(); i++) {
+                if (cbHorario.getItemAt(i).equals(horarioOriginal)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains && atendimento.getProfissional() != null && atendimento.getDataHora().toLocalDateTime().toLocalDate().equals(LocalDate.parse((String) cbData.getSelectedItem(), formatoData))) {
+                // adiciona o horário original para não perder informação
+                cbHorario.addItem(horarioOriginal);
+            }
+
             if (cbHorario.getItemCount() > 0) {
                 cbHorario.setSelectedItem(horarioOriginal);
                 cbHorario.setEnabled(true);
@@ -384,5 +478,16 @@ public class AtendimentoEditDialog extends JDialog {
                 JOptionPane.showMessageDialog(this, "Erro ao excluir atendimento: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void selectProfissionalById(int profId) {
+        for (int i = 0; i < cbProfissional.getItemCount(); i++) {
+            Profissional p = cbProfissional.getItemAt(i);
+            if (p != null && p.getId() == profId) {
+                cbProfissional.setSelectedIndex(i);
+                return;
+            }
+        }
+        cbProfissional.setSelectedIndex(-1);
     }
 }
