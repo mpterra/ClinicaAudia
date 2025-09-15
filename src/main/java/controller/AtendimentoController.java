@@ -2,14 +2,11 @@ package controller;
 
 import dao.AtendimentoDAO;
 import model.Atendimento;
-import model.Paciente;
 import model.Profissional;
 
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class AtendimentoController {
 
@@ -19,22 +16,34 @@ public class AtendimentoController {
         this.dao = new AtendimentoDAO();
     }
 
+    // ===========================
+    // CRIAR ATENDIMENTO
+    // ===========================
     public boolean criarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
         validarDuracao(at);
-        validarDisponibilidade(at);
+        validarDisponibilidade(at, null); // null = novo atendimento
         return dao.salvar(at, usuarioLogado);
     }
 
+    // ===========================
+    // ATUALIZAR ATENDIMENTO
+    // ===========================
     public boolean atualizarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
         validarDuracao(at);
-        validarDisponibilidade(at);
+        validarDisponibilidade(at, at.getId()); // Passa ID atual para ignorar na verificação
         return dao.atualizar(at, usuarioLogado);
     }
 
+    // ===========================
+    // REMOVER ATENDIMENTO
+    // ===========================
     public boolean removerAtendimento(int id) throws SQLException {
         return dao.deletar(id);
     }
 
+    // ===========================
+    // BUSCAR
+    // ===========================
     public Atendimento buscarPorId(int id) throws SQLException {
         return dao.buscarPorId(id);
     }
@@ -47,13 +56,16 @@ public class AtendimentoController {
         return dao.listarPorPeriodo(inicio, fim);
     }
 
+    // ===========================
+    // VALIDAÇÕES
+    // ===========================
     private void validarDuracao(Atendimento at) {
         if (at.getDuracaoMin() <= 0) {
             throw new IllegalArgumentException("Duração deve ser maior que zero.");
         }
     }
 
-    private void validarDisponibilidade(Atendimento at) throws SQLException {
+    private void validarDisponibilidade(Atendimento at, Integer idAtual) throws SQLException {
         Profissional prof = at.getProfissional();
         if (prof == null) {
             throw new IllegalArgumentException("Profissional não selecionado.");
@@ -62,7 +74,8 @@ public class AtendimentoController {
         boolean disponivel = dao.isDisponivel(
                 prof.getId(),
                 at.getDataHora(),
-                at.getDuracaoMin()
+                at.getDuracaoMin(),
+                idAtual // Se for atualização, passa o ID atual
         );
 
         if (!disponivel) {

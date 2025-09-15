@@ -6,10 +6,8 @@ import model.Profissional;
 import util.Database;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class AtendimentoDAO {
@@ -139,7 +137,7 @@ public class AtendimentoDAO {
             stmt.setInt(4, at.getDuracaoMin());
             stmt.setString(5, at.getTipo().name());
             stmt.setString(6, at.getSituacao().name());
-            stmt.setString(7, at.getNotas());
+            stmt.setString(7, at.getNotas()); // Substitui completamente as notas
             stmt.setBigDecimal(8, at.getValor());
             stmt.setString(9, usuarioLogado);
             stmt.setInt(10, at.getId());
@@ -160,32 +158,40 @@ public class AtendimentoDAO {
             return stmt.executeUpdate() > 0;
         }
     }
+
     // ============================
     // VERIFICAR DISPONIBILIDADE
     // ============================
-
-    public boolean isDisponivel(int profissionalId, Timestamp dataHora, int duracaoMin) throws SQLException {
+    public boolean isDisponivel(int profissionalId, Timestamp dataHora, int duracaoMin, Integer idAtual) throws SQLException {
         LocalDateTime inicio = dataHora.toLocalDateTime();
         LocalDateTime fim = inicio.plusMinutes(duracaoMin);
-        
+
         String sql = """
-            SELECT COUNT(*) FROM atendimento 
-            WHERE profissional_id = ? 
-            AND situacao != 'CANCELADO'
-            AND (
-                (data_hora BETWEEN ? AND ?) OR 
+            SELECT COUNT(*) FROM atendimento
+            WHERE profissional_id = ?
+              AND situacao != 'CANCELADO'
+              AND (? IS NULL OR id != ?) -- ignora o próprio atendimento se for atualização
+              AND (
+                (data_hora BETWEEN ? AND ?) OR
                 (? BETWEEN data_hora AND TIMESTAMPADD(MINUTE, duracao_min, data_hora))
-            )
+              )
             """;
-        
+
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            
+
             stmt.setInt(1, profissionalId);
-            stmt.setTimestamp(2, Timestamp.valueOf(inicio));
-            stmt.setTimestamp(3, Timestamp.valueOf(fim));
-            stmt.setTimestamp(4, Timestamp.valueOf(fim));
-            
+            if (idAtual != null) {
+                stmt.setInt(2, idAtual);
+                stmt.setInt(3, idAtual);
+            } else {
+                stmt.setNull(2, Types.INTEGER);
+                stmt.setNull(3, Types.INTEGER);
+            }
+            stmt.setTimestamp(4, Timestamp.valueOf(inicio));
+            stmt.setTimestamp(5, Timestamp.valueOf(fim));
+            stmt.setTimestamp(6, Timestamp.valueOf(fim));
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getInt(1) == 0;
             }
@@ -211,7 +217,6 @@ public class AtendimentoDAO {
         at.setAtualizadoEm(rs.getTimestamp("atualizado_em"));
         at.setUsuario(rs.getString("usuario"));
 
-        // Preenche os objetos Paciente e Profissional
         Paciente p = new Paciente();
         p.setId(at.getPacienteId());
         p.setNome(rs.getString("pacienteNome"));
