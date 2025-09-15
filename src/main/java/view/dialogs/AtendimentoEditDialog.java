@@ -2,6 +2,8 @@ package view.dialogs;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.sql.SQLException;
@@ -28,11 +30,9 @@ public class AtendimentoEditDialog extends JDialog {
 
     private final Atendimento atendimento;
     private final AtendimentoController atendimentoController = new AtendimentoController();
-    private final PacienteController pacienteController = new PacienteController();
     private final ProfissionalController profissionalController = new ProfissionalController();
     private final EscalaProfissionalController escalaController = new EscalaProfissionalController();
 
-    private JTextField txtBuscaPaciente;
     private JLabel lblNomePaciente;
     private JLabel lblTelefone;
     private JLabel lblIdade;
@@ -54,7 +54,7 @@ public class AtendimentoEditDialog extends JDialog {
         super(parent, "Editar Atendimento", true);
         this.atendimento = atendimento;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(600, 500);
+        setSize(700, 600); // Aumentado para 700x600
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         setBackground(backgroundColor);
@@ -67,69 +67,77 @@ public class AtendimentoEditDialog extends JDialog {
     private void initComponents() {
         // Painel principal
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
         mainPanel.setBackground(backgroundColor);
 
         // Título
         JLabel lblTitulo = new JLabel("Editar Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(0, 0, 10, 0));
+        lblTitulo.setBorder(new EmptyBorder(0, 0, 15, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         // Formulário
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
 
-        // Busca Paciente
-        JLabel lblBuscaPaciente = new JLabel("Buscar Paciente:");
-        lblBuscaPaciente.setFont(labelFont);
+        // Dados do Paciente (estáticos e centralizados)
+        JPanel pacientePanel = new JPanel(new GridBagLayout());
+        pacientePanel.setBackground(backgroundColor);
+        pacientePanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor), "Dados do Paciente",
+                        TitledBorder.CENTER, TitledBorder.TOP, labelFont, primaryColor),
+                new EmptyBorder(10, 10, 10, 10)));
+        GridBagConstraints gbcP = new GridBagConstraints();
+        gbcP.insets = new Insets(5, 0, 5, 0);
+        gbcP.anchor = GridBagConstraints.CENTER;
+
+        lblNomePaciente = new JLabel();
+        lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblNomePaciente.setHorizontalAlignment(SwingConstants.CENTER);
+        gbcP.gridx = 0;
+        gbcP.gridy = 0;
+        pacientePanel.add(lblNomePaciente, gbcP);
+
+        lblTelefone = new JLabel();
+        lblTelefone.setFont(labelFont);
+        lblTelefone.setHorizontalAlignment(SwingConstants.CENTER);
+        gbcP.gridy = 1;
+        pacientePanel.add(lblTelefone, gbcP);
+
+        lblIdade = new JLabel();
+        lblIdade.setFont(labelFont);
+        lblIdade.setHorizontalAlignment(SwingConstants.CENTER);
+        gbcP.gridy = 2;
+        pacientePanel.add(lblIdade, gbcP);
+
+        lblEmail = new JLabel();
+        lblEmail.setFont(labelFont);
+        lblEmail.setHorizontalAlignment(SwingConstants.CENTER);
+        gbcP.gridy = 3;
+        pacientePanel.add(lblEmail, gbcP);
+
         gbc.gridx = 0;
         gbc.gridy = 0;
-        formPanel.add(lblBuscaPaciente, gbc);
-
-        txtBuscaPaciente = new JTextField(20);
-        gbc.gridx = 1;
-        gbc.gridwidth = 2;
-        formPanel.add(txtBuscaPaciente, gbc);
-
-        // Dados Paciente
-        lblNomePaciente = new JLabel("Nome:");
-        lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 1;
         gbc.gridwidth = 3;
-        formPanel.add(lblNomePaciente, gbc);
-
-        lblTelefone = new JLabel("Telefone:");
-        lblTelefone.setFont(labelFont);
-        gbc.gridy = 2;
-        formPanel.add(lblTelefone, gbc);
-
-        lblIdade = new JLabel("Idade:");
-        lblIdade.setFont(labelFont);
-        gbc.gridy = 3;
-        formPanel.add(lblIdade, gbc);
-
-        lblEmail = new JLabel("Email:");
-        lblEmail.setFont(labelFont);
-        gbc.gridy = 4;
-        formPanel.add(lblEmail, gbc);
+        formPanel.add(pacientePanel, gbc);
 
         // Profissional, Tipo, Situação, Horário, Data
         JLabel lblProfissional = new JLabel("Profissional:");
         lblProfissional.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(lblProfissional, gbc);
 
         cbProfissional = new JComboBox<>();
-        cbProfissional.setPreferredSize(new Dimension(200, 30));
+        cbProfissional.setPreferredSize(new Dimension(250, 30));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         formPanel.add(cbProfissional, gbc);
@@ -137,12 +145,12 @@ public class AtendimentoEditDialog extends JDialog {
         JLabel lblTipo = new JLabel("Tipo:");
         lblTipo.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 2;
         gbc.gridwidth = 1;
         formPanel.add(lblTipo, gbc);
 
         cbTipo = new JComboBox<>(Atendimento.Tipo.values());
-        cbTipo.setPreferredSize(new Dimension(200, 30));
+        cbTipo.setPreferredSize(new Dimension(250, 30));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         formPanel.add(cbTipo, gbc);
@@ -150,12 +158,12 @@ public class AtendimentoEditDialog extends JDialog {
         JLabel lblSituacao = new JLabel("Situação:");
         lblSituacao.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 3;
         gbc.gridwidth = 1;
         formPanel.add(lblSituacao, gbc);
 
         cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
-        cbSituacao.setPreferredSize(new Dimension(200, 30));
+        cbSituacao.setPreferredSize(new Dimension(250, 30));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         formPanel.add(cbSituacao, gbc);
@@ -163,12 +171,12 @@ public class AtendimentoEditDialog extends JDialog {
         JLabel lblData = new JLabel("Data:");
         lblData.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 4;
         gbc.gridwidth = 1;
         formPanel.add(lblData, gbc);
 
         cbData = new JComboBox<>();
-        cbData.setPreferredSize(new Dimension(200, 30));
+        cbData.setPreferredSize(new Dimension(250, 30));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         formPanel.add(cbData, gbc);
@@ -176,28 +184,29 @@ public class AtendimentoEditDialog extends JDialog {
         JLabel lblHorario = new JLabel("Horário:");
         lblHorario.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 5;
         gbc.gridwidth = 1;
         formPanel.add(lblHorario, gbc);
 
         cbHorario = new JComboBox<>();
-        cbHorario.setPreferredSize(new Dimension(200, 30));
+        cbHorario.setPreferredSize(new Dimension(250, 30));
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         formPanel.add(cbHorario, gbc);
 
-        // Observações
+        // Observações (maior)
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 6;
         gbc.gridwidth = 1;
         formPanel.add(lblObservacoes, gbc);
 
-        txtObservacoes = new JTextArea(4, 20);
+        txtObservacoes = new JTextArea(6, 25); // Aumentado para 6 linhas e 25 colunas
         txtObservacoes.setLineWrap(true);
         txtObservacoes.setWrapStyleWord(true);
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
+        scrollObservacoes.setPreferredSize(new Dimension(400, 150)); // Aumentado o tamanho
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         gbc.weighty = 1.0;
@@ -235,52 +244,20 @@ public class AtendimentoEditDialog extends JDialog {
         btnExcluir.addActionListener(e -> excluir());
         btnCancelar.addActionListener(e -> dispose());
 
-        // Listener para busca de paciente
-        txtBuscaPaciente.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) {
-                try {
-                    atualizarPaciente();
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(AtendimentoEditDialog.this, "Erro ao buscar paciente: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
-            public void removeUpdate(javax.swing.event.DocumentEvent e) {
-                try {
-                    atualizarPaciente();
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(AtendimentoEditDialog.this, "Erro ao buscar paciente: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-
-            public void changedUpdate(javax.swing.event.DocumentEvent e) {
-                try {
-                    atualizarPaciente();
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(AtendimentoEditDialog.this, "Erro ao buscar paciente: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
         // Listener para mudança de profissional
         cbProfissional.addActionListener(e -> atualizarHorarios());
         cbData.addActionListener(e -> atualizarHorarios());
     }
 
     private void preencherCampos() {
-        txtBuscaPaciente.setText(atendimento.getPaciente().getNome());
-        try {
-            atualizarPaciente(); // Chama a atualização do paciente ao abrir
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar dados do paciente: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-        lblNomePaciente.setText("Nome: " + atendimento.getPaciente().getNome());
-        lblTelefone.setText("Telefone: " + (atendimento.getPaciente().getTelefone() != null ? atendimento.getPaciente().getTelefone() : "N/A"));
-        long idade = atendimento.getPaciente().getDataNascimento() != null
-                ? java.time.temporal.ChronoUnit.YEARS.between(atendimento.getPaciente().getDataNascimento(), LocalDate.now())
+        Paciente paciente = atendimento.getPaciente();
+        lblNomePaciente.setText("Nome: " + paciente.getNome());
+        lblTelefone.setText("Telefone: " + (paciente.getTelefone() != null ? paciente.getTelefone() : "N/A"));
+        long idade = paciente.getDataNascimento() != null
+                ? java.time.temporal.ChronoUnit.YEARS.between(paciente.getDataNascimento(), LocalDate.now())
                 : 0;
         lblIdade.setText("Idade: " + idade);
-        lblEmail.setText("Email: " + (atendimento.getPaciente().getEmail() != null ? atendimento.getPaciente().getEmail() : "N/A"));
+        lblEmail.setText("Email: " + (paciente.getEmail() != null ? paciente.getEmail() : "N/A"));
         cbProfissional.setSelectedItem(atendimento.getProfissional());
         cbTipo.setSelectedItem(atendimento.getTipo());
         cbSituacao.setSelectedItem(atendimento.getSituacao());
@@ -312,34 +289,6 @@ public class AtendimentoEditDialog extends JDialog {
 
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void atualizarPaciente() throws SQLException {
-        String busca = txtBuscaPaciente.getText().toLowerCase();
-        Paciente ultimoPaciente = null;
-
-        for (Paciente p : pacienteController.listarTodos()) {
-            if (p.getNome().toLowerCase().contains(busca)) {
-                if (ultimoPaciente == null || p.getId() > ultimoPaciente.getId()) {
-                    ultimoPaciente = p;
-                }
-            }
-        }
-
-        if (ultimoPaciente != null) {
-            lblNomePaciente.setText("Nome: " + ultimoPaciente.getNome());
-            lblTelefone.setText("Telefone: " + (ultimoPaciente.getTelefone() != null ? ultimoPaciente.getTelefone() : "N/A"));
-            long idade = ultimoPaciente.getDataNascimento() != null
-                    ? java.time.temporal.ChronoUnit.YEARS.between(ultimoPaciente.getDataNascimento(), LocalDate.now())
-                    : 0;
-            lblIdade.setText("Idade: " + idade);
-            lblEmail.setText("Email: " + (ultimoPaciente.getEmail() != null ? ultimoPaciente.getEmail() : "N/A"));
-        } else {
-            lblNomePaciente.setText("Nome:");
-            lblTelefone.setText("Telefone:");
-            lblIdade.setText("Idade:");
-            lblEmail.setText("Email:");
         }
     }
 
@@ -389,16 +338,6 @@ public class AtendimentoEditDialog extends JDialog {
 
     private void salvar() {
         try {
-            String nomePaciente = lblNomePaciente.getText().replace("Nome: ", "").trim();
-            if (nomePaciente.isEmpty()) {
-                throw new CampoObrigatorioException("Selecione um paciente!");
-            }
-
-            Paciente p = pacienteController.listarTodos().stream()
-                    .filter(pa -> pa.getNome().equals(nomePaciente))
-                    .findFirst()
-                    .orElseThrow(() -> new CampoObrigatorioException("Paciente não encontrado!"));
-
             Profissional prof = (Profissional) cbProfissional.getSelectedItem();
             Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
             Atendimento.Situacao situacao = (Atendimento.Situacao) cbSituacao.getSelectedItem();
@@ -416,7 +355,6 @@ public class AtendimentoEditDialog extends JDialog {
                 throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
             }
 
-            atendimento.setPaciente(p);
             atendimento.setProfissional(prof);
             atendimento.setDataHora(Timestamp.valueOf(data.atTime(hora)));
             atendimento.setTipo(tipo);
