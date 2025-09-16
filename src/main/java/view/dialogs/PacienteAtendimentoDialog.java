@@ -5,9 +5,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.text.StyledEditorKit;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -135,6 +134,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(true); // Permite redimensionamento
         setSize(650, 700); // Tamanho padrão 650x700
+        setMinimumSize(new Dimension(500, 500)); // Tamanho mínimo para evitar layout quebrado
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(backgroundColor);
@@ -202,7 +202,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         buttonPanel.add(btnSalvar);
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-        add(mainPanel, BorderLayout.CENTER); // Removido scroll extra para simplificar
+        add(mainPanel, BorderLayout.CENTER);
 
         btnSalvar.addActionListener(e -> salvar());
         btnCancelar.addActionListener(e -> dispose());
@@ -247,7 +247,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         panel.add(pacientePanel, BorderLayout.NORTH);
 
-        // Seção principal de formulário com espaçamento limpo
+        // Seção principal de formulário
         JPanel formPanel = new JPanel(new BorderLayout(15, 15));
         formPanel.setBackground(backgroundColor);
 
@@ -263,7 +263,6 @@ public class PacienteAtendimentoDialog extends JDialog {
         cbSituacao.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
         cbSituacao.setPreferredSize(new Dimension(150, 30));
         cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        // Define o status atual do atendimento, se disponível
         if (atendimento.getSituacao() != null) {
             cbSituacao.setSelectedItem(atendimento.getSituacao());
         }
@@ -277,17 +276,17 @@ public class PacienteAtendimentoDialog extends JDialog {
         JLabel lblObservacoes = new JLabel("Observações do Atendimento");
         lblObservacoes.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblObservacoes.setForeground(primaryColor);
-        lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0)); // Espaçamento abaixo
+        lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0));
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
         txtObservacoesAtendimento = new JTextArea(5, 30);
         txtObservacoesAtendimento.setLineWrap(true);
         txtObservacoesAtendimento.setWrapStyleWord(true);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
-        txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
+        txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
         JScrollPane scrollObs = new JScrollPane(txtObservacoesAtendimento);
         scrollObs.setBackground(backgroundColor);
         scrollObs.setBorder(BorderFactory.createEmptyBorder());
-        scrollObs.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        scrollObs.getVerticalScrollBar().setUnitIncrement(32);
         obsPanel.add(scrollObs, BorderLayout.CENTER);
         formPanel.add(obsPanel, BorderLayout.CENTER);
 
@@ -301,14 +300,14 @@ public class PacienteAtendimentoDialog extends JDialog {
         JLabel lblNotasEvolucao = new JLabel("Notas da Evolução");
         lblNotasEvolucao.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblNotasEvolucao.setForeground(primaryColor);
-        lblNotasEvolucao.setBorder(new EmptyBorder(0, 0, 10, 0)); // Espaçamento abaixo
+        lblNotasEvolucao.setBorder(new EmptyBorder(0, 0, 10, 0));
         notasPanel.add(lblNotasEvolucao, BorderLayout.NORTH);
 
         // Barra de ferramentas para formatação
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
         toolBar.setBackground(backgroundColor);
-        toolBar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
+        toolBar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
 
         // Botão Negrito
         JButton btnBold = new JButton("N");
@@ -328,7 +327,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnItalic.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         btnItalic.addActionListener(new StyledEditorKit.ItalicAction());
 
-        // Label e ComboBox para tamanho da fonte
+        // ComboBox para tamanho da fonte
         JLabel lblFontSize = new JLabel("Tamanho da Fonte:");
         lblFontSize.setFont(labelFont);
         lblFontSize.setForeground(Color.BLACK);
@@ -341,10 +340,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         fontSizeCombo.setSelectedItem("14"); // Tamanho padrão
         fontSizeCombo.addActionListener(e -> {
             String size = (String) fontSizeCombo.getSelectedItem();
-            String currentText = txtEvolucaoNotas.getText();
-            String newText = "<html><body style='font-family: SansSerif; font-size: " + size + "px;'>" + 
-                             stripBodyContent(currentText) + "</body></html>";
-            txtEvolucaoNotas.setText(newText);
+            applyFontSize(size);
         });
 
         // ComboBox para cores
@@ -373,7 +369,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         });
 
         toolBar.add(btnBold);
-        toolBar.add(Box.createHorizontalStrut(5)); // Espaçamento entre botões
+        toolBar.add(Box.createHorizontalStrut(5));
         toolBar.add(btnItalic);
         toolBar.add(Box.createHorizontalStrut(10));
         toolBar.add(lblFontSize);
@@ -388,14 +384,13 @@ public class PacienteAtendimentoDialog extends JDialog {
         HTMLEditorKit editorKit = new HTMLEditorKit();
         txtEvolucaoNotas.setEditorKit(editorKit);
         txtEvolucaoNotas.setBackground(textAreaBackground);
-        txtEvolucaoNotas.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
-        txtEvolucaoNotas.setPreferredSize(new Dimension(0, 120)); // Tamanho padrão (8 linhas)
-        // Define tamanho padrão da fonte como 14px
+        txtEvolucaoNotas.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        txtEvolucaoNotas.setPreferredSize(new Dimension(0, 120));
         txtEvolucaoNotas.setText("<html><body style='font-family: SansSerif; font-size: 14px;'></body></html>");
         JScrollPane scrollNotas = new JScrollPane(txtEvolucaoNotas);
         scrollNotas.setBackground(backgroundColor);
         scrollNotas.setBorder(BorderFactory.createEmptyBorder());
-        scrollNotas.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        scrollNotas.getVerticalScrollBar().setUnitIncrement(32);
         notasPanel.add(scrollNotas, BorderLayout.SOUTH);
         evolucoesPanel.add(notasPanel, BorderLayout.NORTH);
 
@@ -404,19 +399,22 @@ public class PacienteAtendimentoDialog extends JDialog {
         arquivosPanel.setBackground(backgroundColor);
 
         // Painel para o rótulo e botão de anexar
-        JPanel headerArquivosPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel headerArquivosPanel = new JPanel();
+        headerArquivosPanel.setLayout(new BoxLayout(headerArquivosPanel, BoxLayout.X_AXIS));
         headerArquivosPanel.setBackground(backgroundColor);
+        headerArquivosPanel.setBorder(new EmptyBorder(0, 10, 5, 10)); // Margens para evitar colar nas bordas
         JLabel lblEvolucoes = new JLabel("Arquivos Anexados");
         lblEvolucoes.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblEvolucoes.setForeground(primaryColor);
         headerArquivosPanel.add(lblEvolucoes);
+        headerArquivosPanel.add(Box.createHorizontalStrut(10));
 
         JButton btnAnexar = new JButton("Anexar Arquivo");
-        btnAnexar.setBackground(Color.LIGHT_GRAY); // Cor cinza padrão do sistema
+        btnAnexar.setBackground(Color.LIGHT_GRAY);
         btnAnexar.setForeground(Color.BLACK);
-        btnAnexar.setFont(buttonFont); // Fonte menor
+        btnAnexar.setFont(buttonFont);
         btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnAnexar.setPreferredSize(new Dimension(110, 28)); // Tamanho ajustado
+        btnAnexar.setPreferredSize(new Dimension(100, 26)); // Tamanho reduzido
         btnAnexar.addActionListener(e -> adicionarEvolucaoArquivo());
         headerArquivosPanel.add(btnAnexar);
 
@@ -429,7 +427,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         JScrollPane scrollEvolucoes = new JScrollPane(panelEvolucoesArquivos);
         scrollEvolucoes.setBackground(backgroundColor);
         scrollEvolucoes.setBorder(BorderFactory.createEmptyBorder());
-        scrollEvolucoes.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        scrollEvolucoes.getVerticalScrollBar().setUnitIncrement(32);
         arquivosPanel.add(scrollEvolucoes, BorderLayout.CENTER);
 
         evolucoesPanel.add(arquivosPanel, BorderLayout.SOUTH);
@@ -463,6 +461,14 @@ public class PacienteAtendimentoDialog extends JDialog {
         return panel;
     }
 
+    // Aplica tamanho de fonte ao JEditorPane, preservando formatações
+    private void applyFontSize(String size) {
+        String currentText = txtEvolucaoNotas.getText();
+        String content = stripBodyContent(currentText);
+        String newText = "<html><body style='font-family: SansSerif; font-size: " + size + "px;'>" + content + "</body></html>";
+        txtEvolucaoNotas.setText(newText);
+    }
+
     // Método auxiliar para extrair conteúdo do corpo do HTML
     private String stripBodyContent(String htmlText) {
         String content = htmlText;
@@ -493,7 +499,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         tabelaHistorico.getTableHeader().setBackground(primaryColor);
         tabelaHistorico.getTableHeader().setForeground(Color.WHITE);
         tabelaHistorico.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
-        tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil na tabela
+        tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
 
         // Duplo clique para abrir EvolucaoDialog
         tabelaHistorico.addMouseListener(new MouseAdapter() {
@@ -529,7 +535,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         JScrollPane scrollTabela = new JScrollPane(tabelaHistorico);
         scrollTabela.setBackground(backgroundColor);
         scrollTabela.setBorder(BorderFactory.createEmptyBorder());
-        scrollTabela.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        scrollTabela.getVerticalScrollBar().setUnitIncrement(32);
         panel.add(scrollTabela, BorderLayout.CENTER);
 
         // Ajustar largura das colunas proporcionalmente
@@ -551,10 +557,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
     // Carrega os dados iniciais do atendimento e histórico
     private void carregarDados() {
-        // Carrega observações do atendimento
         txtObservacoesAtendimento.setText(atendimento.getNotas() != null ? atendimento.getNotas() : "");
-
-        // Carrega evoluções existentes
         try {
             List<EvolucaoAtendimento> evolucoes = evolucaoController.listarPorAtendimento(atendimento.getId());
             for (EvolucaoAtendimento evo : evolucoes) {
@@ -569,7 +572,6 @@ public class PacienteAtendimentoDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Erro ao carregar evoluções: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
 
-        // Carrega histórico do paciente
         try {
             List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getPacienteId() == atendimento.getPacienteId())
@@ -590,12 +592,10 @@ public class PacienteAtendimentoDialog extends JDialog {
     // Adiciona uma evolução com arquivo
     private void adicionarEvolucaoArquivo() {
         JFileChooser fileChooser = new JFileChooser();
-        // Configura filtro para imagens e PDFs
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
                 "Imagens e PDFs (*.jpg, *.jpeg, *.png, *.gif, *.pdf)", "jpg", "jpeg", "png", "gif", "pdf"));
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            // Verifica se o arquivo é válido
             String fileName = file.getName().toLowerCase();
             if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || 
                 fileName.endsWith(".png") || fileName.endsWith(".gif") || fileName.endsWith(".pdf")) {
@@ -647,16 +647,12 @@ public class PacienteAtendimentoDialog extends JDialog {
     // Salva as alterações
     private void salvar() {
         try {
-            // Atualiza status do atendimento
             if (cbSituacao != null) {
                 atendimento.setSituacao((Atendimento.Situacao) cbSituacao.getSelectedItem());
             }
-
-            // Atualiza observações do atendimento
             atendimento.setNotas(txtObservacoesAtendimento.getText());
             atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin());
 
-            // Salva ou atualiza a evolução de texto
             String notas = txtEvolucaoNotas.getText();
             if (!notas.trim().isEmpty()) {
                 if (evolucaoTextoExistente == null) {
@@ -667,14 +663,12 @@ public class PacienteAtendimentoDialog extends JDialog {
                 evolucaoTextoExistente.setNotas(notas);
                 evolucaoController.criarEvolucao(evolucaoTextoExistente, Sessao.getUsuarioLogado().getLogin());
             } else if (evolucaoTextoExistente != null && evolucaoTextoExistente.getId() > 0) {
-                // Remove a evolução de texto se o campo estiver vazio
                 evolucaoController.removerEvolucao(evolucaoTextoExistente.getId());
                 evolucaoTextoExistente = null;
             }
 
-            // Salva novas evoluções de arquivo
             for (EvolucaoComponent comp : listaEvolucoesArquivos) {
-                if (comp.evo.getId() == 0) { // Nova evolução
+                if (comp.evo.getId() == 0) {
                     comp.evo.setAtendimentoId(atendimento.getId());
                     comp.evo.setUsuario(Sessao.getUsuarioLogado().getLogin());
                     evolucaoController.criarEvolucao(comp.evo, Sessao.getUsuarioLogado().getLogin());
