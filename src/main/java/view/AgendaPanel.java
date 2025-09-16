@@ -8,6 +8,9 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -16,6 +19,7 @@ import java.util.List;
 
 import controller.AtendimentoController;
 import model.Atendimento;
+import view.dialogs.PacienteAtendimentoDialog;
 
 public class AgendaPanel extends JPanel {
 
@@ -188,6 +192,32 @@ public class AgendaPanel extends JPanel {
                 return c;
             }
         };
+        
+     // Adiciona listener de duplo clique na tabela
+        tabelaAtendimentos.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+                    int row = tabelaAtendimentos.getSelectedRow();
+                    if (row >= 0) {
+                        try {
+                            String dataStr = (String) tabelaAtendimentos.getValueAt(row, 0);
+                            String horaStr = (String) tabelaAtendimentos.getValueAt(row, 1);
+                            LocalDateTime dataHora = LocalDateTime.parse(dataStr + " " + horaStr, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                            AtendimentoController ac = new AtendimentoController();
+                            List<Atendimento> atendimentos = ac.listarPorPeriodo(dataHora, dataHora);
+                            if (!atendimentos.isEmpty()) {
+                                Atendimento atendimento = atendimentos.get(0);
+                                PacienteAtendimentoDialog dialog = new PacienteAtendimentoDialog((Frame) SwingUtilities.getWindowAncestor(AgendaPanel.this), atendimento);
+                                dialog.setVisible(true);
+                            }
+                        } catch (SQLException ex) {
+                            JOptionPane.showMessageDialog(AgendaPanel.this, "Erro ao abrir detalhes: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            }
+        });
 
         // Desativa a grade da tabela para remover divisórias entre células
         tabelaAtendimentos.setShowGrid(false);
