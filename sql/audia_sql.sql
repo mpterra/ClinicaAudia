@@ -442,3 +442,5 @@ CREATE TABLE caixa_movimento (
 -- ========================================
 
 SELECT * FROM evolucao_atendimento;
+DELETE FROM evolucao_atendimento;
+SELECT * FROM documento_paciente;

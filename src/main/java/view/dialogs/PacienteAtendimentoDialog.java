@@ -41,6 +41,7 @@ public class PacienteAtendimentoDialog extends JDialog {
     private JTable tabelaHistorico;
     private DefaultTableModel modeloHistorico;
     private EvolucaoAtendimento evolucaoTextoExistente; // Para gerenciar a evolução de texto existente
+    private JComboBox<Atendimento.Situacao> cbSituacao; // ComboBox para status do atendimento
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final Color primaryColor = new Color(30, 144, 255);
     private final Color backgroundColor = new Color(245, 245, 245);
@@ -246,6 +247,26 @@ public class PacienteAtendimentoDialog extends JDialog {
         JPanel formPanel = new JPanel(new BorderLayout(15, 15));
         formPanel.setBackground(backgroundColor);
 
+        // Status do atendimento
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        statusPanel.setBackground(backgroundColor);
+        JLabel lblStatus = new JLabel("Status do Atendimento: ");
+        lblStatus.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblStatus.setForeground(primaryColor);
+        cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
+        cbSituacao.setFont(labelFont);
+        cbSituacao.setBackground(textAreaBackground);
+        cbSituacao.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        cbSituacao.setPreferredSize(new Dimension(150, 30));
+        cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        // Define o status atual do atendimento, se disponível
+        if (atendimento.getSituacao() != null) {
+            cbSituacao.setSelectedItem(atendimento.getSituacao());
+        }
+        statusPanel.add(lblStatus);
+        statusPanel.add(cbSituacao);
+        formPanel.add(statusPanel, BorderLayout.NORTH);
+
         // Observações do atendimento
         JPanel obsPanel = new JPanel(new BorderLayout(10, 10));
         obsPanel.setBackground(backgroundColor);
@@ -264,7 +285,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         scrollObs.setBorder(BorderFactory.createEmptyBorder());
         scrollObs.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
         obsPanel.add(scrollObs, BorderLayout.CENTER);
-        formPanel.add(obsPanel, BorderLayout.NORTH);
+        formPanel.add(obsPanel, BorderLayout.CENTER);
 
         // Evoluções
         JPanel evolucoesPanel = new JPanel(new BorderLayout(15, 15));
@@ -372,6 +393,29 @@ public class PacienteAtendimentoDialog extends JDialog {
         evolucoesPanel.add(notasPanel, BorderLayout.NORTH);
 
         // Arquivos de evolução
+        JPanel arquivosPanel = new JPanel(new BorderLayout(10, 10));
+        arquivosPanel.setBackground(backgroundColor);
+
+        // Painel para o rótulo e botão de anexar
+        JPanel headerArquivosPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        headerArquivosPanel.setBackground(backgroundColor);
+        JLabel lblEvolucoes = new JLabel("Arquivos Anexados");
+        lblEvolucoes.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblEvolucoes.setForeground(primaryColor);
+        headerArquivosPanel.add(lblEvolucoes);
+
+        JButton btnAnexar = new JButton("Anexar Arquivo");
+        btnAnexar.setBackground(Color.LIGHT_GRAY); // Cor cinza padrão do sistema
+        btnAnexar.setForeground(Color.BLACK);
+        btnAnexar.setFont(labelFont);
+        btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnAnexar.setPreferredSize(new Dimension(120, 30));
+        btnAnexar.addActionListener(e -> adicionarEvolucaoArquivo());
+        headerArquivosPanel.add(btnAnexar);
+
+        arquivosPanel.add(headerArquivosPanel, BorderLayout.NORTH);
+
+        // Painel para lista de arquivos
         panelEvolucoesArquivos = new JPanel();
         panelEvolucoesArquivos.setLayout(new BoxLayout(panelEvolucoesArquivos, BoxLayout.Y_AXIS));
         panelEvolucoesArquivos.setBackground(backgroundColor);
@@ -379,27 +423,11 @@ public class PacienteAtendimentoDialog extends JDialog {
         scrollEvolucoes.setBackground(backgroundColor);
         scrollEvolucoes.setBorder(BorderFactory.createEmptyBorder());
         scrollEvolucoes.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
-        JLabel lblEvolucoes = new JLabel("Arquivos Anexados");
-        lblEvolucoes.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblEvolucoes.setForeground(primaryColor);
-        lblEvolucoes.setBorder(new EmptyBorder(10, 0, 10, 0)); // Espaçamento
-        panelEvolucoesArquivos.add(lblEvolucoes);
+        arquivosPanel.add(scrollEvolucoes, BorderLayout.CENTER);
 
-        evolucoesPanel.add(scrollEvolucoes, BorderLayout.CENTER);
+        evolucoesPanel.add(arquivosPanel, BorderLayout.SOUTH);
 
-        formPanel.add(evolucoesPanel, BorderLayout.CENTER);
-
-        // Botões para adicionar evoluções
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        btnPanel.setBackground(backgroundColor);
-        JButton btnAnexarDocumento = new JButton("Anexar Documento");
-        btnAnexarDocumento.setBackground(Color.LIGHT_GRAY); // Cinza padrão
-        btnAnexarDocumento.setForeground(Color.BLACK);
-        btnAnexarDocumento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnAnexarDocumento.addActionListener(e -> adicionarEvolucaoArquivo());
-        btnPanel.add(btnAnexarDocumento);
-
-        formPanel.add(btnPanel, BorderLayout.SOUTH);
+        formPanel.add(evolucoesPanel, BorderLayout.SOUTH);
 
         panel.add(formPanel, BorderLayout.CENTER);
 
@@ -434,7 +462,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         panel.setBackground(backgroundColor);
 
         // Tabela de histórico
-        String[] colunas = {"Data/Hora", "Profissional", "Tipo", "Situação", "Observações", "Evoluções"};
+        String[] colunas = {"Data/Hora", "Profissional", "Tipo", "Situação"};
         modeloHistorico = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -449,6 +477,31 @@ public class PacienteAtendimentoDialog extends JDialog {
         tabelaHistorico.getTableHeader().setForeground(Color.WHITE);
         tabelaHistorico.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
         tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil na tabela
+
+        // Duplo clique para abrir EvolucaoDialog
+        tabelaHistorico.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = tabelaHistorico.rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        String dataHoraStr = (String) tabelaHistorico.getValueAt(row, 0);
+                        try {
+                            Atendimento selectedAtendimento = atendimentoController.listarTodos().stream()
+                                    .filter(a -> a.getDataHora().toLocalDateTime().format(formatoData).equals(dataHoraStr))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (selectedAtendimento != null) {
+                                new HistoricoEvolucaoDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento, pacienteController.buscarPorId(selectedAtendimento.getPacienteId())).setVisible(true);
+                            }
+                        } catch (SQLException ex) {
+                            JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Erro ao abrir evolução: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            }
+        });
+        tabelaHistorico.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -468,12 +521,10 @@ public class PacienteAtendimentoDialog extends JDialog {
             public void componentResized(java.awt.event.ComponentEvent e) {
                 int larguraTotal = tabelaHistorico.getWidth();
                 if (larguraTotal > 0) {
-                    tabelaHistorico.getColumnModel().getColumn(0).setPreferredWidth((int)(larguraTotal * 0.15));
-                    tabelaHistorico.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.20));
-                    tabelaHistorico.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.15));
-                    tabelaHistorico.getColumnModel().getColumn(3).setPreferredWidth((int)(larguraTotal * 0.15));
-                    tabelaHistorico.getColumnModel().getColumn(4).setPreferredWidth((int)(larguraTotal * 0.20));
-                    tabelaHistorico.getColumnModel().getColumn(5).setPreferredWidth((int)(larguraTotal * 0.15));
+                    tabelaHistorico.getColumnModel().getColumn(0).setPreferredWidth((int)(larguraTotal * 0.25));
+                    tabelaHistorico.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.30));
+                    tabelaHistorico.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.20));
+                    tabelaHistorico.getColumnModel().getColumn(3).setPreferredWidth((int)(larguraTotal * 0.25));
                 }
             }
         });
@@ -507,23 +558,11 @@ public class PacienteAtendimentoDialog extends JDialog {
                     .filter(a -> a.getPacienteId() == atendimento.getPacienteId())
                     .collect(Collectors.toList());
             for (Atendimento at : atendimentos) {
-                List<EvolucaoAtendimento> evolucoes = evolucaoController.listarPorAtendimento(at.getId());
-                String evolucoesStr = evolucoes.stream()
-                        .map(e -> {
-                            String str = "";
-                            if (e.getNotas() != null && !e.getNotas().isEmpty()) str += e.getNotas();
-                            if (e.getArquivo() != null && !e.getArquivo().isEmpty()) str += (str.isEmpty() ? "" : "; ") + "Arquivo: " + e.getArquivo();
-                            return str;
-                        })
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining("; "));
                 modeloHistorico.addRow(new Object[]{
                         at.getDataHora().toLocalDateTime().format(formatoData),
                         at.getProfissionalNome(),
                         at.getTipo(),
-                        at.getSituacao(),
-                        at.getNotas(),
-                        evolucoesStr
+                        at.getSituacao()
                 });
             }
         } catch (SQLException e) {
@@ -533,32 +572,43 @@ public class PacienteAtendimentoDialog extends JDialog {
 
     // Adiciona uma evolução com arquivo
     private void adicionarEvolucaoArquivo() {
-        adicionarEvolucaoArquivo(new EvolucaoAtendimento());
+        JFileChooser fileChooser = new JFileChooser();
+        // Configura filtro para imagens e PDFs
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Imagens e PDFs (*.jpg, *.jpeg, *.png, *.gif, *.pdf)", "jpg", "jpeg", "png", "gif", "pdf"));
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            // Verifica se o arquivo é válido
+            String fileName = file.getName().toLowerCase();
+            if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || 
+                fileName.endsWith(".png") || fileName.endsWith(".gif") || fileName.endsWith(".pdf")) {
+                EvolucaoAtendimento evo = new EvolucaoAtendimento();
+                evo.setArquivo(file.getAbsolutePath());
+                adicionarEvolucaoArquivo(evo);
+            } else {
+                JOptionPane.showMessageDialog(this, "Por favor, selecione uma imagem ou PDF.", "Formato Inválido", JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
 
     private void adicionarEvolucaoArquivo(EvolucaoAtendimento evo) {
-        JFileChooser fileChooser = new JFileChooser();
-        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            evo.setArquivo(file.getAbsolutePath());
+        String fileName = new File(evo.getArquivo()).getName();
+        EvolucaoComponent comp = new EvolucaoComponent(evo, "arquivo");
+        comp.lblArquivo = new JLabel("Arquivo: " + fileName);
+        comp.lblArquivo.setFont(labelFont);
+        comp.panel.add(comp.lblArquivo, BorderLayout.CENTER);
 
-            EvolucaoComponent comp = new EvolucaoComponent(evo, "arquivo");
-            comp.lblArquivo = new JLabel("Arquivo: " + file.getAbsolutePath());
-            comp.lblArquivo.setFont(labelFont);
-            comp.panel.add(comp.lblArquivo, BorderLayout.CENTER);
+        JButton btnRemover = new JButton("Remover");
+        btnRemover.setBackground(new Color(255, 99, 71));
+        btnRemover.setForeground(Color.WHITE);
+        btnRemover.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRemover.addActionListener(e -> removerEvolucaoArquivo(comp));
+        comp.panel.add(btnRemover, BorderLayout.EAST);
 
-            JButton btnRemover = new JButton("Remover");
-            btnRemover.setBackground(new Color(255, 99, 71));
-            btnRemover.setForeground(Color.WHITE);
-            btnRemover.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btnRemover.addActionListener(e -> removerEvolucaoArquivo(comp));
-            comp.panel.add(btnRemover, BorderLayout.EAST);
-
-            listaEvolucoesArquivos.add(comp);
-            panelEvolucoesArquivos.add(comp.panel);
-            panelEvolucoesArquivos.revalidate();
-            panelEvolucoesArquivos.repaint();
-        }
+        listaEvolucoesArquivos.add(comp);
+        panelEvolucoesArquivos.add(comp.panel);
+        panelEvolucoesArquivos.revalidate();
+        panelEvolucoesArquivos.repaint();
     }
 
     // Remove uma evolução de arquivo
@@ -579,6 +629,11 @@ public class PacienteAtendimentoDialog extends JDialog {
     // Salva as alterações
     private void salvar() {
         try {
+            // Atualiza status do atendimento
+            if (cbSituacao != null) {
+                atendimento.setSituacao((Atendimento.Situacao) cbSituacao.getSelectedItem());
+            }
+
             // Atualiza observações do atendimento
             atendimento.setNotas(txtObservacoesAtendimento.getText());
             atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin());
