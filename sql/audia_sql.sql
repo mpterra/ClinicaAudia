@@ -440,3 +440,5 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ========================================
+
+SELECT * FROM evolucao_atendimento;

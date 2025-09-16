@@ -5,8 +5,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.StyledEditorKit;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +35,7 @@ public class PacienteAtendimentoDialog extends JDialog {
     private final PacienteController pacienteController = new PacienteController();
 
     private JTextArea txtObservacoesAtendimento;
-    private JTextArea txtEvolucaoNotas; // Único campo para notas da evolução
+    private JEditorPane txtEvolucaoNotas; // Editor para notas da evolução com formatação
     private List<EvolucaoComponent> listaEvolucoesArquivos; // Apenas para arquivos
     private JPanel panelEvolucoesArquivos;
     private JTable tabelaHistorico;
@@ -60,14 +63,75 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Classe para renderizar cores no JComboBox
+    private static class ColorComboBoxRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof ColorItem) {
+                ColorItem colorItem = (ColorItem) value;
+                label.setText(colorItem.name);
+                label.setIcon(new ColorIcon(colorItem.color));
+                label.setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+                label.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
+            }
+            return label;
+        }
+    }
+
+    // Classe para representar itens de cor no JComboBox
+    private static class ColorItem {
+        String name;
+        Color color;
+
+        ColorItem(String name, Color color) {
+            this.name = name;
+            this.color = color;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    // Classe para criar ícone de amostra de cor
+    private static class ColorIcon implements Icon {
+        private final Color color;
+        private final int width = 16;
+        private final int height = 16;
+
+        ColorIcon(Color color) {
+            this.color = color;
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setColor(color);
+            g2d.fillRect(x, y, width, height);
+            g2d.setColor(Color.BLACK);
+            g2d.drawRect(x, y, width - 1, height - 1);
+            g2d.dispose();
+        }
+
+        @Override
+        public int getIconWidth() {
+            return width;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return height;
+        }
+    }
+
     public PacienteAtendimentoDialog(Frame parent, Atendimento atendimento) {
         super(parent, "Detalhes do Atendimento e Paciente", true);
         this.atendimento = atendimento;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-        // Ajuste de tamanho proporcional à tela
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setSize((int) (screenSize.width * 0.7), (int) (screenSize.height * 0.7));
+        setResizable(true); // Permite redimensionamento
+        setSize(650, 700); // Tamanho padrão 650x700
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(backgroundColor);
@@ -79,7 +143,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
     // Inicializa os componentes da interface
     private void initComponents() {
-        // Painel principal com scroll se necessário
+        // Painel principal
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
@@ -91,10 +155,25 @@ public class PacienteAtendimentoDialog extends JDialog {
         lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Abas
+        // Abas com hand cursor
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(labelFont);
-        tabbedPane.addTab("Atendimento Atual", new JScrollPane(criarPainelAtendimentoAtual(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        tabbedPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (!tabbedPane.isCursorSet()) {
+                    tabbedPane.setCursor(Cursor.getDefaultCursor());
+                }
+            }
+        });
+        JScrollPane atendimentoScrollPane = new JScrollPane(criarPainelAtendimentoAtual(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        atendimentoScrollPane.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        tabbedPane.addTab("Atendimento Atual", atendimentoScrollPane);
         tabbedPane.addTab("Histórico do Paciente", criarPainelHistorico());
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
@@ -106,17 +185,19 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setPreferredSize(new Dimension(100, 35));
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JButton btnCancelar = new JButton("Cancelar");
         btnCancelar.setBackground(Color.LIGHT_GRAY);
         btnCancelar.setForeground(Color.BLACK);
         btnCancelar.setPreferredSize(new Dimension(100, 35));
+        btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         buttonPanel.add(btnCancelar);
         buttonPanel.add(btnSalvar);
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-        add(new JScrollPane(mainPanel), BorderLayout.CENTER); // Scroll no mainPanel se necessário
+        add(mainPanel, BorderLayout.CENTER); // Removido scroll extra para simplificar
 
         btnSalvar.addActionListener(e -> salvar());
         btnCancelar.addActionListener(e -> dispose());
@@ -161,45 +242,132 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         panel.add(pacientePanel, BorderLayout.NORTH);
 
-        // Observações e evoluções
-        JPanel formPanel = new JPanel(new BorderLayout(10, 10));
+        // Seção principal de formulário com espaçamento limpo
+        JPanel formPanel = new JPanel(new BorderLayout(15, 15));
         formPanel.setBackground(backgroundColor);
 
         // Observações do atendimento
-        JPanel obsPanel = new JPanel(new BorderLayout(5, 5));
+        JPanel obsPanel = new JPanel(new BorderLayout(10, 10));
         obsPanel.setBackground(backgroundColor);
         JLabel lblObservacoes = new JLabel("Observações do Atendimento");
-        lblObservacoes.setFont(labelFont);
+        lblObservacoes.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblObservacoes.setForeground(primaryColor);
+        lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0)); // Espaçamento abaixo
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
-        obsPanel.add(new JSeparator(), BorderLayout.CENTER);
         txtObservacoesAtendimento = new JTextArea(5, 30);
         txtObservacoesAtendimento.setLineWrap(true);
         txtObservacoesAtendimento.setWrapStyleWord(true);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
+        txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
         JScrollPane scrollObs = new JScrollPane(txtObservacoesAtendimento);
         scrollObs.setBackground(backgroundColor);
-        obsPanel.add(scrollObs, BorderLayout.SOUTH);
+        scrollObs.setBorder(BorderFactory.createEmptyBorder());
+        scrollObs.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        obsPanel.add(scrollObs, BorderLayout.CENTER);
         formPanel.add(obsPanel, BorderLayout.NORTH);
 
         // Evoluções
-        JPanel evolucoesPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel evolucoesPanel = new JPanel(new BorderLayout(15, 15));
         evolucoesPanel.setBackground(backgroundColor);
 
-        // Notas da evolução
-        JPanel notasPanel = new JPanel(new BorderLayout(5, 5));
+        // Notas da evolução com barra de ferramentas
+        JPanel notasPanel = new JPanel(new BorderLayout(10, 10));
         notasPanel.setBackground(backgroundColor);
         JLabel lblNotasEvolucao = new JLabel("Notas da Evolução");
-        lblNotasEvolucao.setFont(labelFont);
+        lblNotasEvolucao.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblNotasEvolucao.setForeground(primaryColor);
+        lblNotasEvolucao.setBorder(new EmptyBorder(0, 0, 10, 0)); // Espaçamento abaixo
         notasPanel.add(lblNotasEvolucao, BorderLayout.NORTH);
-        notasPanel.add(new JSeparator(), BorderLayout.CENTER);
-        txtEvolucaoNotas = new JTextArea(5, 30);
-        txtEvolucaoNotas.setLineWrap(true);
-        txtEvolucaoNotas.setWrapStyleWord(true);
+
+        // Barra de ferramentas para formatação
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setBackground(backgroundColor);
+        toolBar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
+
+        // Botão Negrito
+        JButton btnBold = new JButton("N");
+        btnBold.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnBold.setToolTipText("Negrito");
+        btnBold.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnBold.setBackground(backgroundColor);
+        btnBold.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnBold.addActionListener(new StyledEditorKit.BoldAction());
+
+        // Botão Itálico
+        JButton btnItalic = new JButton("I");
+        btnItalic.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        btnItalic.setToolTipText("Itálico");
+        btnItalic.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnItalic.setBackground(backgroundColor);
+        btnItalic.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnItalic.addActionListener(new StyledEditorKit.ItalicAction());
+
+        // Label e ComboBox para tamanho da fonte
+        JLabel lblFontSize = new JLabel("Tamanho da Fonte:");
+        lblFontSize.setFont(labelFont);
+        lblFontSize.setForeground(Color.BLACK);
+        JComboBox<String> fontSizeCombo = new JComboBox<>(new String[]{"12", "14", "16", "18", "20"});
+        fontSizeCombo.setMaximumSize(new Dimension(60, 30));
+        fontSizeCombo.setToolTipText("Tamanho da Fonte");
+        fontSizeCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        fontSizeCombo.setBackground(textAreaBackground);
+        fontSizeCombo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        fontSizeCombo.setSelectedItem("16"); // Tamanho padrão
+        fontSizeCombo.addActionListener(e -> {
+            String size = (String) fontSizeCombo.getSelectedItem();
+            new StyledEditorKit.FontSizeAction("FontSize", Integer.parseInt(size)).actionPerformed(null);
+        });
+
+        // ComboBox para cores
+        ColorItem[] colors = {
+            new ColorItem("Preto", Color.BLACK),
+            new ColorItem("Azul", Color.BLUE),
+            new ColorItem("Vermelho", Color.RED),
+            new ColorItem("Verde", new Color(0, 128, 0)),
+            new ColorItem("Cinza", Color.GRAY),
+            new ColorItem("Laranja", new Color(255, 140, 0)),
+            new ColorItem("Roxo", new Color(128, 0, 128)),
+            new ColorItem("Marrom", new Color(139, 69, 19))
+        };
+        JComboBox<ColorItem> colorCombo = new JComboBox<>(colors);
+        colorCombo.setMaximumSize(new Dimension(100, 30));
+        colorCombo.setToolTipText("Cor do Texto");
+        colorCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        colorCombo.setBackground(textAreaBackground);
+        colorCombo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        colorCombo.setRenderer(new ColorComboBoxRenderer());
+        colorCombo.addActionListener(e -> {
+            ColorItem selectedColor = (ColorItem) colorCombo.getSelectedItem();
+            if (selectedColor != null) {
+                new StyledEditorKit.ForegroundAction("Color", selectedColor.color).actionPerformed(null);
+            }
+        });
+
+        toolBar.add(btnBold);
+        toolBar.add(Box.createHorizontalStrut(5)); // Espaçamento entre botões
+        toolBar.add(btnItalic);
+        toolBar.add(Box.createHorizontalStrut(10));
+        toolBar.add(lblFontSize);
+        toolBar.add(Box.createHorizontalStrut(5));
+        toolBar.add(fontSizeCombo);
+        toolBar.add(Box.createHorizontalStrut(10));
+        toolBar.add(colorCombo);
+        notasPanel.add(toolBar, BorderLayout.CENTER);
+
+        txtEvolucaoNotas = new JEditorPane();
+        txtEvolucaoNotas.setContentType("text/html");
+        HTMLEditorKit editorKit = new HTMLEditorKit();
+        txtEvolucaoNotas.setEditorKit(editorKit);
         txtEvolucaoNotas.setBackground(textAreaBackground);
+        txtEvolucaoNotas.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
+        txtEvolucaoNotas.setPreferredSize(new Dimension(0, 120)); // Tamanho padrão (8 linhas)
+        // Define tamanho padrão da fonte como 16px
+        txtEvolucaoNotas.setText("<html><body style='font-family: SansSerif; font-size: 16px;'></body></html>");
         JScrollPane scrollNotas = new JScrollPane(txtEvolucaoNotas);
         scrollNotas.setBackground(backgroundColor);
+        scrollNotas.setBorder(BorderFactory.createEmptyBorder());
+        scrollNotas.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
         notasPanel.add(scrollNotas, BorderLayout.SOUTH);
         evolucoesPanel.add(notasPanel, BorderLayout.NORTH);
 
@@ -209,26 +377,28 @@ public class PacienteAtendimentoDialog extends JDialog {
         panelEvolucoesArquivos.setBackground(backgroundColor);
         JScrollPane scrollEvolucoes = new JScrollPane(panelEvolucoesArquivos);
         scrollEvolucoes.setBackground(backgroundColor);
-        JPanel evolucoesHeader = new JPanel(new BorderLayout(5, 5));
-        evolucoesHeader.setBackground(backgroundColor);
+        scrollEvolucoes.setBorder(BorderFactory.createEmptyBorder());
+        scrollEvolucoes.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
         JLabel lblEvolucoes = new JLabel("Arquivos Anexados");
-        lblEvolucoes.setFont(labelFont);
+        lblEvolucoes.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblEvolucoes.setForeground(primaryColor);
-        evolucoesHeader.add(lblEvolucoes, BorderLayout.NORTH);
-        evolucoesHeader.add(new JSeparator(), BorderLayout.CENTER);
-        panelEvolucoesArquivos.add(evolucoesHeader);
+        lblEvolucoes.setBorder(new EmptyBorder(10, 0, 10, 0)); // Espaçamento
+        panelEvolucoesArquivos.add(lblEvolucoes);
+
+        evolucoesPanel.add(scrollEvolucoes, BorderLayout.CENTER);
+
+        formPanel.add(evolucoesPanel, BorderLayout.CENTER);
 
         // Botões para adicionar evoluções
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBackground(backgroundColor);
         JButton btnAnexarDocumento = new JButton("Anexar Documento");
-        btnAnexarDocumento.setBackground(primaryColor);
-        btnAnexarDocumento.setForeground(Color.WHITE);
+        btnAnexarDocumento.setBackground(Color.LIGHT_GRAY); // Cinza padrão
+        btnAnexarDocumento.setForeground(Color.BLACK);
+        btnAnexarDocumento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAnexarDocumento.addActionListener(e -> adicionarEvolucaoArquivo());
         btnPanel.add(btnAnexarDocumento);
 
-        evolucoesPanel.add(scrollEvolucoes, BorderLayout.CENTER);
-        formPanel.add(evolucoesPanel, BorderLayout.CENTER);
         formPanel.add(btnPanel, BorderLayout.SOUTH);
 
         panel.add(formPanel, BorderLayout.CENTER);
@@ -278,6 +448,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         tabelaHistorico.getTableHeader().setBackground(primaryColor);
         tabelaHistorico.getTableHeader().setForeground(Color.WHITE);
         tabelaHistorico.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+        tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil na tabela
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
@@ -287,6 +458,8 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         JScrollPane scrollTabela = new JScrollPane(tabelaHistorico);
         scrollTabela.setBackground(backgroundColor);
+        scrollTabela.setBorder(BorderFactory.createEmptyBorder());
+        scrollTabela.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
         panel.add(scrollTabela, BorderLayout.CENTER);
 
         // Ajustar largura das colunas proporcionalmente
@@ -377,6 +550,7 @@ public class PacienteAtendimentoDialog extends JDialog {
             JButton btnRemover = new JButton("Remover");
             btnRemover.setBackground(new Color(255, 99, 71));
             btnRemover.setForeground(Color.WHITE);
+            btnRemover.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             btnRemover.addActionListener(e -> removerEvolucaoArquivo(comp));
             comp.panel.add(btnRemover, BorderLayout.EAST);
 
