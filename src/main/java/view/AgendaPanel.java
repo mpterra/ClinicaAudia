@@ -33,6 +33,8 @@ public class AgendaPanel extends JPanel {
     private final DateTimeFormatter formatterHora = DateTimeFormatter.ofPattern("HH:mm");
     private final String[] meses = {"Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                                     "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"};
+    // Definindo a fonte para a tabela, igual ao MarcacaoAtendimentoPanel
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
 
     public AgendaPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -127,7 +129,7 @@ public class AgendaPanel extends JPanel {
     private JPanel criarTabelaAtendimentos() {
         JPanel panelTabela = new JPanel(new BorderLayout());
 
-        // Colunas agora: Dia, Hora, Paciente, Status, Observação
+        // Colunas: Dia, Hora, Paciente, Status, Observação
         String[] colunas = {"Dia", "Hora", "Paciente", "Status", "Observação"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
@@ -138,44 +140,65 @@ public class AgendaPanel extends JPanel {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
+                Color bgColor;
 
-                if (isRowSelected(row)) {
-                    c.setBackground(new Color(135, 206, 250)); // azul claro seleção
-                    c.setForeground(Color.BLACK);
-                    return c;
-                }
+                try {
+                    // Converte a String de volta para LocalDate para comparar
+                    String dataStr = (String) getValueAt(row, 0);
+                    LocalDate dataLinha = LocalDate.parse(dataStr, formatterData);
+                    LocalDate hoje = LocalDate.now();
 
-                String dataStr = (String) getValueAt(row, 0);
-                LocalDate dataLinha = LocalDate.parse(dataStr, formatterData);
-
-                Color bg = Color.WHITE;
-                Color fg = Color.BLACK;
-
-                LocalDate hoje = LocalDate.now();
-
-                if (dataLinha.isBefore(hoje)) bg = new Color(220, 220, 220); // passado
-                else if (dataLinha.equals(hoje)) bg = new Color(0, 200, 0); // verde vibrante hoje
-                else bg = new Color(173, 216, 230); // futuro
-
-                Object statusObj = getValueAt(row, 3);
-                if (statusObj != null) {
-                    String status = statusObj.toString().toUpperCase();
-                    switch (status) {
-                        case "REALIZADO": bg = new Color(144, 238, 144); break;
-                        case "FALTOU": bg = new Color(255, 255, 153); break;
-                        case "CANCELADO": bg = new Color(255, 182, 193); break;
-                        case "AGENDADO": bg = new Color(173, 216, 230); break;
+                    if (dataLinha.isBefore(hoje)) {
+                        bgColor = new Color(220, 220, 220); // Passado
+                    } else {
+                        Object statusObj = getValueAt(row, 3);
+                        String status = statusObj != null ? statusObj.toString().toUpperCase() : "";
+                        switch (status) {
+                            case "AGENDADO" -> bgColor = new Color(173, 216, 230);
+                            case "REALIZADO" -> bgColor = new Color(144, 238, 144);
+                            case "FALTOU" -> bgColor = new Color(255, 255, 153);
+                            case "CANCELADO" -> bgColor = new Color(255, 182, 193);
+                            default -> bgColor = dataLinha.equals(hoje) ? new Color(0, 200, 0) : new Color(173, 216, 230);
+                        }
                     }
+                } catch (Exception e) {
+                    bgColor = Color.WHITE; // Fallback
                 }
 
-                c.setBackground(bg);
-                c.setForeground(fg);
+                c.setBackground(bgColor);
+                c.setForeground(Color.BLACK);
+
+                // Aplica borda preta apenas na linha selecionada, contornando a linha inteira
+                if (isRowSelected(row)) {
+                    int lastColumn = getColumnCount() - 1;
+                    if (column == 0) {
+                        // Primeira coluna: borda esquerda e bordas horizontais
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
+                    } else if (column == lastColumn) {
+                        // Última coluna: borda direita e bordas horizontais
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
+                    } else {
+                        // Colunas intermediárias: apenas bordas horizontais
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
+                    }
+                } else {
+                    ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                }
+
                 return c;
             }
         };
 
+        // Desativa a grade da tabela para remover divisórias entre células
+        tabelaAtendimentos.setShowGrid(false);
+        tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0)); // Remove espaçamento entre células
+
+        // Aplicando a mesma formatação de fonte e altura de linha do MarcacaoAtendimentoPanel
+        tabelaAtendimentos.setFont(labelFont); // Fonte SansSerif, Plain, tamanho 14
+        tabelaAtendimentos.setRowHeight(25); // Altura da linha 25 pixels
+
         tabelaAtendimentos.setFillsViewportHeight(true);
-        tabelaAtendimentos.getTableHeader().setBackground(new Color(30, 144, 255)); // azul escuro
+        tabelaAtendimentos.getTableHeader().setBackground(new Color(30, 144, 255)); // Azul escuro
         tabelaAtendimentos.getTableHeader().setForeground(Color.WHITE);
         tabelaAtendimentos.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
 
@@ -246,7 +269,7 @@ public class AgendaPanel extends JPanel {
                 btnDia.getModel().setPressed(true);
                 btnDia.getModel().setArmed(true);
             } else if (dataAtual.equals(LocalDate.now())) {
-                btnDia.setBackground(Color.decode("#32CD32")); // verde vibrante hoje
+                btnDia.setBackground(Color.decode("#32CD32")); // Verde vibrante hoje
                 btnDia.setForeground(Color.BLACK);
             } else if (dataAtual.isBefore(LocalDate.now())) {
                 btnDia.setBackground(Color.WHITE);

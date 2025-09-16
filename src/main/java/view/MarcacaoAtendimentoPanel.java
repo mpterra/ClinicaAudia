@@ -74,13 +74,13 @@ public class MarcacaoAtendimentoPanel extends JPanel {
 
     public MarcacaoAtendimentoPanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(5, 15, 15, 15)); // Reduzido espaço superior de 15 para 5
+        setBorder(new EmptyBorder(5, 15, 15, 15));
         setBackground(backgroundColor);
 
         JLabel lblTitulo = new JLabel("Marcação de Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0)); // Reduzido margem superior de 10 para 5 e inferior de 20 para 10
+        lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         JPanel painelFormulario = criarPainelFormulario();
@@ -363,7 +363,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         }
     }
 
-
     private JPanel criarMiniCalendario() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(new EmptyBorder(10, 0, 10, 0));
@@ -536,6 +535,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
+                Color bgColor;
 
                 try {
                     // Converte a String de volta para LocalDate para comparar
@@ -544,26 +544,48 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     LocalDate hoje = LocalDate.now();
 
                     if (dataAtendimento.isBefore(hoje)) {
-                        c.setBackground(new Color(220, 220, 220));
+                        bgColor = new Color(220, 220, 220);
                     } else {
                         Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
                         switch (situacao) {
-                            case AGENDADO -> c.setBackground(new Color(173, 216, 230));
-                            case REALIZADO -> c.setBackground(new Color(144, 238, 144));
-                            case FALTOU -> c.setBackground(new Color(255, 255, 153));
-                            case CANCELADO -> c.setBackground(new Color(255, 182, 193));
-                            default -> c.setBackground(backgroundColor);
+                            case AGENDADO -> bgColor = new Color(173, 216, 230);
+                            case REALIZADO -> bgColor = new Color(144, 238, 144);
+                            case FALTOU -> bgColor = new Color(255, 255, 153);
+                            case CANCELADO -> bgColor = new Color(255, 182, 193);
+                            default -> bgColor = backgroundColor;
                         }
                     }
                 } catch (Exception e) {
-                    c.setBackground(backgroundColor); // fallback se algo der errado
+                    bgColor = backgroundColor; // Fallback se algo der errado
                 }
 
+                c.setBackground(bgColor);
                 c.setForeground(Color.BLACK);
+
+                // Aplica borda preta apenas na linha selecionada, contornando a linha inteira
+                if (isRowSelected(row)) {
+                    int lastColumn = getColumnCount() - 1;
+                    if (column == 0) {
+                        // Primeira coluna: borda esquerda e bordas horizontais
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
+                    } else if (column == lastColumn) {
+                        // Última coluna: borda direita e bordas horizontais
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
+                    } else {
+                        // Colunas intermediárias: apenas bordas horizontais
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
+                    }
+                } else {
+                    ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                }
+
                 return c;
             }
         };
-        
+
+        // Desativa a grade da tabela para remover divisórias entre células
+        tabelaAtendimentos.setShowGrid(false);
+        tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0)); // Remove espaçamento entre células
         tabelaAtendimentos.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -705,14 +727,14 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         try {
             List<Atendimento> atendimentos = atendimentoController.listarTodos();
             for (Atendimento a : atendimentos) {
-            	modeloTabela.addRow(new Object[] {
-            		    a.getDataHora().toLocalDateTime().toLocalDate().format(formatoData),
-            		    a.getDataHora().toLocalDateTime().toLocalTime(),
-            		    a.getPacienteNome(),
-            		    a.getProfissional().getNome(),
-            		    a.getTipo(),
-            		    a.getSituacao()
-            		});
+                modeloTabela.addRow(new Object[] {
+                        a.getDataHora().toLocalDateTime().toLocalDate().format(formatoData),
+                        a.getDataHora().toLocalDateTime().toLocalTime(),
+                        a.getPacienteNome(),
+                        a.getProfissional().getNome(),
+                        a.getTipo(),
+                        a.getSituacao()
+                });
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro",
