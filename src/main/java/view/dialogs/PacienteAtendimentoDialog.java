@@ -6,6 +6,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import javax.swing.text.StyledEditorKit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -48,6 +49,7 @@ public class PacienteAtendimentoDialog extends JDialog {
     private final Color textAreaBackground = Color.WHITE; // Fundo branco padrão para campos editáveis
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
+    private final Font buttonFont = new Font("SansSerif", Font.PLAIN, 12); // Fonte menor para botões
 
     // Classe interna para componentes de evolução (apenas arquivos)
     private static class EvolucaoComponent {
@@ -185,12 +187,14 @@ public class PacienteAtendimentoDialog extends JDialog {
         JButton btnSalvar = new JButton("Salvar");
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
+        btnSalvar.setFont(buttonFont);
         btnSalvar.setPreferredSize(new Dimension(100, 35));
         btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JButton btnCancelar = new JButton("Cancelar");
         btnCancelar.setBackground(Color.LIGHT_GRAY);
         btnCancelar.setForeground(Color.BLACK);
+        btnCancelar.setFont(buttonFont);
         btnCancelar.setPreferredSize(new Dimension(100, 35));
         btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
@@ -334,10 +338,13 @@ public class PacienteAtendimentoDialog extends JDialog {
         fontSizeCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         fontSizeCombo.setBackground(textAreaBackground);
         fontSizeCombo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        fontSizeCombo.setSelectedItem("16"); // Tamanho padrão
+        fontSizeCombo.setSelectedItem("14"); // Tamanho padrão
         fontSizeCombo.addActionListener(e -> {
             String size = (String) fontSizeCombo.getSelectedItem();
-            new StyledEditorKit.FontSizeAction("FontSize", Integer.parseInt(size)).actionPerformed(null);
+            String currentText = txtEvolucaoNotas.getText();
+            String newText = "<html><body style='font-family: SansSerif; font-size: " + size + "px;'>" + 
+                             stripBodyContent(currentText) + "</body></html>";
+            txtEvolucaoNotas.setText(newText);
         });
 
         // ComboBox para cores
@@ -383,8 +390,8 @@ public class PacienteAtendimentoDialog extends JDialog {
         txtEvolucaoNotas.setBackground(textAreaBackground);
         txtEvolucaoNotas.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
         txtEvolucaoNotas.setPreferredSize(new Dimension(0, 120)); // Tamanho padrão (8 linhas)
-        // Define tamanho padrão da fonte como 16px
-        txtEvolucaoNotas.setText("<html><body style='font-family: SansSerif; font-size: 16px;'></body></html>");
+        // Define tamanho padrão da fonte como 14px
+        txtEvolucaoNotas.setText("<html><body style='font-family: SansSerif; font-size: 14px;'></body></html>");
         JScrollPane scrollNotas = new JScrollPane(txtEvolucaoNotas);
         scrollNotas.setBackground(backgroundColor);
         scrollNotas.setBorder(BorderFactory.createEmptyBorder());
@@ -407,9 +414,9 @@ public class PacienteAtendimentoDialog extends JDialog {
         JButton btnAnexar = new JButton("Anexar Arquivo");
         btnAnexar.setBackground(Color.LIGHT_GRAY); // Cor cinza padrão do sistema
         btnAnexar.setForeground(Color.BLACK);
-        btnAnexar.setFont(labelFont);
+        btnAnexar.setFont(buttonFont); // Fonte menor
         btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnAnexar.setPreferredSize(new Dimension(120, 30));
+        btnAnexar.setPreferredSize(new Dimension(110, 28)); // Tamanho ajustado
         btnAnexar.addActionListener(e -> adicionarEvolucaoArquivo());
         headerArquivosPanel.add(btnAnexar);
 
@@ -454,6 +461,16 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
 
         return panel;
+    }
+
+    // Método auxiliar para extrair conteúdo do corpo do HTML
+    private String stripBodyContent(String htmlText) {
+        String content = htmlText;
+        if (content.startsWith("<html><body")) {
+            content = content.replaceFirst("<html><body[^>]*>", "");
+            content = content.replaceFirst("</body></html>", "");
+        }
+        return content;
     }
 
     // Cria o painel da aba "Histórico do Paciente"
@@ -601,6 +618,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         JButton btnRemover = new JButton("Remover");
         btnRemover.setBackground(new Color(255, 99, 71));
         btnRemover.setForeground(Color.WHITE);
+        btnRemover.setFont(buttonFont);
         btnRemover.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRemover.addActionListener(e -> removerEvolucaoArquivo(comp));
         comp.panel.add(btnRemover, BorderLayout.EAST);
