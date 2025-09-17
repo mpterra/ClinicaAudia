@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.awt.Desktop;
 
 import controller.AtendimentoController;
 import controller.DocumentoAtendimentoController;
@@ -35,9 +36,9 @@ public class PacienteAtendimentoDialog extends JDialog {
     private JTextArea txtObservacoesAtendimento;
     private JTable tabelaHistorico;
     private DefaultTableModel modeloHistorico;
-    private JComboBox<Atendimento.Situacao> cbSituacao; // ComboBox para status do atendimento
+    private JComboBox<Atendimento.Situacao> cbSituacao;
     private JPanel panelDocumentos;
-    private List<DocumentoComponent> listaDocumentos; // Lista de documentos anexados
+    private List<DocumentoComponent> listaDocumentos;
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final Color primaryColor = new Color(30, 144, 255);
     private final Color backgroundColor = new Color(245, 245, 245);
@@ -58,6 +59,25 @@ public class PacienteAtendimentoDialog extends JDialog {
             this.panel.setBackground(new Color(245, 245, 245));
             this.lblArquivo = new JLabel("Arquivo: " + doc.getNomeArquivo());
             this.lblArquivo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            this.lblArquivo.setForeground(new Color(30, 144, 255));
+            this.lblArquivo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            this.lblArquivo.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    try {
+                        File file = new File(doc.getCaminhoArquivo());
+                        if (file.exists()) {
+                            Desktop.getDesktop().open(file);
+                        } else {
+                            JOptionPane.showMessageDialog(null, "Arquivo não encontrado: " + doc.getCaminhoArquivo(), 
+                                    "Erro", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(null, "Erro ao abrir arquivo: " + ex.getMessage(), 
+                                "Erro", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
         }
     }
 
@@ -210,7 +230,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         lblObservacoes.setForeground(primaryColor);
         lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0));
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
-        txtObservacoesAtendimento = new JTextArea(10, 30);
+        txtObservacoesAtendimento = new JTextArea(7, 30); // Reduzido para 70% (de 10 para 7 linhas)
         txtObservacoesAtendimento.setLineWrap(true);
         txtObservacoesAtendimento.setWrapStyleWord(true);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
