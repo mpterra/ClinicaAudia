@@ -3,6 +3,7 @@ package view.dialogs;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -40,7 +41,7 @@ public class AtendimentoEditDialog extends JDialog {
     private JComboBox<Atendimento.Tipo> cbTipo;
     private JComboBox<Atendimento.Situacao> cbSituacao;
     private JComboBox<LocalTime> cbHorario;
-    private JTextArea txtObservacoes;
+    private JTextPane txtObservacoes; // Changed to JTextPane for HTML support
     private JComboBox<String> cbData;
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -148,6 +149,7 @@ public class AtendimentoEditDialog extends JDialog {
 
         cbProfissional = new JComboBox<>();
         cbProfissional.setPreferredSize(new Dimension(200, 25));
+        cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
         gbc.gridx = 1;
         gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
@@ -166,6 +168,7 @@ public class AtendimentoEditDialog extends JDialog {
 
         cbTipo = new JComboBox<>(Atendimento.Tipo.values());
         cbTipo.setPreferredSize(new Dimension(150, 25));
+        cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -180,6 +183,7 @@ public class AtendimentoEditDialog extends JDialog {
 
         cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
         cbSituacao.setPreferredSize(new Dimension(150, 25));
+        cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
         gbc.gridx = 3;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -196,6 +200,7 @@ public class AtendimentoEditDialog extends JDialog {
 
         cbData = new JComboBox<>();
         cbData.setPreferredSize(new Dimension(150, 25));
+        cbData.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -210,6 +215,7 @@ public class AtendimentoEditDialog extends JDialog {
 
         cbHorario = new JComboBox<>();
         cbHorario.setPreferredSize(new Dimension(150, 25));
+        cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
         gbc.gridx = 3;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -225,9 +231,10 @@ public class AtendimentoEditDialog extends JDialog {
         gbc.weighty = 1.0;
         formPanel.add(lblObservacoes, gbc);
 
-        txtObservacoes = new JTextArea(5, 30);
-        txtObservacoes.setLineWrap(true);
-        txtObservacoes.setWrapStyleWord(true);
+        txtObservacoes = new JTextPane(); // Changed to JTextPane
+        txtObservacoes.setContentType("text/html"); // Set content type to HTML
+        txtObservacoes.setEditorKit(new HTMLEditorKit()); // Enable HTML rendering
+        txtObservacoes.setText("<html></html>"); // Initialize with empty HTML
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
         gbc.gridx = 1;
         gbc.gridwidth = 3;
@@ -242,16 +249,19 @@ public class AtendimentoEditDialog extends JDialog {
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setPreferredSize(new Dimension(100, 35));
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for button
 
         JButton btnExcluir = new JButton("Excluir");
         btnExcluir.setBackground(new Color(255, 99, 71));
         btnExcluir.setForeground(Color.WHITE);
         btnExcluir.setPreferredSize(new Dimension(100, 35));
+        btnExcluir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for button
 
         JButton btnCancelar = new JButton("Cancelar");
         btnCancelar.setBackground(Color.LIGHT_GRAY);
         btnCancelar.setForeground(Color.BLACK);
         btnCancelar.setPreferredSize(new Dimension(100, 35));
+        btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for button
 
         buttonPanel.add(btnCancelar);
         buttonPanel.add(btnExcluir);
@@ -310,7 +320,7 @@ public class AtendimentoEditDialog extends JDialog {
         cbData.setSelectedItem(dataStr);
 
         atualizarHorarios();
-        txtObservacoes.setText(atendimento.getNotas() != null ? atendimento.getNotas() : "");
+        txtObservacoes.setText(atendimento.getNotas() != null ? "<html>" + atendimento.getNotas() + "</html>" : "<html></html>"); // Set HTML content
     }
 
     private void carregarDadosIniciais() throws SQLException {
@@ -403,7 +413,7 @@ public class AtendimentoEditDialog extends JDialog {
             atendimento.setDataHora(Timestamp.valueOf(data.atTime(hora)));
             atendimento.setTipo(tipo);
             atendimento.setSituacao(situacao);
-            atendimento.setNotas(txtObservacoes.getText());
+            atendimento.setNotas(txtObservacoes.getText().replaceAll("<html>|</html>", "")); // Strip HTML tags for saving
 
             if (atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin())) {
                 JOptionPane.showMessageDialog(this, "Atendimento atualizado com sucesso!", "Sucesso",

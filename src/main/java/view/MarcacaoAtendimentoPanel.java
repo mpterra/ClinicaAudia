@@ -677,8 +677,13 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private void carregarDadosIniciais() {
         try {
             cbProfissional.removeAllItems();
-            profissionalController.listarTodos().stream().filter(Profissional::isAtivo)
-                    .forEach(cbProfissional::addItem);
+            List<Profissional> profissionais = profissionalController.listarTodos().stream()
+                    .filter(Profissional::isAtivo)
+                    .collect(Collectors.toList());
+            profissionais.forEach(cbProfissional::addItem);
+            if (!profissionais.isEmpty()) {
+                cbProfissional.setSelectedIndex(0); // Select first professional by default
+            }
             atualizarPaciente();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage(), "Erro",
@@ -779,6 +784,10 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE);
                 carregarAtendimentos();
                 limparCampos();
+                // Ensure a professional is selected after saving
+                if (cbProfissional.getItemCount() > 0) {
+                    cbProfissional.setSelectedIndex(0);
+                }
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -787,10 +796,13 @@ public class MarcacaoAtendimentoPanel extends JPanel {
 
     private void limparCampos() throws SQLException {
         txtBuscaPaciente.setText("");
-        cbProfissional.setSelectedIndex(-1);
         cbTipo.setSelectedIndex(0);
         cbHorario.removeAllItems();
         txtObservacoes.setText("");
         atualizarPaciente();
+        // Ensure a professional is selected after clearing
+        if (cbProfissional.getItemCount() > 0) {
+            cbProfissional.setSelectedIndex(0);
+        }
     }
 }
