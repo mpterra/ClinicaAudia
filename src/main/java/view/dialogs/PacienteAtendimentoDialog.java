@@ -5,9 +5,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.StyledEditorKit;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.sql.SQLException;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.awt.Desktop;
 
+// Importações para controllers, modelos e AgendaPanel
 import controller.AtendimentoController;
 import controller.DocumentoAtendimentoController;
 import controller.PacienteController;
@@ -23,22 +29,24 @@ import model.Atendimento;
 import model.DocumentoAtendimento;
 import model.Paciente;
 import util.Sessao;
+import view.AgendaPanel;
 
 // Diálogo para exibir detalhes do atendimento e histórico do paciente
 public class PacienteAtendimentoDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final Atendimento atendimento;
+    private final AgendaPanel agendaPanel; // Referência ao AgendaPanel pai
     private final AtendimentoController atendimentoController = new AtendimentoController();
     private final DocumentoAtendimentoController documentoController = new DocumentoAtendimentoController();
     private final PacienteController pacienteController = new PacienteController();
 
-    private JTextArea txtObservacoesAtendimento;
+    private JEditorPane txtObservacoesAtendimento; // Editor para observações com formatação HTML
     private JTable tabelaHistorico;
     private DefaultTableModel modeloHistorico;
-    private JComboBox<Atendimento.Situacao> cbSituacao;
+    private JComboBox<Atendimento.Situacao> cbSituacao; // ComboBox para status do atendimento
     private JPanel panelDocumentos;
-    private List<DocumentoComponent> listaDocumentos;
+    private List<DocumentoComponent> listaDocumentos; // Lista de documentos anexados
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final Color primaryColor = new Color(30, 144, 255);
     private final Color backgroundColor = new Color(245, 245, 245);
@@ -81,9 +89,73 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
-    public PacienteAtendimentoDialog(Frame parent, Atendimento atendimento) {
+    // Classe para renderizar cores no JComboBox
+    private static class ColorComboBoxRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof ColorItem) {
+                ColorItem colorItem = (ColorItem) value;
+                label.setText(colorItem.name);
+                label.setIcon(new ColorIcon(colorItem.color));
+                label.setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
+                label.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
+            }
+            return label;
+        }
+    }
+
+    // Classe para representar itens de cor no JComboBox
+    private static class ColorItem {
+        String name;
+        Color color;
+
+        ColorItem(String name, Color color) {
+            this.name = name;
+            this.color = color;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    // Classe para criar ícone de amostra de cor
+    private static class ColorIcon implements Icon {
+        private final Color color;
+        private final int width = 16;
+        private final int height = 16;
+
+        ColorIcon(Color color) {
+            this.color = color;
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2d = (Graphics2D) g.create();
+            g2d.setColor(color);
+            g2d.fillRect(x, y, width, height);
+            g2d.setColor(Color.BLACK);
+            g2d.drawRect(x, y, width - 1, height - 1);
+            g2d.dispose();
+        }
+
+        @Override
+        public int getIconWidth() {
+            return width;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return height;
+        }
+    }
+
+    public PacienteAtendimentoDialog(Frame parent, Atendimento atendimento, AgendaPanel agendaPanel) {
         super(parent, "Detalhes do Atendimento e Paciente", true);
         this.atendimento = atendimento;
+        this.agendaPanel = agendaPanel; // Inicializa a referência ao AgendaPanel
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(true);
         setSize(650, 700);
@@ -222,7 +294,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         statusPanel.add(cbSituacao);
         formPanel.add(statusPanel, BorderLayout.NORTH);
 
-        // Observações do atendimento
+        // Observações do atendimento com formatação
         JPanel obsPanel = new JPanel(new BorderLayout(10, 10));
         obsPanel.setBackground(backgroundColor);
         JLabel lblObservacoes = new JLabel("Observações do Atendimento");
@@ -230,16 +302,96 @@ public class PacienteAtendimentoDialog extends JDialog {
         lblObservacoes.setForeground(primaryColor);
         lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0));
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
-        txtObservacoesAtendimento = new JTextArea(7, 30); // Reduzido para 70% (de 10 para 7 linhas)
-        txtObservacoesAtendimento.setLineWrap(true);
-        txtObservacoesAtendimento.setWrapStyleWord(true);
+
+        // Barra de ferramentas para formatação
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setBackground(backgroundColor);
+        toolBar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+
+        // Botão Negrito
+        JButton btnBold = new JButton("N");
+        btnBold.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnBold.setToolTipText("Negrito");
+        btnBold.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnBold.setBackground(backgroundColor);
+        btnBold.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnBold.addActionListener(new StyledEditorKit.BoldAction());
+
+        // Botão Itálico
+        JButton btnItalic = new JButton("I");
+        btnItalic.setFont(new Font("SansSerif", Font.ITALIC, 14));
+        btnItalic.setToolTipText("Itálico");
+        btnItalic.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnItalic.setBackground(backgroundColor);
+        btnItalic.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnItalic.addActionListener(new StyledEditorKit.ItalicAction());
+
+        // ComboBox para cores
+        ColorItem[] colors = {
+            new ColorItem("Preto", Color.BLACK),
+            new ColorItem("Azul", Color.BLUE),
+            new ColorItem("Vermelho", Color.RED),
+            new ColorItem("Verde", new Color(0, 128, 0)),
+            new ColorItem("Cinza", Color.GRAY),
+            new ColorItem("Laranja", new Color(255, 140, 0)),
+            new ColorItem("Roxo", new Color(128, 0, 128)),
+            new ColorItem("Marrom", new Color(139, 69, 19))
+        };
+        JComboBox<ColorItem> colorCombo = new JComboBox<>(colors);
+        colorCombo.setMaximumSize(new Dimension(100, 30));
+        colorCombo.setToolTipText("Cor do Texto");
+        colorCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        colorCombo.setBackground(textAreaBackground);
+        colorCombo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        colorCombo.setRenderer(new ColorComboBoxRenderer());
+        colorCombo.addActionListener(e -> {
+            ColorItem selectedColor = (ColorItem) colorCombo.getSelectedItem();
+            if (selectedColor != null) {
+                new StyledEditorKit.ForegroundAction("Color", selectedColor.color).actionPerformed(null);
+            }
+        });
+
+        toolBar.add(btnBold);
+        toolBar.add(Box.createHorizontalStrut(5));
+        toolBar.add(btnItalic);
+        toolBar.add(Box.createHorizontalStrut(10));
+        toolBar.add(colorCombo);
+        obsPanel.add(toolBar, BorderLayout.CENTER);
+
+        // Editor de texto com formatação HTML
+        txtObservacoesAtendimento = new JEditorPane();
+        txtObservacoesAtendimento.setContentType("text/html");
+        HTMLEditorKit editorKit = new HTMLEditorKit();
+        txtObservacoesAtendimento.setEditorKit(editorKit);
+        HTMLDocument doc = new HTMLDocument();
+        txtObservacoesAtendimento.setDocument(doc);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
         txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 140)); // Aproximadamente 7 linhas
+        txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif; font-size: 16px; margin: 0; padding: 0; line-height: 1.0;'></body></html>");
+
+        // Configurar quebra de linha com Enter
+        txtObservacoesAtendimento.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    try {
+                        editorKit.insertHTML(doc, txtObservacoesAtendimento.getCaretPosition(), "<br>", 0, 0, null);
+                        e.consume(); // Evita comportamento padrão indesejado
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+
         JScrollPane scrollObs = new JScrollPane(txtObservacoesAtendimento);
         scrollObs.setBackground(backgroundColor);
         scrollObs.setBorder(BorderFactory.createEmptyBorder());
         scrollObs.getVerticalScrollBar().setUnitIncrement(32);
-        obsPanel.add(scrollObs, BorderLayout.CENTER);
+        obsPanel.add(scrollObs, BorderLayout.SOUTH);
+
         formPanel.add(obsPanel, BorderLayout.CENTER);
 
         // Documentos
@@ -343,7 +495,7 @@ public class PacienteAtendimentoDialog extends JDialog {
                                     .findFirst()
                                     .orElse(null);
                             if (selectedAtendimento != null) {
-                                new PacienteAtendimentoDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento).setVisible(true);
+                                new PacienteAtendimentoDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento, agendaPanel).setVisible(true);
                             }
                         } catch (SQLException ex) {
                             JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Erro ao abrir atendimento: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -440,7 +592,8 @@ public class PacienteAtendimentoDialog extends JDialog {
 
     // Carrega os dados iniciais do atendimento e histórico
     private void carregarDados() {
-        txtObservacoesAtendimento.setText(atendimento.getNotas() != null ? atendimento.getNotas() : "");
+        txtObservacoesAtendimento.setText(atendimento.getNotas() != null ? 
+                atendimento.getNotas() : "<html><body style='font-family: SansSerif; font-size: 16px; margin: 0; padding: 0; line-height: 1.0;'></body></html>");
         try {
             List<DocumentoAtendimento> documentos = documentoController.listarPorAtendimentoId(atendimento.getId());
             for (DocumentoAtendimento doc : documentos) {
@@ -481,6 +634,11 @@ public class PacienteAtendimentoDialog extends JDialog {
                     comp.doc.setAtendimentoId(atendimento.getId());
                     documentoController.criar(comp.doc, Sessao.getUsuarioLogado().getLogin());
                 }
+            }
+
+            // Atualiza a tabela no AgendaPanel
+            if (agendaPanel != null) {
+                agendaPanel.atualizarTabela();
             }
 
             JOptionPane.showMessageDialog(this, "Dados salvos com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);

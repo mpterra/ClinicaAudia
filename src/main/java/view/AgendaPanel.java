@@ -21,8 +21,8 @@ import controller.AtendimentoController;
 import model.Atendimento;
 import view.dialogs.PacienteAtendimentoDialog;
 
+// Painel para exibir a agenda de atendimentos com calendário e tabela
 public class AgendaPanel extends JPanel {
-
     private static final long serialVersionUID = 1L;
 
     private JTable tabelaAtendimentos;
@@ -35,21 +35,22 @@ public class AgendaPanel extends JPanel {
 
     private final DateTimeFormatter formatterData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final DateTimeFormatter formatterHora = DateTimeFormatter.ofPattern("HH:mm");
-    private final String[] meses = {"Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-                                    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"};
-    // Definindo a fonte para a tabela, igual ao MarcacaoAtendimentoPanel
-    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
+    private final String[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"};
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14); // Fonte para a tabela
 
     public AgendaPanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
+        // Título
         JLabel lblTitulo = new JLabel("Agenda de Atendimentos", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitulo.setForeground(new Color(30, 30, 60));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
+        // Painéis de calendário e tabela
         JPanel panelEsquerdo = criarPainelCalendario();
         JPanel panelDireito = criarTabelaAtendimentos();
 
@@ -72,6 +73,7 @@ public class AgendaPanel extends JPanel {
         carregarAtendimentosDoDia();
     }
 
+    // Cria o painel do calendário
     private JPanel criarPainelCalendario() {
         JPanel panelCalendario = new JPanel(new BorderLayout(5, 5));
         panelCalendario.setBorder(BorderFactory.createTitledBorder(
@@ -91,7 +93,7 @@ public class AgendaPanel extends JPanel {
         cbMes = new JComboBox<>(meses);
         cbAno = new JComboBox<>();
         int anoAtual = LocalDate.now().getYear();
-        for(int i = anoAtual - 5; i <= 2030; i++) cbAno.addItem(i);
+        for (int i = anoAtual - 5; i <= 2030; i++) cbAno.addItem(i);
 
         cbMes.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
         cbAno.setSelectedItem(anoAtual);
@@ -130,6 +132,7 @@ public class AgendaPanel extends JPanel {
         return panelCalendario;
     }
 
+    // Cria a tabela de atendimentos
     private JPanel criarTabelaAtendimentos() {
         JPanel panelTabela = new JPanel(new BorderLayout());
 
@@ -172,17 +175,14 @@ public class AgendaPanel extends JPanel {
                 c.setBackground(bgColor);
                 c.setForeground(Color.BLACK);
 
-                // Aplica borda preta apenas na linha selecionada, contornando a linha inteira
+                // Aplica borda preta apenas na linha selecionada
                 if (isRowSelected(row)) {
                     int lastColumn = getColumnCount() - 1;
                     if (column == 0) {
-                        // Primeira coluna: borda esquerda e bordas horizontais
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
                     } else if (column == lastColumn) {
-                        // Última coluna: borda direita e bordas horizontais
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
                     } else {
-                        // Colunas intermediárias: apenas bordas horizontais
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
                     }
                 } else {
@@ -192,8 +192,8 @@ public class AgendaPanel extends JPanel {
                 return c;
             }
         };
-        
-     // Adiciona listener de duplo clique na tabela
+
+        // Adiciona listener de duplo clique na tabela
         tabelaAtendimentos.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -203,30 +203,31 @@ public class AgendaPanel extends JPanel {
                         try {
                             String dataStr = (String) tabelaAtendimentos.getValueAt(row, 0);
                             String horaStr = (String) tabelaAtendimentos.getValueAt(row, 1);
-                            LocalDateTime dataHora = LocalDateTime.parse(dataStr + " " + horaStr, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                            LocalDateTime dataHora = LocalDateTime.parse(dataStr + " " + horaStr, 
+                                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
                             AtendimentoController ac = new AtendimentoController();
                             List<Atendimento> atendimentos = ac.listarPorPeriodo(dataHora, dataHora);
                             if (!atendimentos.isEmpty()) {
                                 Atendimento atendimento = atendimentos.get(0);
-                                PacienteAtendimentoDialog dialog = new PacienteAtendimentoDialog((Frame) SwingUtilities.getWindowAncestor(AgendaPanel.this), atendimento);
+                                PacienteAtendimentoDialog dialog = new PacienteAtendimentoDialog(
+                                        (Frame) SwingUtilities.getWindowAncestor(AgendaPanel.this), 
+                                        atendimento, AgendaPanel.this);
                                 dialog.setVisible(true);
                             }
                         } catch (SQLException ex) {
-                            JOptionPane.showMessageDialog(AgendaPanel.this, "Erro ao abrir detalhes: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(AgendaPanel.this, 
+                                    "Erro ao abrir detalhes: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
             }
         });
 
-        // Desativa a grade da tabela para remover divisórias entre células
+        // Configurações visuais da tabela
         tabelaAtendimentos.setShowGrid(false);
         tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0)); // Remove espaçamento entre células
-
-        // Aplicando a mesma formatação de fonte e altura de linha do MarcacaoAtendimentoPanel
-        tabelaAtendimentos.setFont(labelFont); // Fonte SansSerif, Plain, tamanho 14
+        tabelaAtendimentos.setFont(labelFont); // Fonte SansSerif, tamanho 14
         tabelaAtendimentos.setRowHeight(25); // Altura da linha 25 pixels
-
         tabelaAtendimentos.setFillsViewportHeight(true);
         tabelaAtendimentos.getTableHeader().setBackground(new Color(30, 144, 255)); // Azul escuro
         tabelaAtendimentos.getTableHeader().setForeground(Color.WHITE);
@@ -251,6 +252,7 @@ public class AgendaPanel extends JPanel {
         return panelTabela;
     }
 
+    // Ajusta a largura das colunas proporcionalmente
     private void ajustarLarguraColunas() {
         int larguraTotal = tabelaAtendimentos.getWidth();
         if (larguraTotal == 0) return;
@@ -262,6 +264,7 @@ public class AgendaPanel extends JPanel {
         tabelaAtendimentos.getColumnModel().getColumn(4).setPreferredWidth((int)(larguraTotal * 0.30)); // Observação
     }
 
+    // Atualiza o calendário com base no mês e ano selecionados
     private void atualizarCalendario() {
         painelDias.removeAll();
 
@@ -324,6 +327,7 @@ public class AgendaPanel extends JPanel {
         painelDias.repaint();
     }
 
+    // Carrega os atendimentos do dia selecionado
     private void carregarAtendimentosDoDia() {
         modeloTabela.setRowCount(0);
         try {
@@ -339,15 +343,21 @@ public class AgendaPanel extends JPanel {
                         a.getDataHora().toLocalDateTime().format(formatterData),
                         a.getDataHora().toLocalDateTime().format(formatterHora),
                         a.getPacienteNome(),
-                        a.getSituacao(),   // Status
-                        a.getNotas()      // Observação
+                        a.getSituacao(),
+                        a.getNotas()
                 });
             }
 
             ajustarLarguraColunas();
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), 
+                    "Erro", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    // Atualiza a tabela de atendimentos
+    public void atualizarTabela() {
+        carregarAtendimentosDoDia();
     }
 }
