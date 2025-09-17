@@ -181,6 +181,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(labelFont);
+        tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         tabbedPane.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -353,7 +354,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         txtObservacoesAtendimento.setBackground(textAreaBackground);
         txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
         txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 98));
-        txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif;  margin: 3; padding: 3; line-height: 1.0;'></body></html>");
+        txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif; margin: 3; padding: 3; line-height: 1.0;'></body></html>");
 
         txtObservacoesAtendimento.addKeyListener(new KeyAdapter() {
             @Override
@@ -457,8 +458,8 @@ public class PacienteAtendimentoDialog extends JDialog {
         tabelaHistorico.getTableHeader().setForeground(Color.WHITE);
         tabelaHistorico.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
         tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        tabelaHistorico.setCursor(Cursor.getDefaultCursor());
 
-        // Listener para duplo clique abrir HistoricoPacienteDialog
         tabelaHistorico.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -472,7 +473,10 @@ public class PacienteAtendimentoDialog extends JDialog {
                                     .findFirst()
                                     .orElse(null);
                             if (selectedAtendimento != null) {
+                                tabelaHistorico.clearSelection(); // Clear selection to prevent multiple triggers
                                 new HistoricoPacienteDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento).setVisible(true);
+                            } else {
+                                JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Atendimento não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
                             }
                         } catch (SQLException ex) {
                             JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Erro ao abrir histórico: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
