@@ -28,6 +28,10 @@ public class HistoricoPacienteDialog extends JDialog {
     private final Font subtitleFont = new Font("SansSerif", Font.BOLD, 14);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
 
+    // 🔹 Agora mantemos referências diretas
+    private JEditorPane txtObservacoes;
+    private JPanel panelDocumentos;
+
     public HistoricoPacienteDialog(Frame parent, Atendimento atendimento) {
         super(parent, "Histórico do Atendimento", true);
         this.atendimento = atendimento;
@@ -75,7 +79,7 @@ public class HistoricoPacienteDialog extends JDialog {
         lblObservacoes.setForeground(primaryColor);
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
 
-        JEditorPane txtObservacoes = new JEditorPane();
+        txtObservacoes = new JEditorPane();
         txtObservacoes.setContentType("text/html");
         txtObservacoes.setEditable(false);
         txtObservacoes.setBackground(textAreaBackground);
@@ -95,7 +99,7 @@ public class HistoricoPacienteDialog extends JDialog {
         lblDocumentos.setForeground(primaryColor);
         documentosPanel.add(lblDocumentos, BorderLayout.NORTH);
 
-        JPanel panelDocumentos = new JPanel();
+        panelDocumentos = new JPanel();
         panelDocumentos.setLayout(new BoxLayout(panelDocumentos, BoxLayout.Y_AXIS));
         panelDocumentos.setBackground(backgroundColor);
         JScrollPane scrollDocumentos = new JScrollPane(panelDocumentos);
@@ -123,15 +127,11 @@ public class HistoricoPacienteDialog extends JDialog {
 
     // Carrega os dados do atendimento
     private void carregarDados() {
-        // Carrega observações
-        JEditorPane txtObservacoes = (JEditorPane) ((JScrollPane) ((JPanel) getContentPane().getComponent(0))
-                .getComponent(1)).getViewport().getView();
+        // 🔹 Agora acessamos direto a referência
         txtObservacoes.setText(atendimento.getNotas() != null ? 
                 atendimento.getNotas() : "<html><body style='font-family: SansSerif; font-size: 16px; margin: 0; padding: 0; line-height: 1.0;'></body></html>");
 
         // Carrega documentos
-        JPanel panelDocumentos = (JPanel) ((JScrollPane) ((JPanel) ((JPanel) getContentPane().getComponent(0))
-                .getComponent(2)).getComponent(1)).getViewport().getView();
         try {
             List<DocumentoAtendimento> documentos = documentoController.listarPorAtendimentoId(atendimento.getId());
             for (DocumentoAtendimento doc : documentos) {
