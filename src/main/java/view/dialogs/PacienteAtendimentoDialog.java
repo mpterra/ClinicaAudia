@@ -5,8 +5,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.StyledEditorKit;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -18,10 +16,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import controller.AtendimentoController;
-import controller.EvolucaoAtendimentoController;
+import controller.DocumentoAtendimentoController;
 import controller.PacienteController;
 import model.Atendimento;
-import model.EvolucaoAtendimento;
+import model.DocumentoAtendimento;
 import model.Paciente;
 import util.Sessao;
 
@@ -31,100 +29,35 @@ public class PacienteAtendimentoDialog extends JDialog {
 
     private final Atendimento atendimento;
     private final AtendimentoController atendimentoController = new AtendimentoController();
-    private final EvolucaoAtendimentoController evolucaoController = new EvolucaoAtendimentoController();
+    private final DocumentoAtendimentoController documentoController = new DocumentoAtendimentoController();
     private final PacienteController pacienteController = new PacienteController();
 
     private JTextArea txtObservacoesAtendimento;
-    private JEditorPane txtEvolucaoNotas; // Editor para notas da evolução com formatação
-    private List<EvolucaoComponent> listaEvolucoesArquivos; // Apenas para arquivos
-    private JPanel panelEvolucoesArquivos;
     private JTable tabelaHistorico;
     private DefaultTableModel modeloHistorico;
-    private EvolucaoAtendimento evolucaoTextoExistente; // Para gerenciar a evolução de texto existente
     private JComboBox<Atendimento.Situacao> cbSituacao; // ComboBox para status do atendimento
+    private JPanel panelDocumentos;
+    private List<DocumentoComponent> listaDocumentos; // Lista de documentos anexados
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final Color primaryColor = new Color(30, 144, 255);
     private final Color backgroundColor = new Color(245, 245, 245);
-    private final Color textAreaBackground = Color.WHITE; // Fundo branco padrão para campos editáveis
+    private final Color textAreaBackground = Color.WHITE;
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
-    private final Font buttonFont = new Font("SansSerif", Font.PLAIN, 12); // Fonte menor para botões
+    private final Font buttonFont = new Font("SansSerif", Font.PLAIN, 12);
 
-    // Classe interna para componentes de evolução (apenas arquivos)
-    private static class EvolucaoComponent {
-        EvolucaoAtendimento evo;
+    // Classe interna para componentes de documentos
+    private static class DocumentoComponent {
+        DocumentoAtendimento doc;
         JPanel panel;
-        JLabel lblArquivo; // Para tipo arquivo
-        String tipo; // "arquivo"
+        JLabel lblArquivo;
 
-        EvolucaoComponent(EvolucaoAtendimento evo, String tipo) {
-            this.evo = evo;
-            this.tipo = tipo;
+        DocumentoComponent(DocumentoAtendimento doc) {
+            this.doc = doc;
             this.panel = new JPanel(new BorderLayout(5, 5));
             this.panel.setBackground(new Color(245, 245, 245));
-        }
-    }
-
-    // Classe para renderizar cores no JComboBox
-    private static class ColorComboBoxRenderer extends DefaultListCellRenderer {
-        @Override
-        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof ColorItem) {
-                ColorItem colorItem = (ColorItem) value;
-                label.setText(colorItem.name);
-                label.setIcon(new ColorIcon(colorItem.color));
-                label.setBackground(isSelected ? list.getSelectionBackground() : list.getBackground());
-                label.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
-            }
-            return label;
-        }
-    }
-
-    // Classe para representar itens de cor no JComboBox
-    private static class ColorItem {
-        String name;
-        Color color;
-
-        ColorItem(String name, Color color) {
-            this.name = name;
-            this.color = color;
-        }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-    }
-
-    // Classe para criar ícone de amostra de cor
-    private static class ColorIcon implements Icon {
-        private final Color color;
-        private final int width = 16;
-        private final int height = 16;
-
-        ColorIcon(Color color) {
-            this.color = color;
-        }
-
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2d = (Graphics2D) g.create();
-            g2d.setColor(color);
-            g2d.fillRect(x, y, width, height);
-            g2d.setColor(Color.BLACK);
-            g2d.drawRect(x, y, width - 1, height - 1);
-            g2d.dispose();
-        }
-
-        @Override
-        public int getIconWidth() {
-            return width;
-        }
-
-        @Override
-        public int getIconHeight() {
-            return height;
+            this.lblArquivo = new JLabel("Arquivo: " + doc.getNomeArquivo());
+            this.lblArquivo.setFont(new Font("SansSerif", Font.PLAIN, 14));
         }
     }
 
@@ -132,14 +65,14 @@ public class PacienteAtendimentoDialog extends JDialog {
         super(parent, "Detalhes do Atendimento e Paciente", true);
         this.atendimento = atendimento;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setResizable(true); // Permite redimensionamento
-        setSize(650, 700); // Tamanho padrão 650x700
-        setMinimumSize(new Dimension(500, 500)); // Tamanho mínimo para evitar layout quebrado
+        setResizable(true);
+        setSize(650, 700);
+        setMinimumSize(new Dimension(500, 500));
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(backgroundColor);
 
-        listaEvolucoesArquivos = new ArrayList<>();
+        listaDocumentos = new ArrayList<>();
         initComponents();
         carregarDados();
     }
@@ -158,7 +91,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Abas com hand cursor
+        // Abas
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(labelFont);
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -169,13 +102,12 @@ public class PacienteAtendimentoDialog extends JDialog {
             }
             @Override
             public void mouseExited(MouseEvent e) {
-                if (!tabbedPane.isCursorSet()) {
-                    tabbedPane.setCursor(Cursor.getDefaultCursor());
-                }
+                tabbedPane.setCursor(Cursor.getDefaultCursor());
             }
         });
-        JScrollPane atendimentoScrollPane = new JScrollPane(criarPainelAtendimentoAtual(), JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        atendimentoScrollPane.getVerticalScrollBar().setUnitIncrement(32); // Scroll mais rápido
+        JScrollPane atendimentoScrollPane = new JScrollPane(criarPainelAtendimentoAtual(), 
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        atendimentoScrollPane.getVerticalScrollBar().setUnitIncrement(32);
         tabbedPane.addTab("Atendimento Atual", atendimentoScrollPane);
         tabbedPane.addTab("Histórico do Paciente", criarPainelHistorico());
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -217,8 +149,8 @@ public class PacienteAtendimentoDialog extends JDialog {
         JPanel pacientePanel = new JPanel(new GridBagLayout());
         pacientePanel.setBackground(backgroundColor);
         pacientePanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor), "Dados do Paciente",
-                        TitledBorder.CENTER, TitledBorder.TOP, labelFont, primaryColor),
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor), 
+                        "Dados do Paciente", TitledBorder.CENTER, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(15, 15, 15, 15)));
         GridBagConstraints gbcP = new GridBagConstraints();
         gbcP.insets = new Insets(5, 0, 5, 0);
@@ -278,7 +210,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         lblObservacoes.setForeground(primaryColor);
         lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0));
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
-        txtObservacoesAtendimento = new JTextArea(5, 30);
+        txtObservacoesAtendimento = new JTextArea(10, 30);
         txtObservacoesAtendimento.setLineWrap(true);
         txtObservacoesAtendimento.setWrapStyleWord(true);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
@@ -290,149 +222,43 @@ public class PacienteAtendimentoDialog extends JDialog {
         obsPanel.add(scrollObs, BorderLayout.CENTER);
         formPanel.add(obsPanel, BorderLayout.CENTER);
 
-        // Evoluções
-        JPanel evolucoesPanel = new JPanel(new BorderLayout(15, 15));
-        evolucoesPanel.setBackground(backgroundColor);
+        // Documentos
+        JPanel documentosPanel = new JPanel(new BorderLayout(10, 10));
+        documentosPanel.setBackground(backgroundColor);
 
-        // Notas da evolução com barra de ferramentas
-        JPanel notasPanel = new JPanel(new BorderLayout(10, 10));
-        notasPanel.setBackground(backgroundColor);
-        JLabel lblNotasEvolucao = new JLabel("Notas da Evolução");
-        lblNotasEvolucao.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblNotasEvolucao.setForeground(primaryColor);
-        lblNotasEvolucao.setBorder(new EmptyBorder(0, 0, 10, 0));
-        notasPanel.add(lblNotasEvolucao, BorderLayout.NORTH);
-
-        // Barra de ferramentas para formatação
-        JToolBar toolBar = new JToolBar();
-        toolBar.setFloatable(false);
-        toolBar.setBackground(backgroundColor);
-        toolBar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-
-        // Botão Negrito
-        JButton btnBold = new JButton("N");
-        btnBold.setFont(new Font("SansSerif", Font.BOLD, 14));
-        btnBold.setToolTipText("Negrito");
-        btnBold.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnBold.setBackground(backgroundColor);
-        btnBold.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        btnBold.addActionListener(new StyledEditorKit.BoldAction());
-
-        // Botão Itálico
-        JButton btnItalic = new JButton("I");
-        btnItalic.setFont(new Font("SansSerif", Font.ITALIC, 14));
-        btnItalic.setToolTipText("Itálico");
-        btnItalic.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnItalic.setBackground(backgroundColor);
-        btnItalic.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        btnItalic.addActionListener(new StyledEditorKit.ItalicAction());
-
-        // ComboBox para tamanho da fonte
-        JLabel lblFontSize = new JLabel("Tamanho da Fonte:");
-        lblFontSize.setFont(labelFont);
-        lblFontSize.setForeground(Color.BLACK);
-        JComboBox<String> fontSizeCombo = new JComboBox<>(new String[]{"12", "14", "16", "18", "20"});
-        fontSizeCombo.setMaximumSize(new Dimension(60, 30));
-        fontSizeCombo.setToolTipText("Tamanho da Fonte");
-        fontSizeCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        fontSizeCombo.setBackground(textAreaBackground);
-        fontSizeCombo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        fontSizeCombo.setSelectedItem("14"); // Tamanho padrão
-        fontSizeCombo.addActionListener(e -> {
-            String size = (String) fontSizeCombo.getSelectedItem();
-            applyFontSize(size);
-        });
-
-        // ComboBox para cores
-        ColorItem[] colors = {
-            new ColorItem("Preto", Color.BLACK),
-            new ColorItem("Azul", Color.BLUE),
-            new ColorItem("Vermelho", Color.RED),
-            new ColorItem("Verde", new Color(0, 128, 0)),
-            new ColorItem("Cinza", Color.GRAY),
-            new ColorItem("Laranja", new Color(255, 140, 0)),
-            new ColorItem("Roxo", new Color(128, 0, 128)),
-            new ColorItem("Marrom", new Color(139, 69, 19))
-        };
-        JComboBox<ColorItem> colorCombo = new JComboBox<>(colors);
-        colorCombo.setMaximumSize(new Dimension(100, 30));
-        colorCombo.setToolTipText("Cor do Texto");
-        colorCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        colorCombo.setBackground(textAreaBackground);
-        colorCombo.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        colorCombo.setRenderer(new ColorComboBoxRenderer());
-        colorCombo.addActionListener(e -> {
-            ColorItem selectedColor = (ColorItem) colorCombo.getSelectedItem();
-            if (selectedColor != null) {
-                new StyledEditorKit.ForegroundAction("Color", selectedColor.color).actionPerformed(null);
-            }
-        });
-
-        toolBar.add(btnBold);
-        toolBar.add(Box.createHorizontalStrut(5));
-        toolBar.add(btnItalic);
-        toolBar.add(Box.createHorizontalStrut(10));
-        toolBar.add(lblFontSize);
-        toolBar.add(Box.createHorizontalStrut(5));
-        toolBar.add(fontSizeCombo);
-        toolBar.add(Box.createHorizontalStrut(10));
-        toolBar.add(colorCombo);
-        notasPanel.add(toolBar, BorderLayout.CENTER);
-
-        txtEvolucaoNotas = new JEditorPane();
-        txtEvolucaoNotas.setContentType("text/html");
-        HTMLEditorKit editorKit = new HTMLEditorKit();
-        txtEvolucaoNotas.setEditorKit(editorKit);
-        txtEvolucaoNotas.setBackground(textAreaBackground);
-        txtEvolucaoNotas.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        txtEvolucaoNotas.setPreferredSize(new Dimension(0, 120));
-        txtEvolucaoNotas.setText("<html><body style='font-family: SansSerif; font-size: 14px;'></body></html>");
-        JScrollPane scrollNotas = new JScrollPane(txtEvolucaoNotas);
-        scrollNotas.setBackground(backgroundColor);
-        scrollNotas.setBorder(BorderFactory.createEmptyBorder());
-        scrollNotas.getVerticalScrollBar().setUnitIncrement(32);
-        notasPanel.add(scrollNotas, BorderLayout.SOUTH);
-        evolucoesPanel.add(notasPanel, BorderLayout.NORTH);
-
-        // Arquivos de evolução
-        JPanel arquivosPanel = new JPanel(new BorderLayout(10, 10));
-        arquivosPanel.setBackground(backgroundColor);
-
-        // Painel para o rótulo e botão de anexar
-        JPanel headerArquivosPanel = new JPanel();
-        headerArquivosPanel.setLayout(new BoxLayout(headerArquivosPanel, BoxLayout.X_AXIS));
-        headerArquivosPanel.setBackground(backgroundColor);
-        headerArquivosPanel.setBorder(new EmptyBorder(0, 10, 5, 10)); // Margens para evitar colar nas bordas
-        JLabel lblEvolucoes = new JLabel("Arquivos Anexados");
-        lblEvolucoes.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblEvolucoes.setForeground(primaryColor);
-        headerArquivosPanel.add(lblEvolucoes);
-        headerArquivosPanel.add(Box.createHorizontalStrut(10));
+        // Painel para rótulo e botão de anexar
+        JPanel headerDocumentosPanel = new JPanel();
+        headerDocumentosPanel.setLayout(new BoxLayout(headerDocumentosPanel, BoxLayout.X_AXIS));
+        headerDocumentosPanel.setBackground(backgroundColor);
+        headerDocumentosPanel.setBorder(new EmptyBorder(0, 10, 5, 10));
+        JLabel lblDocumentos = new JLabel("Documentos Anexados");
+        lblDocumentos.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblDocumentos.setForeground(primaryColor);
+        headerDocumentosPanel.add(lblDocumentos);
+        headerDocumentosPanel.add(Box.createHorizontalStrut(10));
 
         JButton btnAnexar = new JButton("Anexar Arquivo");
         btnAnexar.setBackground(Color.LIGHT_GRAY);
         btnAnexar.setForeground(Color.BLACK);
         btnAnexar.setFont(buttonFont);
         btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnAnexar.setPreferredSize(new Dimension(100, 26)); // Tamanho reduzido
-        btnAnexar.addActionListener(e -> adicionarEvolucaoArquivo());
-        headerArquivosPanel.add(btnAnexar);
+        btnAnexar.setPreferredSize(new Dimension(100, 26));
+        btnAnexar.addActionListener(e -> adicionarDocumento());
+        headerDocumentosPanel.add(btnAnexar);
 
-        arquivosPanel.add(headerArquivosPanel, BorderLayout.NORTH);
+        documentosPanel.add(headerDocumentosPanel, BorderLayout.NORTH);
 
-        // Painel para lista de arquivos
-        panelEvolucoesArquivos = new JPanel();
-        panelEvolucoesArquivos.setLayout(new BoxLayout(panelEvolucoesArquivos, BoxLayout.Y_AXIS));
-        panelEvolucoesArquivos.setBackground(backgroundColor);
-        JScrollPane scrollEvolucoes = new JScrollPane(panelEvolucoesArquivos);
-        scrollEvolucoes.setBackground(backgroundColor);
-        scrollEvolucoes.setBorder(BorderFactory.createEmptyBorder());
-        scrollEvolucoes.getVerticalScrollBar().setUnitIncrement(32);
-        arquivosPanel.add(scrollEvolucoes, BorderLayout.CENTER);
+        // Painel para lista de documentos
+        panelDocumentos = new JPanel();
+        panelDocumentos.setLayout(new BoxLayout(panelDocumentos, BoxLayout.Y_AXIS));
+        panelDocumentos.setBackground(backgroundColor);
+        JScrollPane scrollDocumentos = new JScrollPane(panelDocumentos);
+        scrollDocumentos.setBackground(backgroundColor);
+        scrollDocumentos.setBorder(BorderFactory.createEmptyBorder());
+        scrollDocumentos.getVerticalScrollBar().setUnitIncrement(32);
+        documentosPanel.add(scrollDocumentos, BorderLayout.CENTER);
 
-        evolucoesPanel.add(arquivosPanel, BorderLayout.SOUTH);
-
-        formPanel.add(evolucoesPanel, BorderLayout.SOUTH);
+        formPanel.add(documentosPanel, BorderLayout.SOUTH);
 
         panel.add(formPanel, BorderLayout.CENTER);
 
@@ -461,24 +287,6 @@ public class PacienteAtendimentoDialog extends JDialog {
         return panel;
     }
 
-    // Aplica tamanho de fonte ao JEditorPane, preservando formatações
-    private void applyFontSize(String size) {
-        String currentText = txtEvolucaoNotas.getText();
-        String content = stripBodyContent(currentText);
-        String newText = "<html><body style='font-family: SansSerif; font-size: " + size + "px;'>" + content + "</body></html>";
-        txtEvolucaoNotas.setText(newText);
-    }
-
-    // Método auxiliar para extrair conteúdo do corpo do HTML
-    private String stripBodyContent(String htmlText) {
-        String content = htmlText;
-        if (content.startsWith("<html><body")) {
-            content = content.replaceFirst("<html><body[^>]*>", "");
-            content = content.replaceFirst("</body></html>", "");
-        }
-        return content;
-    }
-
     // Cria o painel da aba "Histórico do Paciente"
     private JPanel criarPainelHistorico() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -501,7 +309,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         tabelaHistorico.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
         tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
 
-        // Duplo clique para abrir EvolucaoDialog
+        // Duplo clique para abrir detalhes do atendimento
         tabelaHistorico.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -515,10 +323,10 @@ public class PacienteAtendimentoDialog extends JDialog {
                                     .findFirst()
                                     .orElse(null);
                             if (selectedAtendimento != null) {
-                                new HistoricoEvolucaoDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento, pacienteController.buscarPorId(selectedAtendimento.getPacienteId())).setVisible(true);
+                                new PacienteAtendimentoDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento).setVisible(true);
                             }
                         } catch (SQLException ex) {
-                            JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Erro ao abrir evolução: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Erro ao abrir atendimento: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -555,21 +363,71 @@ public class PacienteAtendimentoDialog extends JDialog {
         return panel;
     }
 
+    // Adiciona um documento
+    private void adicionarDocumento() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Imagens e PDFs (*.jpg, *.jpeg, *.png, *.gif, *.pdf)", "jpg", "jpeg", "png", "gif", "pdf"));
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            String fileName = file.getName().toLowerCase();
+            if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || 
+                fileName.endsWith(".png") || fileName.endsWith(".gif") || fileName.endsWith(".pdf")) {
+                DocumentoAtendimento doc = new DocumentoAtendimento();
+                doc.setAtendimentoId(atendimento.getId());
+                doc.setNomeArquivo(file.getName());
+                doc.setCaminhoArquivo(file.getAbsolutePath());
+                doc.setTipoArquivo(fileName.substring(fileName.lastIndexOf(".") + 1).toUpperCase());
+                adicionarDocumento(doc);
+            } else {
+                JOptionPane.showMessageDialog(this, "Por favor, selecione uma imagem ou PDF.", "Formato Inválido", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    private void adicionarDocumento(DocumentoAtendimento doc) {
+        DocumentoComponent comp = new DocumentoComponent(doc);
+        comp.panel.add(comp.lblArquivo, BorderLayout.CENTER);
+
+        JButton btnRemover = new JButton("Remover");
+        btnRemover.setBackground(new Color(255, 99, 71));
+        btnRemover.setForeground(Color.WHITE);
+        btnRemover.setFont(buttonFont);
+        btnRemover.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRemover.addActionListener(e -> removerDocumento(comp));
+        comp.panel.add(btnRemover, BorderLayout.EAST);
+
+        listaDocumentos.add(comp);
+        panelDocumentos.add(comp.panel);
+        panelDocumentos.revalidate();
+        panelDocumentos.repaint();
+    }
+
+    // Remove um documento
+    private void removerDocumento(DocumentoComponent comp) {
+        if (comp.doc.getId() > 0) {
+            try {
+                documentoController.deletar(comp.doc.getId());
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Erro ao remover documento: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        panelDocumentos.remove(comp.panel);
+        listaDocumentos.remove(comp);
+        panelDocumentos.revalidate();
+        panelDocumentos.repaint();
+    }
+
     // Carrega os dados iniciais do atendimento e histórico
     private void carregarDados() {
         txtObservacoesAtendimento.setText(atendimento.getNotas() != null ? atendimento.getNotas() : "");
         try {
-            List<EvolucaoAtendimento> evolucoes = evolucaoController.listarPorAtendimento(atendimento.getId());
-            for (EvolucaoAtendimento evo : evolucoes) {
-                if (evo.getNotas() != null && !evo.getNotas().isEmpty()) {
-                    evolucaoTextoExistente = evo;
-                    txtEvolucaoNotas.setText(evo.getNotas());
-                } else if (evo.getArquivo() != null && !evo.getArquivo().isEmpty()) {
-                    adicionarEvolucaoArquivo(evo);
-                }
+            List<DocumentoAtendimento> documentos = documentoController.listarPorAtendimentoId(atendimento.getId());
+            for (DocumentoAtendimento doc : documentos) {
+                adicionarDocumento(doc);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar evoluções: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao carregar documentos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
 
         try {
@@ -589,61 +447,6 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
-    // Adiciona uma evolução com arquivo
-    private void adicionarEvolucaoArquivo() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-                "Imagens e PDFs (*.jpg, *.jpeg, *.png, *.gif, *.pdf)", "jpg", "jpeg", "png", "gif", "pdf"));
-        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File file = fileChooser.getSelectedFile();
-            String fileName = file.getName().toLowerCase();
-            if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || 
-                fileName.endsWith(".png") || fileName.endsWith(".gif") || fileName.endsWith(".pdf")) {
-                EvolucaoAtendimento evo = new EvolucaoAtendimento();
-                evo.setArquivo(file.getAbsolutePath());
-                adicionarEvolucaoArquivo(evo);
-            } else {
-                JOptionPane.showMessageDialog(this, "Por favor, selecione uma imagem ou PDF.", "Formato Inválido", JOptionPane.WARNING_MESSAGE);
-            }
-        }
-    }
-
-    private void adicionarEvolucaoArquivo(EvolucaoAtendimento evo) {
-        String fileName = new File(evo.getArquivo()).getName();
-        EvolucaoComponent comp = new EvolucaoComponent(evo, "arquivo");
-        comp.lblArquivo = new JLabel("Arquivo: " + fileName);
-        comp.lblArquivo.setFont(labelFont);
-        comp.panel.add(comp.lblArquivo, BorderLayout.CENTER);
-
-        JButton btnRemover = new JButton("Remover");
-        btnRemover.setBackground(new Color(255, 99, 71));
-        btnRemover.setForeground(Color.WHITE);
-        btnRemover.setFont(buttonFont);
-        btnRemover.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnRemover.addActionListener(e -> removerEvolucaoArquivo(comp));
-        comp.panel.add(btnRemover, BorderLayout.EAST);
-
-        listaEvolucoesArquivos.add(comp);
-        panelEvolucoesArquivos.add(comp.panel);
-        panelEvolucoesArquivos.revalidate();
-        panelEvolucoesArquivos.repaint();
-    }
-
-    // Remove uma evolução de arquivo
-    private void removerEvolucaoArquivo(EvolucaoComponent comp) {
-        if (comp.evo.getId() > 0) {
-            try {
-                evolucaoController.removerEvolucao(comp.evo.getId());
-            } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Erro ao remover evolução: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-        panelEvolucoesArquivos.remove(comp.panel);
-        listaEvolucoesArquivos.remove(comp);
-        panelEvolucoesArquivos.revalidate();
-        panelEvolucoesArquivos.repaint();
-    }
-
     // Salva as alterações
     private void salvar() {
         try {
@@ -653,25 +456,10 @@ public class PacienteAtendimentoDialog extends JDialog {
             atendimento.setNotas(txtObservacoesAtendimento.getText());
             atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin());
 
-            String notas = txtEvolucaoNotas.getText();
-            if (!notas.trim().isEmpty()) {
-                if (evolucaoTextoExistente == null) {
-                    evolucaoTextoExistente = new EvolucaoAtendimento();
-                    evolucaoTextoExistente.setAtendimentoId(atendimento.getId());
-                    evolucaoTextoExistente.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                }
-                evolucaoTextoExistente.setNotas(notas);
-                evolucaoController.criarEvolucao(evolucaoTextoExistente, Sessao.getUsuarioLogado().getLogin());
-            } else if (evolucaoTextoExistente != null && evolucaoTextoExistente.getId() > 0) {
-                evolucaoController.removerEvolucao(evolucaoTextoExistente.getId());
-                evolucaoTextoExistente = null;
-            }
-
-            for (EvolucaoComponent comp : listaEvolucoesArquivos) {
-                if (comp.evo.getId() == 0) {
-                    comp.evo.setAtendimentoId(atendimento.getId());
-                    comp.evo.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                    evolucaoController.criarEvolucao(comp.evo, Sessao.getUsuarioLogado().getLogin());
+            for (DocumentoComponent comp : listaDocumentos) {
+                if (comp.doc.getId() == 0) {
+                    comp.doc.setAtendimentoId(atendimento.getId());
+                    documentoController.criar(comp.doc, Sessao.getUsuarioLogado().getLogin());
                 }
             }
 
