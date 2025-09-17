@@ -103,6 +103,25 @@ CREATE TABLE profissional (
         ON UPDATE CASCADE
 );
 
+
+-- ========================================
+-- TABELA DOCUMENTO_PROFISSIONAL
+-- ========================================
+CREATE TABLE documento_profissional (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    profissional_id INT NOT NULL,
+    nome_arquivo VARCHAR(255) NOT NULL,
+    caminho_arquivo VARCHAR(500) NOT NULL,
+    tipo_arquivo VARCHAR(50) NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    usuario VARCHAR(50),
+    CONSTRAINT fk_doc_profissional
+        FOREIGN KEY (profissional_id)
+        REFERENCES profissional(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
     ALTER TABLE usuario
     ADD COLUMN profissional_id INT NULL,
     ADD CONSTRAINT fk_usuario_profissional FOREIGN KEY (profissional_id) REFERENCES profissional(id);
@@ -153,17 +172,19 @@ CREATE TABLE atendimento (
 );
 
 -- ========================================
--- EVOLUCAO DO PACIENTE
+-- TABELA DOCUMENTO_ATENDIMENTO
 -- ========================================
-CREATE TABLE evolucao_atendimento (
+CREATE TABLE documento_atendimento (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     atendimento_id INT NOT NULL,
-    notas TEXT,
-    arquivo VARCHAR(500),
+    nome_arquivo VARCHAR(255) NOT NULL,
+    caminho_arquivo VARCHAR(500) NOT NULL,
+    tipo_arquivo VARCHAR(50) NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
 
-    CONSTRAINT fk_evolucao_atendimento FOREIGN KEY (atendimento_id)
+    CONSTRAINT fk_doc_atendimento
+        FOREIGN KEY (atendimento_id)
         REFERENCES atendimento(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -440,7 +461,3 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ========================================
-
-SELECT * FROM evolucao_atendimento;
-DELETE FROM evolucao_atendimento;
-SELECT * FROM documento_paciente;
