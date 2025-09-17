@@ -1,6 +1,7 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -136,8 +137,8 @@ public class AgendaPanel extends JPanel {
     private JPanel criarTabelaAtendimentos() {
         JPanel panelTabela = new JPanel(new BorderLayout());
 
-        // Colunas: Dia, Hora, Paciente, Status, Observação
-        String[] colunas = {"Dia", "Hora", "Paciente", "Status", "Observação"};
+        // Colunas: Dia, Hora, Paciente, Tipo de Atendimento, Status
+        String[] colunas = {"Dia", "Hora", "Paciente", "Tipo de Atendimento", "Status"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -158,7 +159,7 @@ public class AgendaPanel extends JPanel {
                     if (dataLinha.isBefore(hoje)) {
                         bgColor = new Color(220, 220, 220); // Passado
                     } else {
-                        Object statusObj = getValueAt(row, 3);
+                        Object statusObj = getValueAt(row, 4); // Status agora na coluna 4
                         String status = statusObj != null ? statusObj.toString().toUpperCase() : "";
                         switch (status) {
                             case "AGENDADO" -> bgColor = new Color(173, 216, 230);
@@ -172,24 +173,30 @@ public class AgendaPanel extends JPanel {
                     bgColor = Color.WHITE; // Fallback
                 }
 
-                c.setBackground(bgColor);
-                c.setForeground(Color.BLACK);
-
                 // Aplica borda preta apenas na linha selecionada
+                Border cellBorder;
                 if (isRowSelected(row)) {
                     int lastColumn = getColumnCount() - 1;
                     if (column == 0) {
-                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
+                        cellBorder = BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK);
                     } else if (column == lastColumn) {
-                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
+                        cellBorder = BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK);
                     } else {
-                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
+                        cellBorder = BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK);
                     }
                 } else {
-                    ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                    cellBorder = BorderFactory.createEmptyBorder();
                 }
 
-                return c;
+                // Centraliza todas as colunas
+                DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
+                centralizado.setHorizontalAlignment(SwingConstants.CENTER);
+                Component rendered = centralizado.getTableCellRendererComponent(this, getValueAt(row, column), isRowSelected(row), hasFocus(), row, column);
+                rendered.setBackground(bgColor);
+                rendered.setForeground(Color.BLACK);
+                ((JComponent) rendered).setBorder(cellBorder);
+                ((JComponent) rendered).setFont(labelFont);
+                return rendered;
             }
         };
 
@@ -240,6 +247,7 @@ public class AgendaPanel extends JPanel {
         }
 
         JScrollPane scrollTabela = new JScrollPane(tabelaAtendimentos);
+        scrollTabela.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panelTabela.add(scrollTabela, BorderLayout.CENTER);
 
         tabelaAtendimentos.addComponentListener(new ComponentAdapter() {
@@ -260,8 +268,8 @@ public class AgendaPanel extends JPanel {
         tabelaAtendimentos.getColumnModel().getColumn(0).setPreferredWidth((int)(larguraTotal * 0.15)); // Dia
         tabelaAtendimentos.getColumnModel().getColumn(1).setPreferredWidth((int)(larguraTotal * 0.10)); // Hora
         tabelaAtendimentos.getColumnModel().getColumn(2).setPreferredWidth((int)(larguraTotal * 0.30)); // Paciente
-        tabelaAtendimentos.getColumnModel().getColumn(3).setPreferredWidth((int)(larguraTotal * 0.15)); // Status
-        tabelaAtendimentos.getColumnModel().getColumn(4).setPreferredWidth((int)(larguraTotal * 0.30)); // Observação
+        tabelaAtendimentos.getColumnModel().getColumn(3).setPreferredWidth((int)(larguraTotal * 0.25)); // Tipo de Atendimento
+        tabelaAtendimentos.getColumnModel().getColumn(4).setPreferredWidth((int)(larguraTotal * 0.15)); // Status
     }
 
     // Atualiza o calendário com base no mês e ano selecionados
@@ -343,8 +351,8 @@ public class AgendaPanel extends JPanel {
                         a.getDataHora().toLocalDateTime().format(formatterData),
                         a.getDataHora().toLocalDateTime().format(formatterHora),
                         a.getPacienteNome(),
-                        a.getSituacao(),
-                        a.getNotas()
+                        a.getTipo(), // Tipo de Atendimento na coluna 3
+                        a.getSituacao()        // Status na coluna 4
                 });
             }
 
