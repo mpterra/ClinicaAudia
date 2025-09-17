@@ -14,21 +14,19 @@ import java.awt.Desktop;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-// Diálogo para exibir detalhes de um atendimento específico do histórico do paciente
 public class HistoricoPacienteDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private final Atendimento atendimento;
     private final DocumentoAtendimentoController documentoController = new DocumentoAtendimentoController();
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private final Color primaryColor = new Color(30, 144, 255);
+    private final Color primaryColor = new Color(30, 144, 255); // ainda usado para os lblArquivo
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Color textAreaBackground = Color.WHITE;
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
-    private final Font subtitleFont = new Font("SansSerif", Font.BOLD, 14);
+    private final Font subtitleFont = new Font("SansSerif", Font.BOLD, 14); // 🔹 agora normal, sem negrito
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
 
-    // 🔹 Agora mantemos referências diretas
     private JEditorPane txtObservacoes;
     private JPanel panelDocumentos;
 
@@ -47,28 +45,28 @@ public class HistoricoPacienteDialog extends JDialog {
         carregarDados();
     }
 
-    // Inicializa os componentes da interface
     private void initComponents() {
-        // Painel principal
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
 
-        // Título (nome do paciente)
-        JLabel lblTitulo = new JLabel(atendimento.getPaciente().getNome() != null ? atendimento.getPaciente().getNome() : "Não informado", SwingConstants.CENTER);
+        // Título
+        JLabel lblTitulo = new JLabel(
+                atendimento.getPaciente().getNome() != null ? atendimento.getPaciente().getNome() : "Não informado",
+                SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
-        lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
+        lblTitulo.setForeground(Color.BLACK);
+        lblTitulo.setBorder(new EmptyBorder(0, 0, 2, 0)); // 🔹 espaço mínimo
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Subtítulo (data e tipo da consulta)
-        String subtitulo = String.format("%s - %s", 
-            atendimento.getDataHora().toLocalDateTime().format(formatoData), 
-            atendimento.getTipo() != null ? atendimento.getTipo() : "Não informado");
+        // Subtítulo
+        String subtitulo = String.format("%s - %s",
+                atendimento.getDataHora().toLocalDateTime().format(formatoData),
+                atendimento.getTipo() != null ? atendimento.getTipo() : "Não informado");
         JLabel lblSubtitulo = new JLabel(subtitulo, SwingConstants.CENTER);
         lblSubtitulo.setFont(subtitleFont);
-        lblSubtitulo.setForeground(primaryColor);
-        lblSubtitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
+        lblSubtitulo.setForeground(Color.BLACK);
+        // 🔹 removi o EmptyBorder extra
         mainPanel.add(lblSubtitulo, BorderLayout.NORTH);
 
         // Observações
@@ -76,7 +74,7 @@ public class HistoricoPacienteDialog extends JDialog {
         obsPanel.setBackground(backgroundColor);
         JLabel lblObservacoes = new JLabel("Observações");
         lblObservacoes.setFont(subtitleFont);
-        lblObservacoes.setForeground(primaryColor);
+        lblObservacoes.setForeground(Color.BLACK);
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
 
         txtObservacoes = new JEditorPane();
@@ -88,6 +86,9 @@ public class HistoricoPacienteDialog extends JDialog {
         scrollObs.setBackground(backgroundColor);
         scrollObs.setBorder(BorderFactory.createEmptyBorder());
         scrollObs.getVerticalScrollBar().setUnitIncrement(32);
+        // 🔹 define altura menor (40% a menos em relação à altura do dialog)
+        int alturaDialog = getPreferredSize().height;
+        scrollObs.setPreferredSize(new Dimension(0, (int) (alturaDialog * 0.35)));
         obsPanel.add(scrollObs, BorderLayout.CENTER);
         mainPanel.add(obsPanel, BorderLayout.CENTER);
 
@@ -96,7 +97,7 @@ public class HistoricoPacienteDialog extends JDialog {
         documentosPanel.setBackground(backgroundColor);
         JLabel lblDocumentos = new JLabel("Documentos Anexados");
         lblDocumentos.setFont(subtitleFont);
-        lblDocumentos.setForeground(primaryColor);
+        lblDocumentos.setForeground(Color.BLACK);
         documentosPanel.add(lblDocumentos, BorderLayout.NORTH);
 
         panelDocumentos = new JPanel();
@@ -125,13 +126,11 @@ public class HistoricoPacienteDialog extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    // Carrega os dados do atendimento
     private void carregarDados() {
-        // 🔹 Agora acessamos direto a referência
-        txtObservacoes.setText(atendimento.getNotas() != null ? 
-                atendimento.getNotas() : "<html><body style='font-family: SansSerif; font-size: 16px; margin: 0; padding: 0; line-height: 1.0;'></body></html>");
+        txtObservacoes.setText(atendimento.getNotas() != null
+                ? atendimento.getNotas()
+                : "<html><body style='font-family: SansSerif; font-size: 16px; margin: 0; padding: 0; line-height: 1.0;'></body></html>");
 
-        // Carrega documentos
         try {
             List<DocumentoAtendimento> documentos = documentoController.listarPorAtendimentoId(atendimento.getId());
             for (DocumentoAtendimento doc : documentos) {
@@ -139,7 +138,7 @@ public class HistoricoPacienteDialog extends JDialog {
                 docPanel.setBackground(backgroundColor);
                 JLabel lblArquivo = new JLabel(doc.getNomeArquivo());
                 lblArquivo.setFont(labelFont);
-                lblArquivo.setForeground(primaryColor);
+                lblArquivo.setForeground(primaryColor); // continua azul
                 lblArquivo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 ImageIcon pdfIcon = new ImageIcon("src/main/resources/images/pdf.png");
                 Image scaledImage = pdfIcon.getImage().getScaledInstance(25, 25, Image.SCALE_SMOOTH);
@@ -152,11 +151,13 @@ public class HistoricoPacienteDialog extends JDialog {
                             if (file.exists()) {
                                 Desktop.getDesktop().open(file);
                             } else {
-                                JOptionPane.showMessageDialog(null, "Arquivo não encontrado: " + doc.getCaminhoArquivo(), 
+                                JOptionPane.showMessageDialog(null,
+                                        "Arquivo não encontrado: " + doc.getCaminhoArquivo(),
                                         "Erro", JOptionPane.ERROR_MESSAGE);
                             }
                         } catch (Exception ex) {
-                            JOptionPane.showMessageDialog(null, "Erro ao abrir arquivo: " + ex.getMessage(), 
+                            JOptionPane.showMessageDialog(null,
+                                    "Erro ao abrir arquivo: " + ex.getMessage(),
                                     "Erro", JOptionPane.ERROR_MESSAGE);
                         }
                     }
@@ -167,7 +168,9 @@ public class HistoricoPacienteDialog extends JDialog {
             panelDocumentos.revalidate();
             panelDocumentos.repaint();
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar documentos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Erro ao carregar documentos: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
