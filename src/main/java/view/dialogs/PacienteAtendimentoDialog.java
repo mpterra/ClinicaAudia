@@ -369,7 +369,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         txtObservacoesAtendimento.setBackground(textAreaBackground);
         txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
         txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 140)); // Aproximadamente 7 linhas
-        txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif;  margin: 2; padding: 2; line-height: 1.0;'></body></html>");
+        txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif;  margin: 3; padding: 3; line-height: 1.0;'></body></html>");
 
         // Configurar quebra de linha com Enter
         txtObservacoesAtendimento.addKeyListener(new KeyAdapter() {
