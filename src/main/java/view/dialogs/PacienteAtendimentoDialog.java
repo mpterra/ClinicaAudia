@@ -2,8 +2,10 @@ package view.dialogs;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.HTMLDocument;
@@ -253,7 +255,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnCancelar.addActionListener(e -> dispose());
     }
 
-    // Cria o painel da aba "Atendimento Atual" com layout ajustado
+    // Cria o painel da aba "Atendimento Atual"
     private JPanel criarPainelAtendimentoAtual() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(backgroundColor);
@@ -413,7 +415,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         ImageIcon anexarIcon = new ImageIcon("src/main/resources/images/anexar.png");
         Image scaledImage = anexarIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
         btnAnexar.setIcon(new ImageIcon(scaledImage));
-        btnAnexar.setBackground(Color.LIGHT_GRAY); // Cor cinza claro
+        btnAnexar.setBackground(Color.LIGHT_GRAY);
         btnAnexar.setForeground(Color.BLACK);
         btnAnexar.setFont(buttonFont);
         btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -424,7 +426,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         headerDocumentosPanel.add(btnAnexar);
 
         JLabel lblAnexarDocumento = new JLabel("Anexar Documento");
-        lblAnexarDocumento.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lblAnexarDocumento.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblAnexarDocumento.setForeground(secondaryColor);
         headerDocumentosPanel.add(lblAnexarDocumento);
 
@@ -469,28 +471,61 @@ public class PacienteAtendimentoDialog extends JDialog {
         return panel;
     }
 
-    // Cria o painel da aba "Histórico do Paciente"
+    // Cria o painel da aba "Histórico do Paciente" com layout refatorado
     private JPanel criarPainelHistorico() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(backgroundColor);
+        panel.setBorder(new EmptyBorder(10, 10, 10, 10)); // Padding ao redor para elegância
 
+        // Modelo da tabela
         String[] colunas = {"Data/Hora", "Profissional", "Tipo", "Situação"};
         modeloHistorico = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
 
+        // Tabela com estilo profissional
         tabelaHistorico = new JTable(modeloHistorico);
         tabelaHistorico.setFont(labelFont);
-        tabelaHistorico.setRowHeight(25);
-        tabelaHistorico.setShowGrid(false);
-        tabelaHistorico.setBackground(backgroundColor);
-        tabelaHistorico.getTableHeader().setBackground(primaryColor);
-        tabelaHistorico.getTableHeader().setForeground(Color.WHITE);
-        tabelaHistorico.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
-        tabelaHistorico.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        tabelaHistorico.setRowHeight(28); // Altura de linha aumentada para melhor legibilidade
+        tabelaHistorico.setShowGrid(true); // Grade sutil ativada
+        tabelaHistorico.setGridColor(new Color(220, 220, 220)); // Cor da grade clara
+        tabelaHistorico.setBackground(Color.WHITE); // Fundo branco clean
+        tabelaHistorico.setForeground(new Color(50, 50, 50)); // Texto escuro
+        tabelaHistorico.setSelectionBackground(Color.WHITE); // Sem mudança de cor na seleção
+        tabelaHistorico.setSelectionForeground(new Color(50, 50, 50)); // Texto inalterado na seleção
+        tabelaHistorico.setBorder(new LineBorder(Color.BLACK)); // Borda preta na seleção
         tabelaHistorico.setCursor(Cursor.getDefaultCursor());
 
+        // Renderizador centralizado com linhas alternadas para elegância
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                if (isSelected) {
+                    c.setBackground(table.getBackground()); // Mantém fundo original
+                    ((JComponent) c).setBorder(new LineBorder(Color.BLACK, 1)); // Borda preta na seleção
+                } else {
+                    ((JComponent) c).setBorder(null);
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(250, 250, 250)); // Linhas alternadas
+                }
+                return c;
+            }
+        };
+        for (int i = 0; i < tabelaHistorico.getColumnCount(); i++) {
+            tabelaHistorico.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+
+        // Header da tabela elegante
+        JTableHeader header = tabelaHistorico.getTableHeader();
+        header.setBackground(primaryColor);
+        header.setForeground(Color.WHITE);
+        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(200, 200, 200))); // Borda inferior sutil
+        header.setReorderingAllowed(false); // Impede reordenação de colunas
+
+        // Listener para duplo clique (funcionalidade mantida)
         tabelaHistorico.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -517,18 +552,15 @@ public class PacienteAtendimentoDialog extends JDialog {
             }
         });
 
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < tabelaHistorico.getColumnCount(); i++) {
-            tabelaHistorico.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-        }
-
+        // Scroll pane com scroll vertical/horizontal se necessário
         JScrollPane scrollTabela = new JScrollPane(tabelaHistorico);
         scrollTabela.setBackground(backgroundColor);
-        scrollTabela.setBorder(BorderFactory.createEmptyBorder());
+        scrollTabela.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Borda sutil
         scrollTabela.getVerticalScrollBar().setUnitIncrement(32);
+        scrollTabela.setViewportBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         panel.add(scrollTabela, BorderLayout.CENTER);
 
+        // Listener para redimensionamento de colunas (funcionalidade mantida)
         tabelaHistorico.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
@@ -541,6 +573,24 @@ public class PacienteAtendimentoDialog extends JDialog {
                 }
             }
         });
+
+        // Botão "Histórico Completo do Paciente" abaixo da tabela
+        JButton btnHistoricoCompleto = new JButton("Histórico Completo do Paciente");
+        btnHistoricoCompleto.setBackground(primaryColor);
+        btnHistoricoCompleto.setForeground(Color.WHITE);
+        btnHistoricoCompleto.setFont(buttonFont);
+        btnHistoricoCompleto.setPreferredSize(new Dimension(200, 35));
+        btnHistoricoCompleto.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnHistoricoCompleto.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Adicionar ação ao botão se necessário (atualmente sem ação, conforme especificado)
+        btnHistoricoCompleto.addActionListener(e -> {
+            // TODO: Implementar funcionalidade se necessário
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(backgroundColor);
+        buttonPanel.add(btnHistoricoCompleto);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
     }
