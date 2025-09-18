@@ -46,7 +46,7 @@ public class HistoricoCompletoDialog extends JDialog {
         this.paciente = paciente;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(true);
-        setSize(600, 800);
+        setSize(550, 750);
         setMinimumSize(new Dimension(500, 600));
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
@@ -190,6 +190,7 @@ public class HistoricoCompletoDialog extends JDialog {
                 notasTexto.append("<div style='margin-bottom: 10px;'><h4 style='margin: 0 0 5px 0; color: #").append(String.format("%06X", primaryColor.getRGB() & 0xFFFFFF))
                           .append("; font-size: 12px;'>--- Data: ")
                           .append(at.getDataHora().toLocalDateTime().format(formatoData))
+                          .append(" - " + at.getTipo())
                           .append(" ---</h4>");
                 String notaContent = at.getNotas() != null ? extrairConteudoHTML(at.getNotas()) : "<p style='color: gray;'>Sem notas</p>";
                 notasTexto.append(notaContent).append("</div>");
