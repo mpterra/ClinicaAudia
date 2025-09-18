@@ -586,7 +586,12 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnHistoricoCompleto.setBorder(BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED)); // Efeito 3D
         btnHistoricoCompleto.setToolTipText("Histórico Completo do Paciente");
         btnHistoricoCompleto.addActionListener(e -> {
-            // TODO: Implementar funcionalidade se necessário
+            try {
+                Paciente paciente = pacienteController.buscarPorId(atendimento.getPaciente().getId());
+                new HistoricoCompletoDialog(PacienteAtendimentoDialog.this, paciente).setVisible(true);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Erro ao abrir histórico completo: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
