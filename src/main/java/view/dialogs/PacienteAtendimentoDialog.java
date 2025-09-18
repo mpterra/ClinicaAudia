@@ -2,7 +2,6 @@ package view.dialogs;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.StyledEditorKit;
@@ -31,6 +30,7 @@ import util.Sessao;
 import view.AgendaPanel;
 import view.dialogs.HistoricoPacienteDialog;
 
+// Classe principal para a janela de diálogo de detalhes do atendimento
 public class PacienteAtendimentoDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
@@ -54,6 +54,7 @@ public class PacienteAtendimentoDialog extends JDialog {
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font buttonFont = new Font("SansSerif", Font.PLAIN, 12);
 
+    // Componente para exibir documentos anexados
     private static class DocumentoComponent {
         DocumentoAtendimento doc;
         JPanel panel;
@@ -91,6 +92,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Renderizador para o combobox de cores
     private static class ColorComboBoxRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -106,6 +108,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Item de cor para o combobox
     private static class ColorItem {
         String name;
         Color color;
@@ -121,6 +124,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Ícone de cor para o combobox
     private static class ColorIcon implements Icon {
         private final Color color;
         private final int width = 16;
@@ -151,8 +155,9 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Construtor da janela de diálogo
     public PacienteAtendimentoDialog(Frame parent, Atendimento atendimento, AgendaPanel agendaPanel) {
-        super(parent, "Detalhes do Atendimento e Paciente", true);
+        super(parent, "Detalhes do Atendimento", true);
         this.atendimento = atendimento;
         this.agendaPanel = agendaPanel;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -168,20 +173,37 @@ public class PacienteAtendimentoDialog extends JDialog {
         carregarDados();
     }
 
+    // Inicializa os componentes da interface
     private void initComponents() {
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
 
-        JLabel lblTitulo = new JLabel("Detalhes do Atendimento e Paciente", SwingConstants.CENTER);
+        JLabel lblTitulo = new JLabel("Detalhes do Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
+        lblTitulo.setBorder(new EmptyBorder(0, 0, 5, 0)); // Reduzido o espaço inferior
         add(lblTitulo, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(labelFont);
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Adiciona as abas primeiro
+        JScrollPane atendimentoScrollPane = new JScrollPane(criarPainelAtendimentoAtual(), 
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        atendimentoScrollPane.getVerticalScrollBar().setUnitIncrement(32);
+        tabbedPane.addTab("Atendimento Atual", atendimentoScrollPane);
+        tabbedPane.addTab("Histórico do Paciente", criarPainelHistorico());
+
+        // Define a cor de fundo da aba selecionada após adicionar as abas
+        tabbedPane.setBackgroundAt(0, new Color(200, 220, 255)); // Cor inicial para a primeira aba
+        tabbedPane.setBackgroundAt(1, backgroundColor); // Cor padrão para a segunda aba
+        tabbedPane.addChangeListener(e -> {
+            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                tabbedPane.setBackgroundAt(i, i == tabbedPane.getSelectedIndex() ? new Color(200, 220, 255) : backgroundColor);
+            }
+        });
         tabbedPane.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -192,11 +214,6 @@ public class PacienteAtendimentoDialog extends JDialog {
                 tabbedPane.setCursor(Cursor.getDefaultCursor());
             }
         });
-        JScrollPane atendimentoScrollPane = new JScrollPane(criarPainelAtendimentoAtual(), 
-                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        atendimentoScrollPane.getVerticalScrollBar().setUnitIncrement(32);
-        tabbedPane.addTab("Atendimento Atual", atendimentoScrollPane);
-        tabbedPane.addTab("Histórico do Paciente", criarPainelHistorico());
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
@@ -226,19 +243,17 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnCancelar.addActionListener(e -> dispose());
     }
 
+    // Cria o painel da aba "Atendimento Atual"
     private JPanel criarPainelAtendimentoAtual() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBackground(backgroundColor);
 
         JPanel pacientePanel = new JPanel(new GridBagLayout());
         pacientePanel.setBackground(backgroundColor);
-        pacientePanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor), 
-                        "Dados do Paciente", TitledBorder.CENTER, TitledBorder.TOP, labelFont, primaryColor),
-                new EmptyBorder(15, 15, 15, 15)));
-        pacientePanel.setPreferredSize(new Dimension(0, 148));
+        pacientePanel.setBorder(new EmptyBorder(10, 10, 10, 10)); // Removido TitledBorder
+        pacientePanel.setPreferredSize(new Dimension(0, 120)); // Ajustado para menor altura
         GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(5, 0, 5, 0);
+        gbcP.insets = new Insets(2, 0, 2, 0); // Reduzido espaçamento entre linhas
         gbcP.anchor = GridBagConstraints.CENTER;
 
         JLabel lblNomePaciente = new JLabel();
@@ -269,7 +284,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         statusPanel.setBackground(backgroundColor);
-        JLabel lblStatus = new JLabel("Status do Atendimento: ");
+        JLabel lblStatus = new JLabel("Status: ");
         lblStatus.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblStatus.setForeground(primaryColor);
         cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
@@ -287,7 +302,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         JPanel obsPanel = new JPanel(new BorderLayout(10, 10));
         obsPanel.setBackground(backgroundColor);
-        JLabel lblObservacoes = new JLabel("Observações do Atendimento");
+        JLabel lblObservacoes = new JLabel("Observações");
         lblObservacoes.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblObservacoes.setForeground(primaryColor);
         lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0));
@@ -439,6 +454,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         return panel;
     }
 
+    // Cria o painel da aba "Histórico do Paciente"
     private JPanel criarPainelHistorico() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(backgroundColor);
@@ -473,7 +489,7 @@ public class PacienteAtendimentoDialog extends JDialog {
                                     .findFirst()
                                     .orElse(null);
                             if (selectedAtendimento != null) {
-                                tabelaHistorico.clearSelection(); // Clear selection to prevent multiple triggers
+                                tabelaHistorico.clearSelection();
                                 new HistoricoPacienteDialog((Frame) SwingUtilities.getWindowAncestor(PacienteAtendimentoDialog.this), selectedAtendimento).setVisible(true);
                             } else {
                                 JOptionPane.showMessageDialog(PacienteAtendimentoDialog.this, "Atendimento não encontrado.", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -514,6 +530,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         return panel;
     }
 
+    // Adiciona um documento à interface
     private void adicionarDocumento() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
@@ -535,6 +552,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Adiciona um documento à lista e à interface
     private void adicionarDocumento(DocumentoAtendimento doc) {
         DocumentoComponent comp = new DocumentoComponent(doc);
         comp.panel.add(comp.lblArquivo, BorderLayout.CENTER);
@@ -553,6 +571,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         panelDocumentos.repaint();
     }
 
+    // Remove um documento da interface e do banco
     private void removerDocumento(DocumentoComponent comp) {
         if (comp.doc.getId() > 0) {
             try {
@@ -567,6 +586,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         panelDocumentos.repaint();
     }
 
+    // Carrega os dados do atendimento e paciente
     private void carregarDados() {
         txtObservacoesAtendimento.setText(atendimento.getNotas() != null ? 
                 atendimento.getNotas() : "<html><body style='font-family: SansSerif; font-size: 16px; margin: 0; padding: 0; line-height: 1.0;'></body></html>");
@@ -596,6 +616,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         }
     }
 
+    // Salva as alterações no atendimento
     private void salvar() {
         try {
             if (cbSituacao != null) {
