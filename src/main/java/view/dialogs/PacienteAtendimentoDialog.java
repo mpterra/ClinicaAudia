@@ -48,6 +48,7 @@ public class PacienteAtendimentoDialog extends JDialog {
     private List<DocumentoComponent> listaDocumentos;
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final Color primaryColor = new Color(30, 144, 255);
+    private final Color secondaryColor = new Color(0, 0, 0);
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Color textAreaBackground = Color.WHITE;
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
@@ -231,7 +232,6 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnCancelar.setPreferredSize(new Dimension(100, 35));
         btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Adiciona o combobox de situação ao lado do botão Cancelar
         cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
         cbSituacao.setFont(labelFont);
         cbSituacao.setBackground(textAreaBackground);
@@ -253,7 +253,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnCancelar.addActionListener(e -> dispose());
     }
 
-    // Cria o painel da aba "Atendimento Atual" com layout refatorado
+    // Cria o painel da aba "Atendimento Atual" com layout ajustado
     private JPanel criarPainelAtendimentoAtual() {
         JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(backgroundColor);
@@ -266,7 +266,7 @@ public class PacienteAtendimentoDialog extends JDialog {
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)));
         pacientePanel.setPreferredSize(new Dimension(0, 120));
         GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(2, 0, 2, 0); // Espaçamento vertical reduzido
+        gbcP.insets = new Insets(2, 0, 2, 0);
         gbcP.anchor = GridBagConstraints.WEST;
 
         JLabel lblNomePaciente = new JLabel();
@@ -374,7 +374,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         txtObservacoesAtendimento.setDocument(doc);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
         txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 140)); // Altura reduzida para 70% de 200px
+        txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 140));
         txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif; margin: 3; padding: 3; line-height: 1.0;'></body></html>");
 
         txtObservacoesAtendimento.addKeyListener(new KeyAdapter() {
@@ -405,7 +405,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         documentosPanel.setBackground(backgroundColor);
         documentosPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        JPanel headerDocumentosPanel = new JPanel(new BorderLayout());
+        JPanel headerDocumentosPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         headerDocumentosPanel.setBackground(backgroundColor);
         headerDocumentosPanel.setBorder(new EmptyBorder(0, 10, 10, 10));
 
@@ -413,15 +413,20 @@ public class PacienteAtendimentoDialog extends JDialog {
         ImageIcon anexarIcon = new ImageIcon("src/main/resources/images/anexar.png");
         Image scaledImage = anexarIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
         btnAnexar.setIcon(new ImageIcon(scaledImage));
-        btnAnexar.setBackground(primaryColor);
-        btnAnexar.setForeground(Color.WHITE);
+        btnAnexar.setBackground(Color.LIGHT_GRAY); // Cor cinza claro
+        btnAnexar.setForeground(Color.BLACK);
         btnAnexar.setFont(buttonFont);
         btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAnexar.setPreferredSize(new Dimension(40, 40));
         btnAnexar.setBorder(BorderFactory.createEmptyBorder());
         btnAnexar.setToolTipText("Anexar Arquivo");
         btnAnexar.addActionListener(e -> adicionarDocumento());
-        headerDocumentosPanel.add(btnAnexar, BorderLayout.EAST);
+        headerDocumentosPanel.add(btnAnexar);
+
+        JLabel lblAnexarDocumento = new JLabel("Anexar Documento");
+        lblAnexarDocumento.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        lblAnexarDocumento.setForeground(secondaryColor);
+        headerDocumentosPanel.add(lblAnexarDocumento);
 
         documentosPanel.add(headerDocumentosPanel, BorderLayout.NORTH);
 
