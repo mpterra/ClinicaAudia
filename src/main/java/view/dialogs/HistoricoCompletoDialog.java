@@ -33,6 +33,7 @@ public class HistoricoCompletoDialog extends JDialog {
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Color primaryColor = new Color(30, 144, 255);
+    private final Color secondaryColor = new Color(0, 0, 0);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 12);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
 
@@ -42,12 +43,12 @@ public class HistoricoCompletoDialog extends JDialog {
 
     // Construtor da janela de diálogo
     public HistoricoCompletoDialog(Dialog parent, Paciente paciente) {
-        super(parent, paciente.getNome() != null ? paciente.getNome() : "Histórico Completo", true);
+        super(parent, "Histórico Completo", true);
         this.paciente = paciente;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(true);
-        setSize(550, 750);
-        setMinimumSize(new Dimension(500, 600));
+        setSize(550, 600);
+        setMinimumSize(new Dimension(400, 550));
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         getContentPane().setBackground(backgroundColor);
@@ -63,9 +64,9 @@ public class HistoricoCompletoDialog extends JDialog {
         mainPanel.setBackground(backgroundColor);
 
         // Título
-        JLabel lblTitulo = new JLabel("Histórico Completo do Paciente", SwingConstants.CENTER);
+        JLabel lblTitulo = new JLabel(paciente.getNome(), SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
-        lblTitulo.setForeground(primaryColor);
+        lblTitulo.setForeground(secondaryColor);
         add(lblTitulo, BorderLayout.NORTH);
 
         // Seção de notas
