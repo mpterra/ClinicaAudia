@@ -182,23 +182,21 @@ public class PacienteAtendimentoDialog extends JDialog {
         JLabel lblTitulo = new JLabel("Detalhes do Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(0, 0, 5, 0)); // Reduzido o espaço inferior
+        lblTitulo.setBorder(new EmptyBorder(0, 0, 5, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(labelFont);
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Adiciona as abas primeiro
         JScrollPane atendimentoScrollPane = new JScrollPane(criarPainelAtendimentoAtual(), 
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         atendimentoScrollPane.getVerticalScrollBar().setUnitIncrement(32);
         tabbedPane.addTab("Atendimento Atual", atendimentoScrollPane);
         tabbedPane.addTab("Histórico do Paciente", criarPainelHistorico());
 
-        // Define a cor de fundo da aba selecionada após adicionar as abas
-        tabbedPane.setBackgroundAt(0, new Color(200, 220, 255)); // Cor inicial para a primeira aba
-        tabbedPane.setBackgroundAt(1, backgroundColor); // Cor padrão para a segunda aba
+        tabbedPane.setBackgroundAt(0, new Color(200, 220, 255));
+        tabbedPane.setBackgroundAt(1, backgroundColor);
         tabbedPane.addChangeListener(e -> {
             for (int i = 0; i < tabbedPane.getTabCount(); i++) {
                 tabbedPane.setBackgroundAt(i, i == tabbedPane.getSelectedIndex() ? new Color(200, 220, 255) : backgroundColor);
@@ -233,6 +231,18 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnCancelar.setPreferredSize(new Dimension(100, 35));
         btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        // Adiciona o combobox de situação ao lado do botão Cancelar
+        cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
+        cbSituacao.setFont(labelFont);
+        cbSituacao.setBackground(textAreaBackground);
+        cbSituacao.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        cbSituacao.setPreferredSize(new Dimension(150, 30));
+        cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        if (atendimento.getSituacao() != null) {
+            cbSituacao.setSelectedItem(atendimento.getSituacao());
+        }
+
+        buttonPanel.add(cbSituacao);
         buttonPanel.add(btnCancelar);
         buttonPanel.add(btnSalvar);
 
@@ -243,23 +253,27 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnCancelar.addActionListener(e -> dispose());
     }
 
-    // Cria o painel da aba "Atendimento Atual"
+    // Cria o painel da aba "Atendimento Atual" com layout refatorado
     private JPanel criarPainelAtendimentoAtual() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
         panel.setBackground(backgroundColor);
 
+        // Seção de informações do paciente: card com bordas suaves
         JPanel pacientePanel = new JPanel(new GridBagLayout());
-        pacientePanel.setBackground(backgroundColor);
-        pacientePanel.setBorder(new EmptyBorder(10, 10, 10, 10)); // Removido TitledBorder
-        pacientePanel.setPreferredSize(new Dimension(0, 120)); // Ajustado para menor altura
+        pacientePanel.setBackground(textAreaBackground);
+        pacientePanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)));
+        pacientePanel.setPreferredSize(new Dimension(0, 120));
         GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(2, 0, 2, 0); // Reduzido espaçamento entre linhas
-        gbcP.anchor = GridBagConstraints.CENTER;
+        gbcP.insets = new Insets(2, 0, 2, 0); // Espaçamento vertical reduzido
+        gbcP.anchor = GridBagConstraints.WEST;
 
         JLabel lblNomePaciente = new JLabel();
         lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
         gbcP.gridx = 0;
         gbcP.gridy = 0;
+        gbcP.weightx = 1;
         pacientePanel.add(lblNomePaciente, gbcP);
 
         JLabel lblTelefone = new JLabel();
@@ -279,46 +293,36 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         panel.add(pacientePanel, BorderLayout.NORTH);
 
-        JPanel formPanel = new JPanel(new BorderLayout(15, 15));
+        // Painel principal de formulário
+        JPanel formPanel = new JPanel(new BorderLayout(0, 15));
         formPanel.setBackground(backgroundColor);
 
-        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        statusPanel.setBackground(backgroundColor);
-        JLabel lblStatus = new JLabel("Status: ");
-        lblStatus.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblStatus.setForeground(primaryColor);
-        cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
-        cbSituacao.setFont(labelFont);
-        cbSituacao.setBackground(textAreaBackground);
-        cbSituacao.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        cbSituacao.setPreferredSize(new Dimension(150, 30));
-        cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        if (atendimento.getSituacao() != null) {
-            cbSituacao.setSelectedItem(atendimento.getSituacao());
-        }
-        statusPanel.add(lblStatus);
-        statusPanel.add(cbSituacao);
-        formPanel.add(statusPanel, BorderLayout.NORTH);
-
-        JPanel obsPanel = new JPanel(new BorderLayout(10, 10));
+        // Seção de observações
+        JPanel obsPanel = new JPanel(new BorderLayout(10, 5));
         obsPanel.setBackground(backgroundColor);
         JLabel lblObservacoes = new JLabel("Observações");
         lblObservacoes.setFont(new Font("SansSerif", Font.BOLD, 14));
         lblObservacoes.setForeground(primaryColor);
-        lblObservacoes.setBorder(new EmptyBorder(0, 0, 10, 0));
+        lblObservacoes.setBorder(new EmptyBorder(0, 0, 8, 0));
         obsPanel.add(lblObservacoes, BorderLayout.NORTH);
 
+        // Toolbar compacta e fixa
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
-        toolBar.setBackground(backgroundColor);
-        toolBar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        toolBar.setBackground(textAreaBackground);
+        toolBar.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        toolBar.setPreferredSize(new Dimension(0, 40));
+        toolBar.setMaximumSize(new Dimension(Short.MAX_VALUE, 40));
 
         JButton btnBold = new JButton("N");
         btnBold.setFont(new Font("SansSerif", Font.BOLD, 14));
         btnBold.setToolTipText("Negrito");
         btnBold.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnBold.setBackground(backgroundColor);
-        btnBold.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnBold.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        btnBold.setMargin(new Insets(0, 0, 0, 0));
         btnBold.addActionListener(new StyledEditorKit.BoldAction());
 
         JButton btnItalic = new JButton("I");
@@ -326,7 +330,8 @@ public class PacienteAtendimentoDialog extends JDialog {
         btnItalic.setToolTipText("Itálico");
         btnItalic.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnItalic.setBackground(backgroundColor);
-        btnItalic.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        btnItalic.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+        btnItalic.setMargin(new Insets(0, 0, 0, 0));
         btnItalic.addActionListener(new StyledEditorKit.ItalicAction());
 
         ColorItem[] colors = {
@@ -341,6 +346,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         };
         JComboBox<ColorItem> colorCombo = new JComboBox<>(colors);
         colorCombo.setMaximumSize(new Dimension(100, 30));
+        colorCombo.setPreferredSize(new Dimension(100, 30));
         colorCombo.setToolTipText("Cor do Texto");
         colorCombo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         colorCombo.setBackground(textAreaBackground);
@@ -358,7 +364,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         toolBar.add(btnItalic);
         toolBar.add(Box.createHorizontalStrut(10));
         toolBar.add(colorCombo);
-        obsPanel.add(toolBar, BorderLayout.CENTER);
+        obsPanel.add(toolBar, BorderLayout.NORTH);
 
         txtObservacoesAtendimento = new JEditorPane();
         txtObservacoesAtendimento.setContentType("text/html");
@@ -368,7 +374,7 @@ public class PacienteAtendimentoDialog extends JDialog {
         txtObservacoesAtendimento.setDocument(doc);
         txtObservacoesAtendimento.setBackground(textAreaBackground);
         txtObservacoesAtendimento.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 98));
+        txtObservacoesAtendimento.setPreferredSize(new Dimension(0, 140)); // Altura reduzida para 70% de 200px
         txtObservacoesAtendimento.setText("<html><body style='font-family: SansSerif; margin: 3; padding: 3; line-height: 1.0;'></body></html>");
 
         txtObservacoesAtendimento.addKeyListener(new KeyAdapter() {
@@ -388,32 +394,34 @@ public class PacienteAtendimentoDialog extends JDialog {
         JScrollPane scrollObs = new JScrollPane(txtObservacoesAtendimento);
         scrollObs.setBackground(backgroundColor);
         scrollObs.setBorder(BorderFactory.createEmptyBorder());
+        scrollObs.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollObs.getVerticalScrollBar().setUnitIncrement(32);
-        obsPanel.add(scrollObs, BorderLayout.SOUTH);
+        obsPanel.add(scrollObs, BorderLayout.CENTER);
 
         formPanel.add(obsPanel, BorderLayout.CENTER);
 
+        // Seção de documentos
         JPanel documentosPanel = new JPanel(new BorderLayout(10, 10));
         documentosPanel.setBackground(backgroundColor);
+        documentosPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 
-        JPanel headerDocumentosPanel = new JPanel();
-        headerDocumentosPanel.setLayout(new BoxLayout(headerDocumentosPanel, BoxLayout.X_AXIS));
+        JPanel headerDocumentosPanel = new JPanel(new BorderLayout());
         headerDocumentosPanel.setBackground(backgroundColor);
-        headerDocumentosPanel.setBorder(new EmptyBorder(0, 10, 5, 10));
-        JLabel lblDocumentos = new JLabel("Documentos Anexados");
-        lblDocumentos.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblDocumentos.setForeground(primaryColor);
-        headerDocumentosPanel.add(lblDocumentos);
-        headerDocumentosPanel.add(Box.createHorizontalStrut(10));
+        headerDocumentosPanel.setBorder(new EmptyBorder(0, 10, 10, 10));
 
-        JButton btnAnexar = new JButton("Anexar Arquivo");
-        btnAnexar.setBackground(Color.LIGHT_GRAY);
-        btnAnexar.setForeground(Color.BLACK);
+        JButton btnAnexar = new JButton();
+        ImageIcon anexarIcon = new ImageIcon("src/main/resources/images/anexar.png");
+        Image scaledImage = anexarIcon.getImage().getScaledInstance(24, 24, Image.SCALE_SMOOTH);
+        btnAnexar.setIcon(new ImageIcon(scaledImage));
+        btnAnexar.setBackground(primaryColor);
+        btnAnexar.setForeground(Color.WHITE);
         btnAnexar.setFont(buttonFont);
         btnAnexar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnAnexar.setPreferredSize(new Dimension(100, 26));
+        btnAnexar.setPreferredSize(new Dimension(40, 40));
+        btnAnexar.setBorder(BorderFactory.createEmptyBorder());
+        btnAnexar.setToolTipText("Anexar Arquivo");
         btnAnexar.addActionListener(e -> adicionarDocumento());
-        headerDocumentosPanel.add(btnAnexar);
+        headerDocumentosPanel.add(btnAnexar, BorderLayout.EAST);
 
         documentosPanel.add(headerDocumentosPanel, BorderLayout.NORTH);
 
@@ -422,7 +430,8 @@ public class PacienteAtendimentoDialog extends JDialog {
         panelDocumentos.setBackground(backgroundColor);
         JScrollPane scrollDocumentos = new JScrollPane(panelDocumentos);
         scrollDocumentos.setBackground(backgroundColor);
-        scrollDocumentos.setBorder(BorderFactory.createEmptyBorder());
+        scrollDocumentos.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        scrollDocumentos.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollDocumentos.getVerticalScrollBar().setUnitIncrement(32);
         documentosPanel.add(scrollDocumentos, BorderLayout.CENTER);
 
@@ -430,6 +439,7 @@ public class PacienteAtendimentoDialog extends JDialog {
 
         panel.add(formPanel, BorderLayout.CENTER);
 
+        // Carrega dados do paciente
         try {
             Paciente paciente = atendimento.getPaciente();
             if (paciente != null && paciente.getId() > 0) {
