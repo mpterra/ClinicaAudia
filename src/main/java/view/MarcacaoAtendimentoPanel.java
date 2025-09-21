@@ -18,6 +18,7 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ import model.EscalaProfissional;
 import model.Paciente;
 import model.Profissional;
 import util.Sessao;
-import view.dialogs.AtendimentoEditDialog;
+import view.dialogs.EditarMarcacaoDialog;
 
 public class MarcacaoAtendimentoPanel extends JPanel {
 
@@ -306,6 +307,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panel.add(mainGrid, BorderLayout.CENTER);
 
         cbProfissional.addActionListener(e -> atualizarHorarios());
+        cbTipo.addActionListener(e -> atualizarHorarios());
         txtBuscaPaciente.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 try {
@@ -505,7 +507,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true), "Atendimentos",
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true), "Próximos Atendimentos",
                         TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
@@ -603,7 +605,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                                 .findFirst()
                                 .orElse(null);
                         if (atendimento != null) {
-                            AtendimentoEditDialog dialog = new AtendimentoEditDialog((Frame) SwingUtilities.getWindowAncestor(MarcacaoAtendimentoPanel.this), atendimento);
+                            EditarMarcacaoDialog dialog = new EditarMarcacaoDialog((Frame) SwingUtilities.getWindowAncestor(MarcacaoAtendimentoPanel.this), atendimento);
                             dialog.setVisible(true);
                             carregarAtendimentos(); // Atualiza a tabela após fechar o dialog
                         }
@@ -696,34 +698,74 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         cbHorario.setEnabled(false);
 
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
-        if (prof == null || dataSelecionada == null)
+        Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
+        if (prof == null || dataSelecionada == null || tipo == null)
             return;
 
+        int duration = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
+
         try {
-            int diaSemana = dataSelecionada.getDayOfWeek().getValue()-1;
+            int diaSemana = dataSelecionada.getDayOfWeek().getValue() - 1;
 
             List<EscalaProfissional> escalas = escalaController.listarTodas().stream().filter(
                     e -> e.getProfissionalId() == prof.getId() && e.getDiaSemana() == diaSemana && e.isDisponivel())
                     .collect(Collectors.toList());
 
-            List<LocalTime> ocupados = atendimentoController.listarTodos().stream()
+            // Coletar intervalos ocupados (excluindo cancelados)
+            List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getProfissional().getId() == prof.getId()
-                            && a.getDataHora().toLocalDateTime().toLocalDate().equals(dataSelecionada))
-                    .map(a -> a.getDataHora().toLocalDateTime().toLocalTime()).collect(Collectors.toList());
+                            && a.getDataHora().toLocalDateTime().toLocalDate().equals(dataSelecionada)
+                            && a.getSituacao() != Atendimento.Situacao.CANCELADO)
+                    .collect(Collectors.toList());
 
+            List<Intervalo> ocupados = new ArrayList<>();
+            for (Atendimento a : atendimentos) {
+                LocalTime inicio = a.getDataHora().toLocalDateTime().toLocalTime();
+                LocalTime fim = inicio.plusMinutes(a.getDuracaoMin());
+                ocupados.add(new Intervalo(inicio, fim));
+            }
+
+            // Gerar horários possíveis
             for (EscalaProfissional e : escalas) {
                 LocalTime hora = e.getHoraInicio().toLocalTime();
-                LocalTime fim = e.getHoraFim().toLocalTime();
-                while (!hora.isAfter(fim.minusMinutes(30))) {
-                    if (!ocupados.contains(hora))
+                LocalTime fimEscala = e.getHoraFim().toLocalTime();
+
+                while (true) {
+                    LocalTime fimProposto = hora.plusMinutes(duration);
+                    if (fimProposto.isAfter(fimEscala)) {
+                        break;
+                    }
+
+                    boolean sobreposto = false;
+                    for (Intervalo occ : ocupados) {
+                        if (!(fimProposto.compareTo(occ.inicio) <= 0 || hora.compareTo(occ.fim) >= 0)) {
+                            sobreposto = true;
+                            break;
+                        }
+                    }
+
+                    if (!sobreposto) {
                         cbHorario.addItem(hora);
-                    hora = hora.plusMinutes(30);
+                    }
+
+                    hora = hora.plusMinutes(30); // Passo de 30 minutos para flexibilidade
                 }
             }
             cbHorario.setEnabled(cbHorario.getItemCount() > 0);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro ao atualizar horários: " + ex.getMessage(), "Erro",
                     JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Classe auxiliar para intervalos
+    private static class Intervalo {
+        LocalTime inicio;
+        LocalTime fim;
+
+        Intervalo(LocalTime inicio, LocalTime fim) {
+            this.inicio = inicio;
+            this.fim = fim;
         }
     }
 
@@ -740,8 +782,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 LocalDate dataAtendimento = a.getDataHora().toLocalDateTime().toLocalDate();
                 Atendimento.Situacao situacao = a.getSituacao();
 
-                // Condição 1: Mostrar todos os atendimentos de hoje em diante
-                if (!dataAtendimento.isBefore(hoje)) {
+                // Mostrar atendimentos de hoje em diante, exceto cancelados
+                if (!dataAtendimento.isBefore(hoje) && situacao != Atendimento.Situacao.CANCELADO) {
                     modeloTabela.addRow(new Object[] {
                             dataAtendimento.format(formatoData),
                             a.getDataHora().toLocalDateTime().toLocalTime(),
@@ -751,7 +793,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                             situacao
                     });
                 }
-                // Condição 2: Mostrar atendimentos passados apenas se a situação não for REALIZADO, FALTOU ou CANCELADO
+                // Mostrar atendimentos passados apenas se não for REALIZADO, FALTOU ou CANCELADO
                 else if (situacao != Atendimento.Situacao.REALIZADO &&
                          situacao != Atendimento.Situacao.FALTOU &&
                          situacao != Atendimento.Situacao.CANCELADO) {
@@ -793,11 +835,13 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
             }
 
+            int duration = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
+
             Atendimento at = new Atendimento();
             at.setPaciente(p);
             at.setProfissional(prof);
             at.setDataHora(java.sql.Timestamp.valueOf(dataSelecionada.atTime(hora)));
-            at.setDuracaoMin(30);
+            at.setDuracaoMin(duration);
             at.setTipo(tipo);
             at.setSituacao(Atendimento.Situacao.AGENDADO);
             at.setUsuario(Sessao.getUsuarioLogado().getLogin());

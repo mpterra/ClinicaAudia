@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import controller.AtendimentoController;
 import model.Atendimento;
@@ -155,17 +156,29 @@ public class AgendaPanel extends JPanel {
                     String dataStr = (String) getValueAt(row, 0);
                     LocalDate dataLinha = LocalDate.parse(dataStr, formatterData);
                     LocalDate hoje = LocalDate.now();
+                    Object statusObj = getValueAt(row, 4); // Status na coluna 4
+                    String status = statusObj != null ? statusObj.toString().toUpperCase() : "";
 
                     if (dataLinha.isBefore(hoje)) {
-                        bgColor = new Color(220, 220, 220); // Passado
+                        // Atendimentos passados com status AGENDADO ficam cinza
+                        if (status.equals("AGENDADO")) {
+                            bgColor = new Color(220, 220, 220); // Cinza para passado agendado
+                        } else {
+                            // Outros status mantêm suas cores específicas
+                            switch (status) {
+                                case "REALIZADO" -> bgColor = new Color(144, 238, 144); // Verde claro
+                                case "FALTOU" -> bgColor = new Color(255, 255, 153); // Amarelo claro
+                                case "CANCELADO" -> bgColor = new Color(255, 182, 193); // Rosa claro
+                                default -> bgColor = new Color(220, 220, 220); // Cinza padrão para outros casos
+                            }
+                        }
                     } else {
-                        Object statusObj = getValueAt(row, 4); // Status agora na coluna 4
-                        String status = statusObj != null ? statusObj.toString().toUpperCase() : "";
+                        // Atendimentos futuros ou de hoje
                         switch (status) {
-                            case "AGENDADO" -> bgColor = new Color(173, 216, 230);
-                            case "REALIZADO" -> bgColor = new Color(144, 238, 144);
-                            case "FALTOU" -> bgColor = new Color(255, 255, 153);
-                            case "CANCELADO" -> bgColor = new Color(255, 182, 193);
+                            case "AGENDADO" -> bgColor = new Color(173, 216, 230); // Azul claro
+                            case "REALIZADO" -> bgColor = new Color(144, 238, 144); // Verde claro
+                            case "FALTOU" -> bgColor = new Color(255, 255, 153); // Amarelo claro
+                            case "CANCELADO" -> bgColor = new Color(255, 182, 193); // Rosa claro
                             default -> bgColor = dataLinha.equals(hoje) ? new Color(0, 200, 0) : new Color(173, 216, 230);
                         }
                     }
@@ -344,15 +357,17 @@ public class AgendaPanel extends JPanel {
             LocalDateTime inicio = dataSelecionada.atStartOfDay();
             LocalDateTime fim = dataSelecionada.atTime(23, 59, 59);
 
-            List<Atendimento> atendimentos = ac.listarPorPeriodo(inicio, fim);
+            List<Atendimento> atendimentos = ac.listarPorPeriodo(inicio, fim).stream()
+                    .filter(a -> a.getSituacao() != Atendimento.Situacao.CANCELADO)
+                    .collect(Collectors.toList());
 
             for (Atendimento a : atendimentos) {
                 modeloTabela.addRow(new Object[]{
                         a.getDataHora().toLocalDateTime().format(formatterData),
                         a.getDataHora().toLocalDateTime().format(formatterHora),
                         a.getPacienteNome(),
-                        a.getTipo(), // Tipo de Atendimento na coluna 3
-                        a.getSituacao()        // Status na coluna 4
+                        a.getTipo(),
+                        a.getSituacao()
                 });
             }
 

@@ -8,6 +8,7 @@ import java.awt.*;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,7 +25,7 @@ import model.Paciente;
 import model.Profissional;
 import util.Sessao;
 
-public class AtendimentoEditDialog extends JDialog {
+public class EditarMarcacaoDialog extends JDialog {
     private static final long serialVersionUID = 1L;
 
     private Atendimento atendimento;
@@ -50,7 +51,7 @@ public class AtendimentoEditDialog extends JDialog {
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
 
-    public AtendimentoEditDialog(Frame parent, Atendimento atendimento) {
+    public EditarMarcacaoDialog(Frame parent, Atendimento atendimento) {
         super(parent, "Editar Atendimento", true);
         this.atendimento = atendimento;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -403,10 +404,20 @@ public class AtendimentoEditDialog extends JDialog {
             }
 
             LocalDate data = LocalDate.parse(dataStr, formatoData);
-            LocalDate hoje = LocalDate.now();
-            LocalTime agora = LocalTime.now();
-            if (data.isBefore(hoje) || (data.equals(hoje) && hora.isBefore(agora))) {
-                throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
+            
+            // Captura data/hora original para validação condicional em edições
+            LocalDateTime originalDataHora = atendimento.getDataHora().toLocalDateTime();
+            LocalDate originalData = originalDataHora.toLocalDate();
+            LocalTime originalHora = originalDataHora.toLocalTime();
+            
+            // Validação só aplica se data/hora mudou; permite edições em atendimentos passados sem alterar data/hora
+            boolean dataHoraMudou = !data.equals(originalData) || !hora.equals(originalHora);
+            if (dataHoraMudou) {
+                LocalDate hoje = LocalDate.now();
+                LocalTime agora = LocalTime.now();
+                if (data.isBefore(hoje) || (data.equals(hoje) && hora.isBefore(agora))) {
+                    throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
+                }
             }
 
             atendimento.setProfissional(prof);
