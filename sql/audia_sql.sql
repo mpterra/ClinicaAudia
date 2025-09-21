@@ -461,3 +461,8 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ========================================
+
+SELECT * FROM atendimento order by data_hora;
+update atendimento set situacao = 'AGENDADO' where id = 1;
+SELECT * FROM documento_atendimento;
+SELECT * FROM paciente;
