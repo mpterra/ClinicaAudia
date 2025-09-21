@@ -728,18 +728,42 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     }
 
     private void carregarAtendimentos() {
+        // Limpa as linhas existentes na tabela
         modeloTabela.setRowCount(0);
         try {
+            // Obtém todos os atendimentos
             List<Atendimento> atendimentos = atendimentoController.listarTodos();
+            LocalDate hoje = LocalDate.now();
+
+            // Filtra atendimentos com base nas condições
             for (Atendimento a : atendimentos) {
-                modeloTabela.addRow(new Object[] {
-                        a.getDataHora().toLocalDateTime().toLocalDate().format(formatoData),
-                        a.getDataHora().toLocalDateTime().toLocalTime(),
-                        a.getPacienteNome(),
-                        a.getProfissional().getNome(),
-                        a.getTipo(),
-                        a.getSituacao()
-                });
+                LocalDate dataAtendimento = a.getDataHora().toLocalDateTime().toLocalDate();
+                Atendimento.Situacao situacao = a.getSituacao();
+
+                // Condição 1: Mostrar todos os atendimentos de hoje em diante
+                if (!dataAtendimento.isBefore(hoje)) {
+                    modeloTabela.addRow(new Object[] {
+                            dataAtendimento.format(formatoData),
+                            a.getDataHora().toLocalDateTime().toLocalTime(),
+                            a.getPacienteNome(),
+                            a.getProfissional().getNome(),
+                            a.getTipo(),
+                            situacao
+                    });
+                }
+                // Condição 2: Mostrar atendimentos passados apenas se a situação não for REALIZADO, FALTOU ou CANCELADO
+                else if (situacao != Atendimento.Situacao.REALIZADO &&
+                         situacao != Atendimento.Situacao.FALTOU &&
+                         situacao != Atendimento.Situacao.CANCELADO) {
+                    modeloTabela.addRow(new Object[] {
+                            dataAtendimento.format(formatoData),
+                            a.getDataHora().toLocalDateTime().toLocalTime(),
+                            a.getPacienteNome(),
+                            a.getProfissional().getNome(),
+                            a.getTipo(),
+                            situacao
+                    });
+                }
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar atendimentos: " + e.getMessage(), "Erro",
