@@ -461,3 +461,27 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ========================================
+
+SELECT * FROM atendimento;
+
+SELECT * FROM paciente;
+
+INSERT INTO atendimento (
+    paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, usuario
+) VALUES (
+    1, 1, '2025-09-22 10:00:00', 60, 'AVALIACAO', 'AGENDADO', 'Primeira avaliação do paciente.', 150.00, 'admin'
+);
+
+INSERT INTO atendimento (
+    paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, usuario
+) VALUES (
+    2, 1, '2025-09-23 14:00:00', 60, 'RETORNO', 'AGENDADO', 'Retorno de Exame', 150.00, 'admin'
+);
+
+INSERT INTO atendimento (
+    paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, usuario
+) VALUES (
+    3, 1, '2025-09-19 14:00:00', 60, 'RETORNO', 'AGENDADO', 'Teste', 150.00, 'admin'
+);
+
+UPDATE atendimento set situacao = 'REALIZADO', atualizado_em = CURRENT_TIMESTAMP where id = 12;

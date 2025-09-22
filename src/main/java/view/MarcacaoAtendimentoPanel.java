@@ -14,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -101,6 +102,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         carregarDadosIniciais();
     }
 
+    // Cria o painel de formulário para agendamento
     private JPanel criarPainelFormulario() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -337,6 +339,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         return panel;
     }
 
+    // Atualiza os dados do paciente com base na busca
     private void atualizarPaciente() throws SQLException {
         String busca = txtBuscaPaciente.getText().toLowerCase();
         Paciente ultimoPaciente = null;
@@ -365,6 +368,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         }
     }
 
+    // Cria o mini calendário para seleção de data
     private JPanel criarMiniCalendario() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(new EmptyBorder(10, 0, 10, 0));
@@ -420,6 +424,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         return panel;
     }
 
+    // Atualiza o calendário com os dias do mês selecionado
     private void atualizarCalendario() {
         painelDias.removeAll();
         int mes = cbMes.getSelectedIndex() + 1;
@@ -504,6 +509,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         painelDias.repaint();
     }
 
+    // Cria o painel da tabela de atendimentos
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -540,15 +546,19 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 Color bgColor;
 
                 try {
-                    // Converte a String de volta para LocalDate para comparar
+                    // Obtém data, horário e situação
                     String dataStr = (String) getValueAt(row, 0);
                     LocalDate dataAtendimento = LocalDate.parse(dataStr, formatoData);
-                    LocalDate hoje = LocalDate.now();
+                    LocalTime horaAtendimento = (LocalTime) getValueAt(row, 1);
+                    LocalDateTime dtAtendimento = dataAtendimento.atTime(horaAtendimento);
+                    LocalDateTime agora = LocalDateTime.now();
+                    boolean isPast = dtAtendimento.isBefore(agora);
+                    Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
 
-                    if (dataAtendimento.isBefore(hoje)) {
+                    // Aplica cor cinza apenas para AGENDADO passado; prioriza cores de outras situações
+                    if (isPast && situacao == Atendimento.Situacao.AGENDADO) {
                         bgColor = new Color(220, 220, 220);
                     } else {
-                        Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
                         switch (situacao) {
                             case AGENDADO -> bgColor = new Color(173, 216, 230);
                             case REALIZADO -> bgColor = new Color(144, 238, 144);
@@ -558,23 +568,20 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         }
                     }
                 } catch (Exception e) {
-                    bgColor = backgroundColor; // Fallback se algo der errado
+                    bgColor = backgroundColor; // Fallback
                 }
 
                 c.setBackground(bgColor);
                 c.setForeground(Color.BLACK);
 
-                // Aplica borda preta apenas na linha selecionada, contornando a linha inteira
+                // Aplica borda preta na linha selecionada
                 if (isRowSelected(row)) {
                     int lastColumn = getColumnCount() - 1;
                     if (column == 0) {
-                        // Primeira coluna: borda esquerda e bordas horizontais
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
                     } else if (column == lastColumn) {
-                        // Última coluna: borda direita e bordas horizontais
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
                     } else {
-                        // Colunas intermediárias: apenas bordas horizontais
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
                     }
                 } else {
@@ -585,9 +592,9 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             }
         };
 
-        // Desativa a grade da tabela para remover divisórias entre células
+        // Configurações da tabela
         tabelaAtendimentos.setShowGrid(false);
-        tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0)); // Remove espaçamento entre células
+        tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0));
         tabelaAtendimentos.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -607,7 +614,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         if (atendimento != null) {
                             EditarMarcacaoDialog dialog = new EditarMarcacaoDialog((Frame) SwingUtilities.getWindowAncestor(MarcacaoAtendimentoPanel.this), atendimento);
                             dialog.setVisible(true);
-                            carregarAtendimentos(); // Atualiza a tabela após fechar o dialog
+                            carregarAtendimentos();
                         }
                     } catch (Exception ex) {
                         JOptionPane.showMessageDialog(MarcacaoAtendimentoPanel.this, "Erro ao abrir atendimento: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -670,12 +677,14 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         return panel;
     }
 
+    // Filtra a tabela por paciente e profissional
     private void filtrar(String paciente, String prof) {
         RowFilter<DefaultTableModel, Object> filterPaciente = RowFilter.regexFilter("(?i)" + paciente, 2);
         RowFilter<DefaultTableModel, Object> filterProf = RowFilter.regexFilter("(?i)" + prof, 3);
         sorter.setRowFilter(RowFilter.andFilter(List.of(filterPaciente, filterProf)));
     }
 
+    // Carrega dados iniciais como profissionais
     private void carregarDadosIniciais() {
         try {
             cbProfissional.removeAllItems();
@@ -684,7 +693,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     .collect(Collectors.toList());
             profissionais.forEach(cbProfissional::addItem);
             if (!profissionais.isEmpty()) {
-                cbProfissional.setSelectedIndex(0); // Select first professional by default
+                cbProfissional.setSelectedIndex(0);
             }
             atualizarPaciente();
         } catch (Exception e) {
@@ -693,6 +702,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         }
     }
 
+    // Atualiza os horários disponíveis, evitando sobreposições (exceto cancelados)
     private void atualizarHorarios() {
         cbHorario.removeAllItems();
         cbHorario.setEnabled(false);
@@ -711,7 +721,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     e -> e.getProfissionalId() == prof.getId() && e.getDiaSemana() == diaSemana && e.isDisponivel())
                     .collect(Collectors.toList());
 
-            // Coletar intervalos ocupados (excluindo cancelados)
+            // Intervalos ocupados (excluindo cancelados), usando duracaoMin armazenada
             List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getProfissional().getId() == prof.getId()
                             && a.getDataHora().toLocalDateTime().toLocalDate().equals(dataSelecionada)
@@ -725,7 +735,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 ocupados.add(new Intervalo(inicio, fim));
             }
 
-            // Gerar horários possíveis
+            // Gera horários possíveis sem sobreposição
             for (EscalaProfissional e : escalas) {
                 LocalTime hora = e.getHoraInicio().toLocalTime();
                 LocalTime fimEscala = e.getHoraFim().toLocalTime();
@@ -748,7 +758,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         cbHorario.addItem(hora);
                     }
 
-                    hora = hora.plusMinutes(30); // Passo de 30 minutos para flexibilidade
+                    hora = hora.plusMinutes(30);
                 }
             }
             cbHorario.setEnabled(cbHorario.getItemCount() > 0);
@@ -758,7 +768,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         }
     }
 
-    // Classe auxiliar para intervalos
+    // Classe auxiliar para intervalos de tempo
     private static class Intervalo {
         LocalTime inicio;
         LocalTime fim;
@@ -769,42 +779,33 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         }
     }
 
+    // Carrega os atendimentos na tabela, filtrando conforme regras
+ // Carrega os atendimentos na tabela, filtrando conforme regras
     private void carregarAtendimentos() {
-        // Limpa as linhas existentes na tabela
         modeloTabela.setRowCount(0);
         try {
-            // Obtém todos os atendimentos
             List<Atendimento> atendimentos = atendimentoController.listarTodos();
             LocalDate hoje = LocalDate.now();
 
-            // Filtra atendimentos com base nas condições
             for (Atendimento a : atendimentos) {
                 LocalDate dataAtendimento = a.getDataHora().toLocalDateTime().toLocalDate();
                 Atendimento.Situacao situacao = a.getSituacao();
 
-                // Mostrar atendimentos de hoje em diante, exceto cancelados
-                if (!dataAtendimento.isBefore(hoje) && situacao != Atendimento.Situacao.CANCELADO) {
-                    modeloTabela.addRow(new Object[] {
-                            dataAtendimento.format(formatoData),
-                            a.getDataHora().toLocalDateTime().toLocalTime(),
-                            a.getPacienteNome(),
-                            a.getProfissional().getNome(),
-                            a.getTipo(),
-                            situacao
-                    });
-                }
-                // Mostrar atendimentos passados apenas se não for REALIZADO, FALTOU ou CANCELADO
-                else if (situacao != Atendimento.Situacao.REALIZADO &&
-                         situacao != Atendimento.Situacao.FALTOU &&
-                         situacao != Atendimento.Situacao.CANCELADO) {
-                    modeloTabela.addRow(new Object[] {
-                            dataAtendimento.format(formatoData),
-                            a.getDataHora().toLocalDateTime().toLocalTime(),
-                            a.getPacienteNome(),
-                            a.getProfissional().getNome(),
-                            a.getTipo(),
-                            situacao
-                    });
+                // Regra 1: Atendimentos de hoje ou futuros (exceto CANCELADO)
+                // Regra 2: Atendimentos passados apenas se AGENDADO
+                // Regra 3: Exclui qualquer atendimento CANCELADO
+                if (situacao != Atendimento.Situacao.CANCELADO) {
+                    if (!dataAtendimento.isBefore(hoje) || // Hoje ou futuro
+                        (dataAtendimento.isBefore(hoje) && situacao == Atendimento.Situacao.AGENDADO)) { // Passado e AGENDADO
+                        modeloTabela.addRow(new Object[] {
+                                dataAtendimento.format(formatoData),
+                                a.getDataHora().toLocalDateTime().toLocalTime(),
+                                a.getPacienteNome(),
+                                a.getProfissional().getNome(),
+                                a.getTipo(),
+                                situacao
+                        });
+                    }
                 }
             }
         } catch (Exception e) {
@@ -813,14 +814,19 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         }
     }
 
+    // Salva o atendimento, validando campos e regras
+ // Salva o atendimento, validando campos e regras
+ // Salva o atendimento, validando campos e regras
     private void salvarAtendimento() {
         try {
             String nomePaciente = lblNomePaciente.getText().replace("Nome: ", "").trim();
             if (nomePaciente.isEmpty())
                 throw new CampoObrigatorioException("Selecione um paciente!");
 
-            Paciente p = pacienteController.listarTodos().stream().filter(pa -> pa.getNome().equals(nomePaciente))
-                    .findFirst().orElseThrow(() -> new CampoObrigatorioException("Paciente não encontrado!"));
+            Paciente p = pacienteController.listarTodos().stream()
+                    .filter(pa -> pa.getNome().equals(nomePaciente))
+                    .findFirst()
+                    .orElseThrow(() -> new CampoObrigatorioException("Paciente não encontrado!"));
 
             Profissional prof = (Profissional) cbProfissional.getSelectedItem();
             LocalTime hora = (LocalTime) cbHorario.getSelectedItem();
@@ -835,40 +841,61 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
             }
 
+            // Define a duração com base no tipo de atendimento
             int duration = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
 
+            // Verificação de sobreposição no frontend
+            List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
+                    .filter(a -> a.getProfissional().getId() == prof.getId()
+                            && a.getDataHora().toLocalDateTime().toLocalDate().equals(dataSelecionada)
+                            && a.getSituacao() != Atendimento.Situacao.CANCELADO)
+                    .collect(Collectors.toList());
+
+            LocalDateTime inicioProposto = dataSelecionada.atTime(hora);
+            LocalDateTime fimProposto = inicioProposto.plusMinutes(duration);
+            for (Atendimento a : atendimentos) {
+                LocalDateTime inicioExist = a.getDataHora().toLocalDateTime();
+                LocalDateTime fimExist = inicioExist.plusMinutes(a.getDuracaoMin());
+                if (!(fimProposto.compareTo(inicioExist) <= 0 || inicioProposto.compareTo(fimExist) >= 0)) {
+                    throw new Exception("Horário Indisponível para o profissional");
+                }
+            }
+
+            // Cria o atendimento
             Atendimento at = new Atendimento();
             at.setPaciente(p);
             at.setProfissional(prof);
-            at.setDataHora(java.sql.Timestamp.valueOf(dataSelecionada.atTime(hora)));
+            at.setDataHora(java.sql.Timestamp.valueOf(inicioProposto));
             at.setDuracaoMin(duration);
             at.setTipo(tipo);
             at.setSituacao(Atendimento.Situacao.AGENDADO);
             at.setUsuario(Sessao.getUsuarioLogado().getLogin());
             at.setNotas(txtObservacoes.getText());
 
+            // Chama o controller para salvar
             if (atendimentoController.criarAtendimento(at, Sessao.getUsuarioLogado().getLogin())) {
                 JOptionPane.showMessageDialog(this, "Atendimento salvo com sucesso!", "Sucesso",
                         JOptionPane.INFORMATION_MESSAGE);
                 carregarAtendimentos();
                 limparCampos();
-                // Ensure a professional is selected after saving
                 if (cbProfissional.getItemCount() > 0) {
                     cbProfissional.setSelectedIndex(0);
                 }
+            } else {
+                throw new Exception("Falha ao salvar o atendimento no banco de dados");
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    // Limpa os campos do formulário
     private void limparCampos() throws SQLException {
         txtBuscaPaciente.setText("");
         cbTipo.setSelectedIndex(0);
         cbHorario.removeAllItems();
         txtObservacoes.setText("");
         atualizarPaciente();
-        // Ensure a professional is selected after clearing
         if (cbProfissional.getItemCount() > 0) {
             cbProfissional.setSelectedIndex(0);
         }

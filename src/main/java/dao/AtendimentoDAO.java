@@ -172,8 +172,11 @@ public class AtendimentoDAO {
               AND situacao != 'CANCELADO'
               AND (? IS NULL OR id != ?) -- ignora o próprio atendimento se for atualização
               AND (
-                (data_hora BETWEEN ? AND ?) OR
-                (? BETWEEN data_hora AND TIMESTAMPADD(MINUTE, duracao_min, data_hora))
+                (? >= data_hora AND ? < DATE_ADD(data_hora, INTERVAL duracao_min MINUTE))
+                OR
+                (? > data_hora AND ? <= DATE_ADD(data_hora, INTERVAL duracao_min MINUTE))
+                OR
+                (data_hora >= ? AND data_hora < ?)
               )
             """;
 
@@ -188,15 +191,18 @@ public class AtendimentoDAO {
                 stmt.setNull(2, Types.INTEGER);
                 stmt.setNull(3, Types.INTEGER);
             }
-            stmt.setTimestamp(4, Timestamp.valueOf(inicio));
-            stmt.setTimestamp(5, Timestamp.valueOf(fim));
-            stmt.setTimestamp(6, Timestamp.valueOf(fim));
+            stmt.setTimestamp(4, dataHora); // inicio do novo atendimento
+            stmt.setTimestamp(5, Timestamp.valueOf(inicio)); // inicio do novo atendimento
+            stmt.setTimestamp(6, Timestamp.valueOf(fim)); // fim do novo atendimento
+            stmt.setTimestamp(7, Timestamp.valueOf(fim)); // fim do novo atendimento
+            stmt.setTimestamp(8, dataHora); // inicio do novo atendimento
+            stmt.setTimestamp(9, Timestamp.valueOf(fim)); // fim do novo atendimento
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getInt(1) == 0;
             }
         }
-        return false;
+        return true;
     }
 
     // ============================

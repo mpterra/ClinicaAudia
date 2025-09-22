@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,17 @@ import model.EscalaProfissional;
 import model.Paciente;
 import model.Profissional;
 import util.Sessao;
+
+// Classe auxiliar para intervalos de tempo
+class Intervalo {
+    LocalTime inicio;
+    LocalTime fim;
+
+    Intervalo(LocalTime inicio, LocalTime fim) {
+        this.inicio = inicio;
+        this.fim = fim;
+    }
+}
 
 public class EditarMarcacaoDialog extends JDialog {
     private static final long serialVersionUID = 1L;
@@ -42,7 +54,7 @@ public class EditarMarcacaoDialog extends JDialog {
     private JComboBox<Atendimento.Tipo> cbTipo;
     private JComboBox<Atendimento.Situacao> cbSituacao;
     private JComboBox<LocalTime> cbHorario;
-    private JTextPane txtObservacoes; // Changed to JTextPane for HTML support
+    private JTextPane txtObservacoes;
     private JComboBox<String> cbData;
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -51,6 +63,7 @@ public class EditarMarcacaoDialog extends JDialog {
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
 
+    // Construtor do diálogo
     public EditarMarcacaoDialog(Frame parent, Atendimento atendimento) {
         super(parent, "Editar Atendimento", true);
         this.atendimento = atendimento;
@@ -64,7 +77,6 @@ public class EditarMarcacaoDialog extends JDialog {
 
         try {
             carregarDadosIniciais();
-
             try {
                 Atendimento full = atendimentoController.buscarPorId(this.atendimento.getId());
                 if (full != null) this.atendimento = full;
@@ -80,6 +92,7 @@ public class EditarMarcacaoDialog extends JDialog {
         preencherCampos();
     }
 
+    // Inicializa os componentes da interface
     private void initComponents() {
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -150,7 +163,7 @@ public class EditarMarcacaoDialog extends JDialog {
 
         cbProfissional = new JComboBox<>();
         cbProfissional.setPreferredSize(new Dimension(200, 25));
-        cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
+        cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
         gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
@@ -169,7 +182,7 @@ public class EditarMarcacaoDialog extends JDialog {
 
         cbTipo = new JComboBox<>(Atendimento.Tipo.values());
         cbTipo.setPreferredSize(new Dimension(150, 25));
-        cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
+        cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -184,7 +197,7 @@ public class EditarMarcacaoDialog extends JDialog {
 
         cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
         cbSituacao.setPreferredSize(new Dimension(150, 25));
-        cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
+        cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 3;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -201,7 +214,7 @@ public class EditarMarcacaoDialog extends JDialog {
 
         cbData = new JComboBox<>();
         cbData.setPreferredSize(new Dimension(150, 25));
-        cbData.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
+        cbData.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -216,7 +229,7 @@ public class EditarMarcacaoDialog extends JDialog {
 
         cbHorario = new JComboBox<>();
         cbHorario.setPreferredSize(new Dimension(150, 25));
-        cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for combo
+        cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 3;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -232,10 +245,10 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.weighty = 1.0;
         formPanel.add(lblObservacoes, gbc);
 
-        txtObservacoes = new JTextPane(); // Changed to JTextPane
-        txtObservacoes.setContentType("text/html"); // Set content type to HTML
-        txtObservacoes.setEditorKit(new HTMLEditorKit()); // Enable HTML rendering
-        txtObservacoes.setText("<html></html>"); // Initialize with empty HTML
+        txtObservacoes = new JTextPane();
+        txtObservacoes.setContentType("text/html");
+        txtObservacoes.setEditorKit(new HTMLEditorKit());
+        txtObservacoes.setText("<html></html>");
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
         gbc.gridx = 1;
         gbc.gridwidth = 3;
@@ -250,19 +263,19 @@ public class EditarMarcacaoDialog extends JDialog {
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setPreferredSize(new Dimension(100, 35));
-        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for button
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JButton btnExcluir = new JButton("Excluir");
         btnExcluir.setBackground(new Color(255, 99, 71));
         btnExcluir.setForeground(Color.WHITE);
         btnExcluir.setPreferredSize(new Dimension(100, 35));
-        btnExcluir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for button
+        btnExcluir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JButton btnCancelar = new JButton("Cancelar");
         btnCancelar.setBackground(Color.LIGHT_GRAY);
         btnCancelar.setForeground(Color.BLACK);
         btnCancelar.setPreferredSize(new Dimension(100, 35));
-        btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Hand cursor for button
+        btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         buttonPanel.add(btnCancelar);
         buttonPanel.add(btnExcluir);
@@ -278,8 +291,10 @@ public class EditarMarcacaoDialog extends JDialog {
 
         cbProfissional.addActionListener(e -> atualizarHorarios());
         cbData.addActionListener(e -> atualizarHorarios());
+        cbTipo.addActionListener(e -> atualizarHorarios()); // Adicionado para atualizar horários ao mudar tipo
     }
 
+    // Preenche os campos com os dados do atendimento
     private void preencherCampos() {
         try {
             Paciente paciente = atendimento.getPaciente();
@@ -315,18 +330,24 @@ public class EditarMarcacaoDialog extends JDialog {
         String dataStr = atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData);
         boolean found = false;
         for (int i = 0; i < cbData.getItemCount(); i++) {
-            if (cbData.getItemAt(i).equals(dataStr)) { found = true; break; }
+            if (cbData.getItemAt(i).equals(dataStr)) {
+                found = true;
+                break;
+            }
         }
         if (!found) cbData.insertItemAt(dataStr, 0);
         cbData.setSelectedItem(dataStr);
 
+        txtObservacoes.setText(atendimento.getNotas() != null ? "<html>" + atendimento.getNotas() + "</html>" : "<html></html>");
         atualizarHorarios();
-        txtObservacoes.setText(atendimento.getNotas() != null ? "<html>" + atendimento.getNotas() + "</html>" : "<html></html>"); // Set HTML content
     }
 
+    // Carrega dados iniciais (profissionais e datas)
     private void carregarDadosIniciais() throws SQLException {
         cbProfissional.removeAllItems();
-        profissionalController.listarTodos().stream().filter(Profissional::isAtivo).forEach(cbProfissional::addItem);
+        profissionalController.listarTodos().stream()
+                .filter(Profissional::isAtivo)
+                .forEach(cbProfissional::addItem);
 
         cbData.removeAllItems();
         LocalDate hoje = LocalDate.now();
@@ -339,51 +360,90 @@ public class EditarMarcacaoDialog extends JDialog {
             String dataAt = atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData);
             boolean achou = false;
             for (int i = 0; i < cbData.getItemCount(); i++) {
-                if (cbData.getItemAt(i).equals(dataAt)) { achou = true; break; }
+                if (cbData.getItemAt(i).equals(dataAt)) {
+                    achou = true;
+                    break;
+                }
             }
             if (!achou) cbData.insertItemAt(dataAt, 0);
             cbData.setSelectedItem(dataAt);
         }
     }
 
+    // Atualiza os horários disponíveis, considerando a duração e excluindo cancelados
     private void atualizarHorarios() {
         cbHorario.removeAllItems();
         cbHorario.setEnabled(false);
 
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
         String dataStr = (String) cbData.getSelectedItem();
-        if (prof == null || dataStr == null) return;
+        Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
+        if (prof == null || dataStr == null || tipo == null) return;
 
         try {
             LocalDate data = LocalDate.parse(dataStr, formatoData);
             int diaSemana = data.getDayOfWeek().getValue() - 1;
+            int duracaoMin = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
 
+            // Carrega escalas do profissional para o dia da semana
             List<EscalaProfissional> escalas = escalaController.listarTodas().stream()
                     .filter(e -> e.getProfissionalId() == prof.getId() && e.getDiaSemana() == diaSemana && e.isDisponivel())
                     .collect(Collectors.toList());
 
-            List<LocalTime> ocupados = atendimentoController.listarTodos().stream()
+            // Carrega intervalos ocupados (excluindo CANCELADO e o próprio atendimento)
+            List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getProfissional().getId() == prof.getId()
                             && a.getDataHora().toLocalDateTime().toLocalDate().equals(data)
+                            && a.getSituacao() != Atendimento.Situacao.CANCELADO
                             && a.getId() != atendimento.getId())
-                    .map(a -> a.getDataHora().toLocalDateTime().toLocalTime())
                     .collect(Collectors.toList());
+
+            List<Intervalo> ocupados = new ArrayList<>();
+            for (Atendimento a : atendimentos) {
+                LocalTime inicio = a.getDataHora().toLocalDateTime().toLocalTime();
+                LocalTime fim = inicio.plusMinutes(a.getDuracaoMin());
+                ocupados.add(new Intervalo(inicio, fim));
+            }
+
+            // Gera horários disponíveis
+            LocalTime horarioOriginal = atendimento.getDataHora().toLocalDateTime().toLocalTime();
+            boolean horarioOriginalAdicionado = false;
 
             for (EscalaProfissional e : escalas) {
                 LocalTime hora = e.getHoraInicio().toLocalTime();
-                LocalTime fim = e.getHoraFim().toLocalTime();
-                while (!hora.isAfter(fim.minusMinutes(30))) {
-                    if (!ocupados.contains(hora)) cbHorario.addItem(hora);
+                LocalTime fimEscala = e.getHoraFim().toLocalTime();
+
+                while (!hora.isAfter(fimEscala.minusMinutes(duracaoMin))) {
+                    LocalTime fimProposto = hora.plusMinutes(duracaoMin);
+                    boolean sobreposto = false;
+
+                    for (Intervalo occ : ocupados) {
+                        if (!(fimProposto.compareTo(occ.inicio) <= 0 || hora.compareTo(occ.fim) >= 0)) {
+                            sobreposto = true;
+                            break;
+                        }
+                    }
+
+                    // Adiciona o horário original se ele for válido
+                    if (hora.equals(horarioOriginal) && !sobreposto) {
+                        cbHorario.addItem(horarioOriginal);
+                        horarioOriginalAdicionado = true;
+                    } else if (!sobreposto && !hora.equals(horarioOriginal)) {
+                        cbHorario.addItem(hora);
+                    }
+
                     hora = hora.plusMinutes(30);
                 }
             }
 
-            LocalTime horarioOriginal = atendimento.getDataHora().toLocalDateTime().toLocalTime();
-            if (cbHorario.getItemCount() > 0) {
-                if (cbHorario.getItemAt(0).equals(horarioOriginal)) cbHorario.setSelectedItem(horarioOriginal);
-                else cbHorario.setSelectedIndex(0);
-                cbHorario.setEnabled(true);
+            // Garante que o horário original esteja na lista, mesmo que não esteja na escala
+            if (!horarioOriginalAdicionado) {
+                cbHorario.addItem(horarioOriginal);
             }
+
+            // Seleciona o horário original
+            cbHorario.setSelectedItem(horarioOriginal);
+            cbHorario.setEnabled(cbHorario.getItemCount() > 0);
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Erro ao atualizar horários: " + ex.getMessage(), "Erro",
@@ -391,6 +451,7 @@ public class EditarMarcacaoDialog extends JDialog {
         }
     }
 
+    // Salva as alterações no atendimento
     private void salvar() {
         try {
             Profissional prof = (Profissional) cbProfissional.getSelectedItem();
@@ -404,12 +465,12 @@ public class EditarMarcacaoDialog extends JDialog {
             }
 
             LocalDate data = LocalDate.parse(dataStr, formatoData);
-            
+
             // Captura data/hora original para validação condicional em edições
             LocalDateTime originalDataHora = atendimento.getDataHora().toLocalDateTime();
             LocalDate originalData = originalDataHora.toLocalDate();
             LocalTime originalHora = originalDataHora.toLocalTime();
-            
+
             // Validação só aplica se data/hora mudou; permite edições em atendimentos passados sem alterar data/hora
             boolean dataHoraMudou = !data.equals(originalData) || !hora.equals(originalHora);
             if (dataHoraMudou) {
@@ -422,9 +483,10 @@ public class EditarMarcacaoDialog extends JDialog {
 
             atendimento.setProfissional(prof);
             atendimento.setDataHora(Timestamp.valueOf(data.atTime(hora)));
+            atendimento.setDuracaoMin(tipo == Atendimento.Tipo.AVALIACAO ? 90 : 60); // Define duração com base no tipo
             atendimento.setTipo(tipo);
             atendimento.setSituacao(situacao);
-            atendimento.setNotas(txtObservacoes.getText().replaceAll("<html>|</html>", "")); // Strip HTML tags for saving
+            atendimento.setNotas(txtObservacoes.getText().replaceAll("<html>|</html>", ""));
 
             if (atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin())) {
                 JOptionPane.showMessageDialog(this, "Atendimento atualizado com sucesso!", "Sucesso",
@@ -437,6 +499,7 @@ public class EditarMarcacaoDialog extends JDialog {
         }
     }
 
+    // Exclui o atendimento
     private void excluir() {
         int confirm = JOptionPane.showConfirmDialog(this, "Deseja realmente excluir este atendimento?", "Confirmação",
                 JOptionPane.YES_NO_OPTION);
@@ -454,6 +517,7 @@ public class EditarMarcacaoDialog extends JDialog {
         }
     }
 
+    // Seleciona profissional pelo ID
     private void selectProfissionalById(int profId) {
         for (int i = 0; i < cbProfissional.getItemCount(); i++) {
             Profissional p = cbProfissional.getItemAt(i);
