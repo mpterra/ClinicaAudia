@@ -21,7 +21,7 @@ public class PagamentoVenda {
     // -------------------------
     // Enum para método de pagamento
     // -------------------------
-    public enum MetodoPagamento {DINHEIRO, PIX, CARTAO, BOLETO}
+    public enum MetodoPagamento {DINHEIRO, PIX, DEBITO, CREDITO, BOLETO}
 
     // -------------------------
     // Construtores

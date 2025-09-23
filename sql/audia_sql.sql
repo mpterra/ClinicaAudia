@@ -376,7 +376,7 @@ CREATE TABLE pagamento_venda (
     venda_id INT NOT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor DECIMAL(10,2) NOT NULL,
-    metodo_pagamento ENUM('DINHEIRO','PIX','CARTAO','BOLETO') NOT NULL,
+    metodo_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO','BOLETO') NOT NULL,
     parcela INT DEFAULT 1,
     total_parcelas INT DEFAULT 1,
     observacoes TEXT,
@@ -483,5 +483,9 @@ INSERT INTO atendimento (
 ) VALUES (
     3, 1, '2025-09-19 14:00:00', 60, 'RETORNO', 'AGENDADO', 'Teste', 150.00, 'admin'
 );
-
+INSERT INTO atendimento (
+    paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, usuario
+) VALUES (
+    1, 1, '2025-09-22 14:00:00', 60, 'RETORNO', 'AGENDADO', 'Teste', 150.00, 'admin'
+);
 UPDATE atendimento set situacao = 'REALIZADO', atualizado_em = CURRENT_TIMESTAMP where id = 12;
