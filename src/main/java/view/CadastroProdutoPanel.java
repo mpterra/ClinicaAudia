@@ -25,6 +25,7 @@ public class CadastroProdutoPanel extends JPanel {
     private JTextField tfNome, tfCodigoSerial, tfPesquisar;
     private JTextArea taDescricao;
     private JComboBox<TipoProduto> cbTipoProduto;
+    private JSpinner spGarantiaMeses;
     private JButton btnSalvar, btnLimpar;
 
     private JTable tabelaProdutos;
@@ -34,34 +35,27 @@ public class CadastroProdutoPanel extends JPanel {
     public CadastroProdutoPanel() {
         setLayout(new BorderLayout(10, 20));
 
-        // TÍTULO elegante no topo
         JLabel lblTitulo = new JLabel("Cadastro de Produto", SwingConstants.CENTER);
         lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
         lblTitulo.setForeground(new Color(30, 30, 60));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Criar os painéis
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaComPesquisa();
 
-        // Divisor horizontal
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
         splitPane.setContinuousLayout(true);
         splitPane.setDividerSize(5);
-
-        // Ajuste de 40%-60% após a tela aparecer
-        splitPane.setDividerLocation(0.4); // valor inicial qualquer
+        splitPane.setDividerLocation(0.4);
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4));
 
-        // Wrapper para espaçamento
         JPanel panelWrapper = new JPanel(new BorderLayout());
         panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
         panelWrapper.add(splitPane, BorderLayout.CENTER);
 
         add(panelWrapper, BorderLayout.CENTER);
 
-        // Listeners dos botões
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
             try {
@@ -92,7 +86,6 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // SUBTÍTULO elegante
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -102,7 +95,7 @@ public class CadastroProdutoPanel extends JPanel {
         panelCadastro.add(lblSubtitulo, gbc);
         gbc.gridwidth = 1;
 
-        // TIPO DE PRODUTO
+        // Tipo de produto
         gbc.gridx = 0;
         gbc.gridy = 1;
         panelCadastro.add(new JLabel("Tipo de Produto:"), gbc);
@@ -124,7 +117,7 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbTipoProduto, gbc);
 
-        // NOME
+        // Nome
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
@@ -137,24 +130,29 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(tfNome, gbc);
 
-        // CÓDIGO SERIAL
+        // Código Serial
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
         panelCadastro.add(new JLabel("Código Serial:"), gbc);
 
         tfCodigoSerial = new JTextField();
         gbc.gridx = 1;
-        gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(tfCodigoSerial, gbc);
 
-        // DESCRIÇÃO
+        // Garantia em meses
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
+        panelCadastro.add(new JLabel("Garantia (meses):"), gbc);
+
+        spGarantiaMeses = new JSpinner(new SpinnerNumberModel(0, 0, 120, 1));
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelCadastro.add(spGarantiaMeses, gbc);
+
+        // Descrição
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         panelCadastro.add(new JLabel("Descrição:"), gbc);
 
         taDescricao = new JTextArea(4, 20);
@@ -162,11 +160,10 @@ public class CadastroProdutoPanel extends JPanel {
         taDescricao.setWrapStyleWord(true);
         JScrollPane scrollDescricao = new JScrollPane(taDescricao);
         gbc.gridx = 1;
-        gbc.weightx = 0.5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(scrollDescricao, gbc);
 
-        // BOTÕES
+        // Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnSalvar = new JButton("Salvar");
         btnLimpar = new JButton("Limpar");
@@ -174,10 +171,9 @@ public class CadastroProdutoPanel extends JPanel {
         panelBotoes.add(btnLimpar);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.EAST;
         panelCadastro.add(panelBotoes, gbc);
 
         Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
@@ -190,7 +186,7 @@ public class CadastroProdutoPanel extends JPanel {
     private JPanel criarTabelaComPesquisa() {
         JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
 
-        String[] colunas = {"Tipo", "Nome", "Código Serial", "Descrição"};
+        String[] colunas = {"Tipo", "Nome", "Código Serial", "Garantia (meses)", "Descrição"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -231,17 +227,6 @@ public class CadastroProdutoPanel extends JPanel {
         panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
         panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
 
-        panelTabelaWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                int totalWidth = panelTabelaWrapper.getWidth();
-                tabelaProdutos.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProdutos.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.2));
-                tabelaProdutos.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.15));
-                tabelaProdutos.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.3));
-            }
-        });
-
         return panelTabelaWrapper;
     }
 
@@ -250,6 +235,7 @@ public class CadastroProdutoPanel extends JPanel {
         tfCodigoSerial.setText("");
         taDescricao.setText("");
         cbTipoProduto.setSelectedIndex(-1);
+        spGarantiaMeses.setValue(0);
     }
 
     private void salvarProduto() throws SQLException {
@@ -257,6 +243,7 @@ public class CadastroProdutoPanel extends JPanel {
         String nome = tfNome.getText().trim();
         String codigoSerial = tfCodigoSerial.getText().trim();
         String descricao = taDescricao.getText().trim();
+        int garantiaMeses = (int) spGarantiaMeses.getValue();
 
         if (tipoSelecionado == null) {
             JOptionPane.showMessageDialog(this, "Selecione um tipo de produto!", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -273,6 +260,7 @@ public class CadastroProdutoPanel extends JPanel {
         produto.setNome(nome);
         produto.setCodigoSerial(codigoSerial);
         produto.setDescricao(descricao);
+        produto.setGarantiaMeses(garantiaMeses);
         produto.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
         ProdutoController controller = new ProdutoController();
@@ -300,7 +288,7 @@ public class CadastroProdutoPanel extends JPanel {
                 } catch (SQLException ignored) {}
                 modeloTabela.addRow(new Object[]{
                         tipoNome, p.getNome(), p.getCodigoSerial(),
-                        p.getDescricao()
+                        p.getGarantiaMeses(), p.getDescricao()
                 });
             }
         } catch (SQLException e) {

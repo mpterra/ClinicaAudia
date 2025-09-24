@@ -12,6 +12,7 @@ public class Produto {
     private Timestamp criadoEm;
     private Timestamp atualizadoEm;
     private String usuario;
+    private int garantiaMeses;
 
     // Construtor vazio
     public Produto() {}
@@ -40,4 +41,7 @@ public class Produto {
 
     public String getUsuario() { return usuario; }
     public void setUsuario(String usuario) { this.usuario = usuario; }
+    
+    public int getGarantiaMeses() { return garantiaMeses; }
+    public void setGarantiaMeses(int garantiaMeses) { this.garantiaMeses = garantiaMeses; }
 }

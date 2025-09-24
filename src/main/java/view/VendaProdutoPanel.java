@@ -107,10 +107,10 @@ public class VendaProdutoPanel extends JPanel {
 
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
-        splitPane.setResizeWeight(0.5);
+        splitPane.setResizeWeight(0.4); // Alterado de 0.5 para 0.4 (40-60)
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.5));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4));
         add(splitPane, BorderLayout.CENTER);
 
         // Carrega dados iniciais
@@ -168,15 +168,17 @@ public class VendaProdutoPanel extends JPanel {
         GridBagConstraints gbcS = new GridBagConstraints();
         gbcS.insets = new Insets(10, 10, 10, 10);
         gbcS.fill = GridBagConstraints.BOTH;
-        gbcS.weightx = 0.5;
+        gbcS.weightx = 1.0;
         gbcS.weighty = 1.0;
 
-        // Seção Esquerda: Dados do Paciente
+        // Seção Paciente
         JPanel pacientePanel = new JPanel(new GridBagLayout());
-        pacientePanel.setBorder(new EmptyBorder(0, 0, 0, 5));
+        pacientePanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(primaryColor, 1, true),
+                "Dados do Paciente", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor));
         pacientePanel.setBackground(backgroundColor);
         GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(5, 0, 5, 0);
+        gbcP.insets = new Insets(5, 5, 5, 5);
         gbcP.anchor = GridBagConstraints.WEST;
         gbcP.fill = GridBagConstraints.HORIZONTAL;
 
@@ -213,12 +215,14 @@ public class VendaProdutoPanel extends JPanel {
         gbcS.gridy = 0;
         dataSection.add(pacientePanel, gbcS);
 
-        // Seção Direita: Dados do Produto
+        // Seção Produto
         JPanel produtoPanel = new JPanel(new GridBagLayout());
-        produtoPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
+        produtoPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(primaryColor, 1, true),
+                "Dados do Produto", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor));
         produtoPanel.setBackground(backgroundColor);
         GridBagConstraints gbcProd = new GridBagConstraints();
-        gbcProd.insets = new Insets(5, 0, 5, 0);
+        gbcProd.insets = new Insets(5, 5, 5, 5);
         gbcProd.anchor = GridBagConstraints.WEST;
         gbcProd.fill = GridBagConstraints.HORIZONTAL;
 
@@ -251,7 +255,7 @@ public class VendaProdutoPanel extends JPanel {
         gbcProd.gridx = 0;
         gbcProd.gridy = 3;
         produtoPanel.add(lblPreco, gbcProd);
-        txtPrecoUnitario = new JTextField(20); // Aumentado de 15 para 20
+        txtPrecoUnitario = new JTextField(20);
         txtPrecoUnitario.setText("0,00");
         gbcProd.gridx = 1;
         produtoPanel.add(txtPrecoUnitario, gbcProd);
@@ -259,8 +263,8 @@ public class VendaProdutoPanel extends JPanel {
         // Adiciona filtro para formatação automática de valores
         ((AbstractDocument) txtPrecoUnitario.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
 
-        gbcS.gridx = 1;
-        gbcS.gridy = 0;
+        gbcS.gridx = 0;
+        gbcS.gridy = 1;
         dataSection.add(produtoPanel, gbcS);
 
         gbc.gridx = 0;
@@ -296,7 +300,7 @@ public class VendaProdutoPanel extends JPanel {
         gbcPag.weightx = 0.0;
         pagamentoPanel.add(lblParcelas, gbcPag);
         spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
-        spinnerParcelas.setPreferredSize(new Dimension(100, 30)); // Tamanho original mantido
+        spinnerParcelas.setPreferredSize(new Dimension(100, 30));
         spinnerParcelas.setEnabled(false);
         gbcPag.gridx = 3;
         gbcPag.weightx = 1.0;
@@ -330,7 +334,7 @@ public class VendaProdutoPanel extends JPanel {
         // Row 6: Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panelBotoes.setBackground(backgroundColor);
-        JButton btnSalvar = new JButton("Salvar Venda");
+        JButton btnSalvar = new JButton("Vender"); // Alterado de "Salvar Venda" para "Vender"
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setPreferredSize(new Dimension(120, 35));
@@ -782,18 +786,13 @@ public class VendaProdutoPanel extends JPanel {
 
         private String formatCurrency(String digits) {
             if (digits.isEmpty()) return "0,00";
-            // Adiciona zeros à esquerda se necessário para garantir pelo menos 3 dígitos
             while (digits.length() < 3) {
                 digits = "0" + digits;
             }
-            // Últimos dois dígitos são centavos
             String cents = digits.substring(digits.length() - 2);
-            // Parte dos reais
             String reais = digits.substring(0, digits.length() - 2);
-            // Remove zeros à esquerda dos reais, se houver
             reais = reais.replaceFirst("^0+(?!$)", "");
             if (reais.isEmpty()) reais = "0";
-            // Adiciona pontos como separadores de milhares
             StringBuilder formattedReais = new StringBuilder();
             int count = 0;
             for (int i = reais.length() - 1; i >= 0; i--) {

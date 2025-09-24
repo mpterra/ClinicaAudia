@@ -211,6 +211,7 @@ CREATE TABLE produto (
     nome VARCHAR(120) NOT NULL,
     codigo_serial VARCHAR(100),
     descricao TEXT,
+    garantia_meses INT DEFAULT 0,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),

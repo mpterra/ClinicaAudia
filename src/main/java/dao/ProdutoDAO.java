@@ -13,7 +13,8 @@ public class ProdutoDAO {
     // CREATE
     // ============================
     public boolean salvar(Produto produto, String usuarioLogado) throws SQLException {
-        String sql = "INSERT INTO produto (tipo_produto_id, nome, codigo_serial, descricao, usuario) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO produto (tipo_produto_id, nome, codigo_serial, descricao, usuario, garantia_meses) " +
+                     "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -23,6 +24,7 @@ public class ProdutoDAO {
             stmt.setString(3, produto.getCodigoSerial());
             stmt.setString(4, produto.getDescricao());
             stmt.setString(5, usuarioLogado);
+            stmt.setInt(6, produto.getGarantiaMeses());
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
@@ -73,7 +75,9 @@ public class ProdutoDAO {
     // UPDATE
     // ============================
     public boolean atualizar(Produto produto, String usuarioLogado) throws SQLException {
-        String sql = "UPDATE produto SET tipo_produto_id = ?, nome = ?, codigo_serial = ?, descricao = ?, usuario = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?";
+        String sql = "UPDATE produto SET tipo_produto_id = ?, nome = ?, codigo_serial = ?, descricao = ?, " +
+                     "usuario = ?, atualizado_em = CURRENT_TIMESTAMP, garantia_meses = ? WHERE id = ?";
+
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -82,7 +86,8 @@ public class ProdutoDAO {
             stmt.setString(3, produto.getCodigoSerial());
             stmt.setString(4, produto.getDescricao());
             stmt.setString(5, usuarioLogado);
-            stmt.setInt(6, produto.getId());
+            stmt.setInt(6, produto.getGarantiaMeses());
+            stmt.setInt(7, produto.getId());
 
             return stmt.executeUpdate() > 0;
         }
@@ -114,6 +119,7 @@ public class ProdutoDAO {
         p.setCriadoEm(rs.getTimestamp("criado_em"));
         p.setAtualizadoEm(rs.getTimestamp("atualizado_em"));
         p.setUsuario(rs.getString("usuario"));
+        p.setGarantiaMeses(rs.getInt("garantia_meses"));
         return p;
     }
 }
