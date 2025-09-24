@@ -1,269 +1,295 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
-
 import controller.TipoProdutoController;
 import model.TipoProduto;
 import util.Sessao;
-
 import java.awt.*;
 import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+// Painel para cadastro e listagem de tipos de produto
 public class CadastroTipoProdutoPanel extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private JTextField tfNome, tfPesquisar;
-	private JTextArea taDescricao;
-	private JButton btnSalvar, btnLimpar;
+    // Componentes de entrada
+    private JTextField tfNome, tfPesquisar;
+    private JTextArea taDescricao;
+    private JButton btnSalvar, btnLimpar;
 
-	private JTable tabelaTipos;
-	private DefaultTableModel modeloTabela;
-	private TableRowSorter<DefaultTableModel> sorter;
+    // Componentes da tabela
+    private JTable tabelaTipos;
+    private DefaultTableModel modeloTabela;
+    private TableRowSorter<DefaultTableModel> sorter;
 
-	public CadastroTipoProdutoPanel() {
-		setLayout(new BorderLayout(10, 20));
+    // Estilo visual
+    private final Color primaryColor = new Color(138, 43, 226); // Roxo
+    private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
+    private final Color rowColorLightLilac = new Color(230, 230, 250); // Lilás claro para linhas pares
+    private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
 
-		// TÍTULO elegante no topo
-		JLabel lblTitulo = new JLabel("Cadastro de Tipo de Produto", SwingConstants.CENTER);
-		lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
-		lblTitulo.setForeground(new Color(30, 30, 60));
-		lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
-		add(lblTitulo, BorderLayout.NORTH);
+    // Construtor
+    public CadastroTipoProdutoPanel() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(new EmptyBorder(5, 15, 15, 15));
+        setBackground(backgroundColor);
 
-		// Criar os painéis
-		JPanel panelCadastro = criarPainelCadastro();
-		JPanel panelTabela = criarTabelaComPesquisa();
+        // Título do painel
+        JLabel lblTitulo = new JLabel("Cadastro de Tipo de Produto", SwingConstants.CENTER);
+        lblTitulo.setFont(titleFont);
+        lblTitulo.setForeground(primaryColor);
+        lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
+        add(lblTitulo, BorderLayout.NORTH);
 
-		// Divisor horizontal: 50% cadastro, 50% tabela
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-		splitPane.setResizeWeight(0.5);
-		splitPane.setContinuousLayout(true);
-		splitPane.setDividerSize(5);
+        // Painéis de cadastro e tabela
+        JPanel panelCadastro = criarPainelCadastro();
+        JPanel panelTabela = criarPainelTabela();
 
-		// Wrapper para espaçamento
-		JPanel panelWrapper = new JPanel(new BorderLayout());
-		panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
-		panelWrapper.add(splitPane, BorderLayout.CENTER);
+        // SplitPane para dividir cadastro e tabela
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
+        splitPane.setResizeWeight(0.495);
+        splitPane.setDividerSize(7);
+        splitPane.setBackground(backgroundColor);
 
-		add(panelWrapper, BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
 
-		// Listeners dos botões
-		btnLimpar.addActionListener(e -> limparCampos());
-		btnSalvar.addActionListener(e -> {
-			try {
-				salvarTipoProduto();
-			} catch (SQLException ex) {
-				ex.printStackTrace();
-				JOptionPane.showMessageDialog(this, "Erro ao salvar tipo de produto: " + ex.getMessage(), "Erro",
-						JOptionPane.ERROR_MESSAGE);
-			}
-		});
+        // Ações dos botões
+        btnLimpar.addActionListener(e -> limparCampos());
+        btnSalvar.addActionListener(e -> salvarTipoProduto());
 
-		carregarTipos();
-	}
+        // Carregar dados iniciais
+        carregarTipos();
+    }
 
-	private JPanel criarPainelCadastro() {
-		JPanel panelCadastroWrapper = new JPanel(new BorderLayout());
-		JPanel panelCadastro = new JPanel(new GridBagLayout());
+    // Cria o painel de cadastro
+    private JPanel criarPainelCadastro() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1, true),
+                        "Novo Tipo de Produto",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
+                new EmptyBorder(10, 10, 10, 10)));
+        panel.setBackground(backgroundColor);
 
-		panelCadastro.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK),
-				"Cadastrar novo tipo de produto", TitledBorder.LEADING, TitledBorder.TOP));
+        JPanel mainGrid = new JPanel(new GridBagLayout());
+        mainGrid.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
-		panelCadastroWrapper.add(panelCadastro, BorderLayout.NORTH);
+        // Nome
+        JLabel lblNome = new JLabel("Nome:");
+        lblNome.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0.0;
+        mainGrid.add(lblNome, gbc);
 
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.insets = new Insets(10, 10, 10, 10);
-		gbc.anchor = GridBagConstraints.WEST;
+        tfNome = new JTextField(20);
+        tfNome.setPreferredSize(new Dimension(200, 30));
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        mainGrid.add(tfNome, gbc);
 
-		// SUBTÍTULO elegante dentro do painel
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridwidth = 2;
-		JLabel lblSubtitulo = new JLabel("Preencha os dados do tipo de produto");
-		lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 13));
-		lblSubtitulo.setForeground(Color.DARK_GRAY);
-		panelCadastro.add(lblSubtitulo, gbc);
-		gbc.gridwidth = 1;
+        // Descrição
+        JLabel lblDescricao = new JLabel("Descrição:");
+        lblDescricao.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0.0;
+        mainGrid.add(lblDescricao, gbc);
 
-		// NOME
-		gbc.gridx = 0;
-		gbc.gridy = 1;
-		panelCadastro.add(new JLabel("Nome:"), gbc);
+        taDescricao = new JTextArea(4, 20);
+        taDescricao.setLineWrap(true);
+        taDescricao.setWrapStyleWord(true);
+        JScrollPane scrollDescricao = new JScrollPane(taDescricao);
+        scrollDescricao.setPreferredSize(new Dimension(200, 100));
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        mainGrid.add(scrollDescricao, gbc);
 
-		tfNome = new JTextField();
-		gbc.gridx = 1;
-		gbc.weightx = 0.5;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		panelCadastro.add(tfNome, gbc);
+        // Botões (Limpar à esquerda, Salvar à direita)
+        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        panelBotoes.setBackground(backgroundColor);
+        btnLimpar = new JButton("Limpar");
+        btnLimpar.setBackground(Color.LIGHT_GRAY);
+        btnLimpar.setForeground(Color.BLACK);
+        btnLimpar.setPreferredSize(new Dimension(100, 35));
+        btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnSalvar = new JButton("Salvar");
+        btnSalvar.setBackground(primaryColor);
+        btnSalvar.setForeground(Color.WHITE);
+        btnSalvar.setPreferredSize(new Dimension(100, 35));
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        panelBotoes.add(btnLimpar);
+        panelBotoes.add(btnSalvar);
 
-		// DESCRIÇÃO
-		gbc.gridx = 0;
-		gbc.gridy = 2;
-		gbc.weightx = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		panelCadastro.add(new JLabel("Descrição:"), gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
+        mainGrid.add(panelBotoes, gbc);
 
-		taDescricao = new JTextArea(4, 20);
-		taDescricao.setLineWrap(true);
-		taDescricao.setWrapStyleWord(true);
-		JScrollPane scrollDescricao = new JScrollPane(taDescricao);
-		gbc.gridx = 1;
-		gbc.weightx = 0.5;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		panelCadastro.add(scrollDescricao, gbc);
+        panel.add(mainGrid, BorderLayout.NORTH);
+        return panel;
+    }
 
-		// BOTOES
-		JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		btnSalvar = new JButton("Salvar");
-		btnLimpar = new JButton("Limpar");
-		panelBotoes.add(btnSalvar);
-		panelBotoes.add(btnLimpar);
+    // Cria o painel da tabela com pesquisa
+    private JPanel criarPainelTabela() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1, true),
+                        "Tipos de Produto Cadastrados",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
+                new EmptyBorder(10, 10, 10, 10)));
+        panel.setBackground(backgroundColor);
 
-		gbc.gridx = 0;
-		gbc.gridy = 3;
-		gbc.gridwidth = 2;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.anchor = GridBagConstraints.EAST;
-		panelCadastro.add(panelBotoes, gbc);
+        // Pesquisa
+        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelBusca.setBackground(backgroundColor);
+        JLabel lblPesquisar = new JLabel("Pesquisar Tipo:");
+        lblPesquisar.setFont(labelFont);
+        tfPesquisar = new JTextField(15);
+        tfPesquisar.setPreferredSize(new Dimension(200, 30));
+        panelBusca.add(lblPesquisar);
+        panelBusca.add(tfPesquisar);
 
-		// Cursor de mãozinha
-		Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
-		btnSalvar.setCursor(handCursor);
-		btnLimpar.setCursor(handCursor);
+        tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { filtrarTabela(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { filtrarTabela(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { filtrarTabela(); }
 
-		return panelCadastroWrapper;
-	}
+            private void filtrarTabela() {
+                String texto = tfPesquisar.getText().trim();
+                sorter.setRowFilter(texto.isEmpty() ? null : RowFilter.regexFilter("(?i)" + texto, 0));
+            }
+        });
 
-	private JPanel criarTabelaComPesquisa() {
-		JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
+        // Tabela
+        String[] colunas = {"Nome", "Descrição"};
+        modeloTabela = new DefaultTableModel(colunas, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
+        tabelaTipos = new JTable(modeloTabela);
+        tabelaTipos.setRowHeight(25);
+        tabelaTipos.setShowGrid(false);
+        tabelaTipos.setIntercellSpacing(new Dimension(0, 0));
+        tabelaTipos.setFont(labelFont);
 
-		String[] colunas = { "Nome", "Descrição" };
-		modeloTabela = new DefaultTableModel(colunas, 0) {
-			private static final long serialVersionUID = 1L;
+        // Renderizador para alternar cores das linhas
+        DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                           boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rowColorLightLilac : Color.WHITE);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tabelaTipos.getColumnCount(); i++) {
+            tabelaTipos.getColumnModel().getColumn(i).setCellRenderer(rowRenderer);
+        }
 
-			@Override
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			}
-		};
+        JTableHeader header = tabelaTipos.getTableHeader();
+        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+        header.setBackground(primaryColor);
+        header.setForeground(Color.WHITE);
 
-		tabelaTipos = new JTable(modeloTabela);
-		tabelaTipos.setFillsViewportHeight(true);
+        sorter = new TableRowSorter<>(modeloTabela);
+        tabelaTipos.setRowSorter(sorter);
 
-		DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
-		centralizado.setHorizontalAlignment(SwingConstants.CENTER);
-		for (int i = 0; i < tabelaTipos.getColumnCount(); i++) {
-			tabelaTipos.getColumnModel().getColumn(i).setCellRenderer(centralizado);
-		}
+        JScrollPane scrollTabela = new JScrollPane(tabelaTipos);
+        scrollTabela.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
-		sorter = new TableRowSorter<>(modeloTabela);
-		tabelaTipos.setRowSorter(sorter);
+        panel.add(panelBusca, BorderLayout.NORTH);
+        panel.add(scrollTabela, BorderLayout.CENTER);
 
-		JScrollPane scrollTabela = new JScrollPane(tabelaTipos);
+        // Ajuste dinâmico das colunas
+        panel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                int totalWidth = panel.getWidth();
+                tabelaTipos.getColumnModel().getColumn(0).setPreferredWidth((int) (totalWidth * 0.3));
+                tabelaTipos.getColumnModel().getColumn(1).setPreferredWidth((int) (totalWidth * 0.7));
+            }
+        });
 
-		JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		JLabel lblPesquisar = new JLabel("Pesquisar tipo:");
-		lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
-		lblPesquisar.setForeground(Color.DARK_GRAY);
-		panelPesquisa.add(lblPesquisar);
+        return panel;
+    }
 
-		tfPesquisar = new JTextField(20);
-		panelPesquisa.add(tfPesquisar);
-		tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
-			private void filtrar() {
-				String texto = tfPesquisar.getText().trim();
-				if (texto.isEmpty())
-					sorter.setRowFilter(null);
-				else
-					sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0));
-			}
+    // Limpa os campos do formulário
+    private void limparCampos() {
+        tfNome.setText("");
+        taDescricao.setText("");
+    }
 
-			public void insertUpdate(DocumentEvent e) {
-				filtrar();
-			}
+    // Salva o tipo de produto no banco
+    private void salvarTipoProduto() {
+        try {
+            String nome = tfNome.getText().trim();
+            if (nome.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Preencha o nome do tipo de produto.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-			public void removeUpdate(DocumentEvent e) {
-				filtrar();
-			}
+            TipoProduto tipo = new TipoProduto();
+            tipo.setNome(nome);
+            tipo.setDescricao(taDescricao.getText().trim());
+            tipo.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
-			public void changedUpdate(DocumentEvent e) {
-				filtrar();
-			}
-		});
+            TipoProdutoController controller = new TipoProdutoController();
+            TipoProduto salvo = controller.salvar(tipo);
 
-		panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
-		panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
+            if (salvo != null) {
+                JOptionPane.showMessageDialog(this, "Tipo de produto salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                limparCampos();
+                carregarTipos();
+            } else {
+                JOptionPane.showMessageDialog(this, "Falha ao salvar o tipo de produto.", "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Erro ao salvar tipo de produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
-		panelTabelaWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
-			@Override
-			public void componentResized(java.awt.event.ComponentEvent evt) {
-				int totalWidth = panelTabelaWrapper.getWidth();
-				tabelaTipos.getColumnModel().getColumn(0).setPreferredWidth((int) (totalWidth * 0.2));
-				tabelaTipos.getColumnModel().getColumn(1).setPreferredWidth((int) (totalWidth * 0.5));
-			}
-		});
+    // Carrega os tipos de produto na tabela
+    private void carregarTipos() {
+        try {
+            TipoProdutoController controller = new TipoProdutoController();
+            List<TipoProduto> tipos = controller.listarTodos();
+            modeloTabela.setRowCount(0);
 
-		return panelTabelaWrapper;
-	}
-
-	private void limparCampos() {
-		tfNome.setText("");
-		taDescricao.setText("");
-	}
-
-	private void salvarTipoProduto() throws SQLException {
-		String nome = tfNome.getText().trim();
-		String descricao = taDescricao.getText().trim();
-
-		if (nome.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Preencha o nome do tipo de produto!", "Erro",
-					JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-
-		TipoProduto tipo = new TipoProduto();
-		tipo.setNome(nome);
-		tipo.setDescricao(descricao);
-		tipo.setUsuario(Sessao.getUsuarioLogado().getLogin()); // Exemplo de usuário logado
-
-		TipoProdutoController controller = new TipoProdutoController();
-		TipoProduto salvo = controller.salvar(tipo);
-
-		if (salvo != null) {
-			JOptionPane.showMessageDialog(this, "Tipo de produto salvo com sucesso!", "Sucesso",
-					JOptionPane.INFORMATION_MESSAGE);
-			limparCampos();
-			carregarTipos();
-		}
-	}
-
-	private void carregarTipos() {
-		try {
-			TipoProdutoController controller = new TipoProdutoController();
-			List<TipoProduto> tipos = controller.listarTodos();
-
-			modeloTabela.setRowCount(0);
-
-			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-			for (TipoProduto t : tipos) {
-
-				modeloTabela.addRow(new Object[] { t.getNome(), t.getDescricao() });
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Erro ao carregar tipos: " + e.getMessage(), "Erro",
-					JOptionPane.ERROR_MESSAGE);
-		}
-	}
+            for (TipoProduto t : tipos) {
+                modeloTabela.addRow(new Object[]{t.getNome(), t.getDescricao()});
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar tipos: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }

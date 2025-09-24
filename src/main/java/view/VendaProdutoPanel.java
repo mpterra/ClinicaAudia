@@ -8,19 +8,19 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
+import java.awt.*;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import controller.CaixaController;
 import controller.CaixaMovimentoController;
@@ -42,6 +42,7 @@ import model.Venda;
 import model.VendaProduto;
 import util.Sessao;
 
+// Painel para registro de vendas de produtos com suporte a múltiplos itens
 public class VendaProdutoPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -60,10 +61,12 @@ public class VendaProdutoPanel extends JPanel {
     private JComboBox<String> cbMetodoPagamento;
     private JSpinner spinnerParcelas;
     private JTextArea txtObservacoes;
-    // Componentes da tabela
+    // Componentes da tabela de itens da venda atual
+    private JTable tabelaItensVenda;
+    private DefaultTableModel modeloTabelaItens;
+    // Componentes da tabela de histórico (removida para outra tela futura)
     private JTable tabelaVendas;
-    private DefaultTableModel modeloTabela;
-    private TableRowSorter<DefaultTableModel> sorter;
+    private DefaultTableModel modeloTabelaVendas;
 
     // Estilo
     private final Color primaryColor = new Color(34, 139, 34); // Verde
@@ -85,6 +88,8 @@ public class VendaProdutoPanel extends JPanel {
     // Variáveis de estado
     private Paciente pacienteSelecionado;
     private Produto produtoSelecionado;
+    private List<VendaProduto> itensVendaAtual; // Lista de itens da venda atual
+    private BigDecimal valorTotalVenda; // Valor total da venda atual
 
     // Formas de pagamento disponíveis
     private static final String[] FORMAS_PAGAMENTO = {"DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO"};
@@ -93,6 +98,10 @@ public class VendaProdutoPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(5, 15, 15, 15));
         setBackground(backgroundColor);
+
+        // Inicializa lista de itens da venda atual
+        itensVendaAtual = new ArrayList<>();
+        valorTotalVenda = BigDecimal.ZERO;
 
         // Título
         JLabel lblTitulo = new JLabel("Venda de Produtos", SwingConstants.CENTER);
@@ -107,14 +116,11 @@ public class VendaProdutoPanel extends JPanel {
 
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
-        splitPane.setResizeWeight(0.4); // Alterado de 0.5 para 0.4 (40-60)
+        splitPane.setResizeWeight(0.4);
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4));
         add(splitPane, BorderLayout.CENTER);
-
-        // Carrega dados iniciais
-        carregarVendas();
     }
 
     // Cria o painel de formulário para registrar vendas
@@ -260,6 +266,18 @@ public class VendaProdutoPanel extends JPanel {
         gbcProd.gridx = 1;
         produtoPanel.add(txtPrecoUnitario, gbcProd);
 
+        // Botão para adicionar item à venda atual
+        JButton btnAdicionarItem = new JButton("Adicionar Item");
+        btnAdicionarItem.setBackground(primaryColor);
+        btnAdicionarItem.setForeground(Color.WHITE);
+        btnAdicionarItem.setPreferredSize(new Dimension(120, 30));
+        btnAdicionarItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        gbcProd.gridx = 0;
+        gbcProd.gridy = 4;
+        gbcProd.gridwidth = 2;
+        gbcProd.anchor = GridBagConstraints.CENTER;
+        produtoPanel.add(btnAdicionarItem, gbcProd);
+
         // Adiciona filtro para formatação automática de valores
         ((AbstractDocument) txtPrecoUnitario.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
 
@@ -334,18 +352,18 @@ public class VendaProdutoPanel extends JPanel {
         // Row 6: Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panelBotoes.setBackground(backgroundColor);
-        JButton btnSalvar = new JButton("Vender"); // Alterado de "Salvar Venda" para "Vender"
-        btnSalvar.setBackground(primaryColor);
-        btnSalvar.setForeground(Color.WHITE);
-        btnSalvar.setPreferredSize(new Dimension(120, 35));
-        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JButton btnRealizarVenda = new JButton("Realizar Venda");
+        btnRealizarVenda.setBackground(primaryColor);
+        btnRealizarVenda.setForeground(Color.WHITE);
+        btnRealizarVenda.setPreferredSize(new Dimension(120, 35));
+        btnRealizarVenda.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
         btnLimpar.setPreferredSize(new Dimension(100, 35));
         btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         panelBotoes.add(btnLimpar);
-        panelBotoes.add(btnSalvar);
+        panelBotoes.add(btnRealizarVenda);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
@@ -355,7 +373,8 @@ public class VendaProdutoPanel extends JPanel {
         mainGrid.add(panelBotoes, gbc);
 
         // Listeners
-        btnSalvar.addActionListener(e -> salvarVenda());
+        btnAdicionarItem.addActionListener(e -> adicionarItemVenda());
+        btnRealizarVenda.addActionListener(e -> realizarVenda());
         btnLimpar.addActionListener(e -> limparCampos());
         txtBuscaPaciente.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { atualizarPaciente(); }
@@ -373,39 +392,24 @@ public class VendaProdutoPanel extends JPanel {
         return panel;
     }
 
-    // Cria o painel da tabela de vendas
+    // Cria o painel da tabela de itens da venda atual
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true),
-                        "Histórico de Vendas", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
+                        "Itens da Venda Atual", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
 
-        // Painel de busca
-        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        panelBusca.setBackground(backgroundColor);
-        JLabel lblBuscaPacienteTabela = new JLabel("Buscar Paciente:");
-        lblBuscaPacienteTabela.setFont(labelFont);
-        JTextField txtBuscaPacienteTabela = new JTextField(15);
-        JLabel lblBuscaProdutoTabela = new JLabel("Buscar Produto:");
-        lblBuscaProdutoTabela.setFont(labelFont);
-        JTextField txtBuscaProdutoTabela = new JTextField(15);
-        panelBusca.add(lblBuscaPacienteTabela);
-        panelBusca.add(txtBuscaPacienteTabela);
-        panelBusca.add(lblBuscaProdutoTabela);
-        panelBusca.add(txtBuscaProdutoTabela);
-        panel.add(panelBusca, BorderLayout.NORTH);
-
-        // Configuração da tabela
-        String[] colunas = { "Data", "Paciente", "Produto", "Valor Total", "Parcelas Pagas", "Parcelas Totais" };
-        modeloTabela = new DefaultTableModel(colunas, 0) {
+        // Configuração da tabela de itens
+        String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal", "Garantia (meses)"};
+        modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
                 return false;
             }
         };
-        tabelaVendas = new JTable(modeloTabela) {
+        tabelaItensVenda = new JTable(modeloTabelaItens) {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
@@ -421,42 +425,33 @@ public class VendaProdutoPanel extends JPanel {
             }
         };
 
-        tabelaVendas.setShowGrid(false);
-        tabelaVendas.setIntercellSpacing(new Dimension(0, 0));
-        tabelaVendas.setFillsViewportHeight(true);
-        tabelaVendas.setRowHeight(25);
-        tabelaVendas.setFont(labelFont);
-        tabelaVendas.setBackground(backgroundColor);
+        tabelaItensVenda.setShowGrid(false);
+        tabelaItensVenda.setIntercellSpacing(new Dimension(0, 0));
+        tabelaItensVenda.setFillsViewportHeight(true);
+        tabelaItensVenda.setRowHeight(25);
+        tabelaItensVenda.setFont(labelFont);
+        tabelaItensVenda.setBackground(backgroundColor);
 
-        JTableHeader header = tabelaVendas.getTableHeader();
+        JTableHeader header = tabelaItensVenda.getTableHeader();
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
 
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < tabelaVendas.getColumnCount(); i++) {
-            tabelaVendas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        for (int i = 0; i < tabelaItensVenda.getColumnCount(); i++) {
+            tabelaItensVenda.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        sorter = new TableRowSorter<>(modeloTabela);
-        tabelaVendas.setRowSorter(sorter);
-
-        JScrollPane scroll = new JScrollPane(tabelaVendas);
+        JScrollPane scroll = new JScrollPane(tabelaItensVenda);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
 
-        // Listeners de busca
-        txtBuscaPacienteTabela.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProdutoTabela.getText()); }
-            public void removeUpdate(DocumentEvent e) { filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProdutoTabela.getText()); }
-            public void changedUpdate(DocumentEvent e) { filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProdutoTabela.getText()); }
-        });
-        txtBuscaProdutoTabela.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProdutoTabela.getText()); }
-            public void removeUpdate(DocumentEvent e) { filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProdutoTabela.getText()); }
-            public void changedUpdate(DocumentEvent e) { filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProdutoTabela.getText()); }
-        });
+        // Label para valor total
+        JLabel lblValorTotal = new JLabel("Valor Total: R$ 0,00");
+        lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblValorTotal.setBorder(new EmptyBorder(5, 10, 5, 10));
+        panel.add(lblValorTotal, BorderLayout.SOUTH);
 
         return panel;
     }
@@ -533,56 +528,10 @@ public class VendaProdutoPanel extends JPanel {
         }
     }
 
-    // Filtra a tabela por paciente e produto
-    private void filtrar(String paciente, String produto) {
-        RowFilter<DefaultTableModel, Object> filterPaciente = RowFilter.regexFilter("(?i)" + paciente, 1);
-        RowFilter<DefaultTableModel, Object> filterProduto = RowFilter.regexFilter("(?i)" + produto, 2);
-        sorter.setRowFilter(RowFilter.andFilter(List.of(filterPaciente, filterProduto)));
-    }
-
-    // Carrega as vendas na tabela
-    private void carregarVendas() {
-        modeloTabela.setRowCount(0);
-        try {
-            List<Venda> vendas = vendaController.listarTodos();
-            for (Venda v : vendas) {
-                List<VendaProduto> produtos = vendaProdutoController.listarPorVenda(v.getId());
-                List<PagamentoVenda> pagamentos = pagamentoVendaController.listarPorVenda(v);
-                int parcelasPagas = pagamentos.size();
-                int totalParcelas = pagamentos.isEmpty() ? 1 : pagamentos.get(0).getTotalParcelas();
-                String pacienteNome = "N/A";
-                if (v.getAtendimentoId() != null) {
-                    pacienteNome = "Paciente ID " + v.getAtendimentoId();
-                }
-                String produtoNomes = produtos.stream().map(vp -> {
-                    try {
-                        Produto p = produtoController.buscarPorId(vp.getProdutoId());
-                        return p.getNome();
-                    } catch (SQLException e) {
-                        return "Produto ID " + vp.getProdutoId();
-                    }
-                }).collect(Collectors.joining(", "));
-                modeloTabela.addRow(new Object[] {
-                        v.getDataHora().toLocalDateTime().toLocalDate().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                        pacienteNome,
-                        produtoNomes,
-                        v.getValorTotal(),
-                        parcelasPagas,
-                        totalParcelas
-                });
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar vendas: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // Salva a venda, atualizando estoque, movimentos e caixa
-    private void salvarVenda() {
+    // Adiciona um item à venda atual
+    private void adicionarItemVenda() {
         try {
             // Validações
-            if (pacienteSelecionado == null) {
-                throw new IllegalArgumentException("Selecione um paciente!");
-            }
             if (produtoSelecionado == null) {
                 throw new IllegalArgumentException("Selecione um produto!");
             }
@@ -597,8 +546,6 @@ public class VendaProdutoPanel extends JPanel {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Preço unitário inválido!");
             }
-            int parcelas = (Integer) spinnerParcelas.getValue();
-            String metodo = (String) cbMetodoPagamento.getSelectedItem();
 
             // Verifica estoque
             Estoque estoque = estoqueController.buscarPorProdutoId(produtoSelecionado.getId());
@@ -606,13 +553,83 @@ public class VendaProdutoPanel extends JPanel {
                 throw new IllegalArgumentException("Estoque insuficiente para o produto!");
             }
 
-            // Calcula valor total
-            BigDecimal valorTotal = precoUnitario.multiply(BigDecimal.valueOf(quantidade));
+            // Cria o item da venda
+            VendaProduto vendaProduto = new VendaProduto();
+            vendaProduto.setProdutoId(produtoSelecionado.getId());
+            vendaProduto.setQuantidade(quantidade);
+            vendaProduto.setPrecoUnitario(precoUnitario);
+            vendaProduto.setGarantiaMeses(produtoSelecionado.getGarantiaMeses());
+            LocalDate dataVenda = LocalDate.now();
+            vendaProduto.setDataVenda(Timestamp.valueOf(dataVenda.atStartOfDay()));
+            vendaProduto.setFimGarantia(Date.valueOf(dataVenda.plusMonths(produtoSelecionado.getGarantiaMeses())));
+
+            // Adiciona à lista de itens da venda atual
+            itensVendaAtual.add(vendaProduto);
+
+            // Atualiza tabela de itens
+            atualizarTabelaItens();
+
+            // Limpa campos do produto
+            txtBuscaProduto.setText("");
+            spinnerQuantidade.setValue(1);
+            txtPrecoUnitario.setText("0,00");
+            produtoSelecionado = null;
+            atualizarProduto();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao adicionar item: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Atualiza a tabela de itens da venda atual
+    private void atualizarTabelaItens() {
+        modeloTabelaItens.setRowCount(0);
+        valorTotalVenda = BigDecimal.ZERO;
+
+        for (VendaProduto vp : itensVendaAtual) {
+            try {
+                Produto p = produtoController.buscarPorId(vp.getProdutoId());
+                BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
+                valorTotalVenda = valorTotalVenda.add(subtotal);
+                modeloTabelaItens.addRow(new Object[]{
+                        p.getNome(),
+                        vp.getQuantidade(),
+                        String.format("R$ %.2f", vp.getPrecoUnitario()),
+                        String.format("R$ %.2f", subtotal),
+                        vp.getGarantiaMeses()
+                });
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Erro ao carregar produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        // Atualiza label do valor total
+        JLabel lblValorTotal = (JLabel) ((JPanel) tabelaItensVenda.getParent().getParent()).getComponent(1);
+        lblValorTotal.setText(String.format("Valor Total: R$ %.2f", valorTotalVenda));
+    }
+
+    // Realiza a venda, atualizando estoque, movimentos e caixa
+    private void realizarVenda() {
+        try {
+            // Validações
+            if (pacienteSelecionado == null) {
+                throw new IllegalArgumentException("Selecione um paciente!");
+            }
+            if (itensVendaAtual.isEmpty()) {
+                throw new IllegalArgumentException("Adicione pelo menos um produto à venda!");
+            }
+            int parcelas = (Integer) spinnerParcelas.getValue();
+            String metodo = (String) cbMetodoPagamento.getSelectedItem();
+
+            // Verifica caixa aberto
+            Caixa caixa = caixaController.buscarCaixaAberto();
+            if (caixa == null) {
+                throw new IllegalStateException("Nenhum caixa aberto encontrado!");
+            }
 
             // Cria a venda
             Venda venda = new Venda();
-            venda.setAtendimentoId(null);
-            venda.setValorTotal(valorTotal);
+            venda.setValorTotal(valorTotalVenda);
             venda.setUsuario(Sessao.getUsuarioLogado().getLogin());
             venda.setDataHora(Timestamp.valueOf(LocalDateTime.now()));
 
@@ -624,46 +641,40 @@ public class VendaProdutoPanel extends JPanel {
             // Obtém o ID da venda
             int vendaId = venda.getId();
 
-            // Registra o produto da venda
-            VendaProduto vendaProduto = new VendaProduto();
-            vendaProduto.setVendaId(vendaId);
-            vendaProduto.setProdutoId(produtoSelecionado.getId());
-            vendaProduto.setQuantidade(quantidade);
-            vendaProduto.setPrecoUnitario(precoUnitario);
-            vendaProduto.setDataVenda(Timestamp.valueOf(LocalDateTime.now()));
-            if (!vendaProdutoController.adicionarProdutoVenda(vendaProduto)) {
-                throw new SQLException("Falha ao registrar produto da venda!");
-            }
+            // Registra os produtos da venda e atualiza estoque
+            for (VendaProduto vp : itensVendaAtual) {
+                vp.setVendaId(vendaId);
+                if (!vendaProdutoController.adicionarProdutoVenda(vp)) {
+                    throw new SQLException("Falha ao registrar produto da venda!");
+                }
 
-            // Atualiza estoque
-            estoque.setQuantidade(estoque.getQuantidade() - quantidade);
-            estoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
-            if (!estoqueController.salvarOuAtualizarEstoque(estoque, Sessao.getUsuarioLogado().getLogin())) {
-                throw new SQLException("Falha ao atualizar estoque!");
-            }
+                // Atualiza estoque
+                Estoque estoque = estoqueController.buscarPorProdutoId(vp.getProdutoId());
+                estoque.setQuantidade(estoque.getQuantidade() - vp.getQuantidade());
+                estoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
+                if (!estoqueController.salvarOuAtualizarEstoque(estoque, Sessao.getUsuarioLogado().getLogin())) {
+                    throw new SQLException("Falha ao atualizar estoque!");
+                }
 
-            // Registra movimento de estoque
-            MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
-            movimentoEstoque.setProdutoId(produtoSelecionado.getId());
-            movimentoEstoque.setQuantidade(quantidade);
-            movimentoEstoque.setTipo(MovimentoEstoque.Tipo.SAIDA);
-            movimentoEstoque.setObservacoes("Saída por venda ID " + vendaId);
-            movimentoEstoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
-            if (!movimentoEstoqueController.registrarMovimento(movimentoEstoque, Sessao.getUsuarioLogado().getLogin())) {
-                throw new SQLException("Falha ao registrar movimento de estoque!");
+                // Registra movimento de estoque
+                MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
+                movimentoEstoque.setProdutoId(vp.getProdutoId());
+                movimentoEstoque.setQuantidade(vp.getQuantidade());
+                movimentoEstoque.setTipo(MovimentoEstoque.Tipo.SAIDA);
+                movimentoEstoque.setObservacoes("Saída por venda ID " + vendaId);
+                movimentoEstoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
+                if (!movimentoEstoqueController.registrarMovimento(movimentoEstoque, Sessao.getUsuarioLogado().getLogin())) {
+                    throw new SQLException("Falha ao registrar movimento de estoque!");
+                }
             }
 
             // Registra pagamento(s)
-            Caixa caixa = caixaController.buscarCaixaAberto();
-            if (caixa == null) {
-                throw new IllegalStateException("Nenhum caixa aberto encontrado!");
-            }
-            BigDecimal valorParcela = valorTotal.divide(BigDecimal.valueOf(parcelas), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal valorParcela = valorTotalVenda.divide(BigDecimal.valueOf(parcelas), 2, BigDecimal.ROUND_HALF_UP);
             for (int i = 1; i <= parcelas; i++) {
                 if (i == 1 && ("DINHEIRO".equals(metodo) || "PIX".equals(metodo) || "DEBITO".equals(metodo) || parcelas == 1)) {
                     PagamentoVenda pagamento = new PagamentoVenda();
                     pagamento.setVenda(venda);
-                    pagamento.setValor(valorTotal);
+                    pagamento.setValor(valorTotalVenda);
                     pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.valueOf(metodo));
                     pagamento.setParcela(i);
                     pagamento.setTotalParcelas(parcelas);
@@ -679,7 +690,7 @@ public class VendaProdutoPanel extends JPanel {
                     movimentoCaixa.setOrigem(CaixaMovimento.OrigemMovimento.PAGAMENTO_VENDA);
                     movimentoCaixa.setPagamentoVenda(pagamento);
                     movimentoCaixa.setFormaPagamento(CaixaMovimento.FormaPagamento.valueOf(metodo));
-                    movimentoCaixa.setValor(valorTotal);
+                    movimentoCaixa.setValor(valorTotalVenda);
                     movimentoCaixa.setDescricao("Pagamento " + (parcelas == 1 ? "à vista" : "parcela " + i + "/" + parcelas) + " de venda ID " + vendaId);
                     movimentoCaixa.setUsuario(Sessao.getUsuarioLogado().getLogin());
                     movimentoCaixa.setDataHora(LocalDateTime.now());
@@ -722,15 +733,14 @@ public class VendaProdutoPanel extends JPanel {
                 }
             }
 
-            JOptionPane.showMessageDialog(this, "Venda registrada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-            carregarVendas();
+            JOptionPane.showMessageDialog(this, "Venda realizada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             limparCampos();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao registrar venda: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao realizar venda: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    // Limpa os campos do formulário
+    // Limpa os campos do formulário e a lista de itens
     private void limparCampos() {
         txtBuscaPaciente.setText("");
         txtBuscaProduto.setText("");
@@ -742,8 +752,10 @@ public class VendaProdutoPanel extends JPanel {
         txtObservacoes.setText("");
         pacienteSelecionado = null;
         produtoSelecionado = null;
+        itensVendaAtual.clear();
         atualizarPaciente();
         atualizarProduto();
+        atualizarTabelaItens();
     }
 
     // Filtro para formatar entrada de valores monetários
