@@ -1,70 +1,79 @@
 package view;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
-
 import controller.UsuarioController;
 import controller.ProfissionalController;
 import exception.LoginDuplicadoException;
 import model.Usuario;
 import model.Profissional;
-
 import java.awt.*;
 import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+// Painel para cadastro e listagem de usuários
 public class CadastroUsuarioPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
+    // Componentes de entrada
     private JTextField tfLogin, tfPesquisar;
     private JPasswordField pfSenha;
     private JComboBox<String> cbTipo;
     private JButton btnSalvar, btnLimpar;
-
     private JTable tabelaUsuarios;
     private DefaultTableModel modeloTabela;
     private TableRowSorter<DefaultTableModel> sorter;
-
     private JRadioButton rbSim, rbNao;
     private JComboBox<String> cbProfissionais;
     private List<Profissional> listaProfissionais = new ArrayList<>();
-
     private JLabel lblSenhaInfo;
 
-    public CadastroUsuarioPanel() {
-        setLayout(new BorderLayout(10, 20));
+    // Estilo visual
+    private final Color primaryColor = new Color(138, 43, 226); // Roxo
+    private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
+    private final Color rowColorLightLilac = new Color(230, 230, 250); // Lilás claro para linhas pares
+    private final Font titleFont = new Font("SansSerif", Font.BOLD, 18); // Título principal
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14); // Labels, TitledBorder, tabela
 
-        // TÍTULO elegante no topo
+    // Construtor
+    public CadastroUsuarioPanel() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(new EmptyBorder(5, 15, 15, 15));
+        setBackground(backgroundColor);
+
+        // Título do painel
         JLabel lblTitulo = new JLabel("Cadastro de Usuário", SwingConstants.CENTER);
-        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 22));
-        lblTitulo.setForeground(new Color(30, 30, 60));
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        lblTitulo.setFont(titleFont);
+        lblTitulo.setForeground(primaryColor);
+        lblTitulo.setBorder(new EmptyBorder(10, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Criar os painéis
+        // Painéis de cadastro e tabela
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaUsuariosComPesquisa();
 
-        // Divisor horizontal: 50% cadastro, 50% tabela
+        // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.5);
-        splitPane.setContinuousLayout(true);
-        splitPane.setDividerSize(5);
+        splitPane.setResizeWeight(0.60); // Proporção 60-40
+        splitPane.setDividerSize(7);
+        splitPane.setContinuousLayout(true); // Transição suave ao redimensionar
+        splitPane.setBackground(backgroundColor);
 
-        // Wrapper para espaçamento
-        JPanel panelWrapper = new JPanel(new BorderLayout());
-        panelWrapper.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
-        panelWrapper.add(splitPane, BorderLayout.CENTER);
+        add(splitPane, BorderLayout.CENTER);
 
-        add(panelWrapper, BorderLayout.CENTER);
+        // Garantir proporção 60-40 do JSplitPane
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.60));
+        revalidate();
+        repaint();
 
         // Listeners dos botões
         btnLimpar.addActionListener(e -> limparCampos());
@@ -84,72 +93,85 @@ public class CadastroUsuarioPanel extends JPanel {
         carregarProfissionais();
     }
 
+    // Cria o painel de cadastro
     private JPanel criarPainelCadastro() {
         JPanel panelCadastroWrapper = new JPanel(new BorderLayout());
+        panelCadastroWrapper.setBackground(backgroundColor);
+        panelCadastroWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
+
         JPanel panelCadastro = new JPanel(new GridBagLayout());
-
-        panelCadastro.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Color.BLACK),
-                "Cadastrar novo usuário",
-                TitledBorder.LEADING,
-                TitledBorder.TOP));
-
-        panelCadastroWrapper.add(panelCadastro, BorderLayout.NORTH);
+        panelCadastro.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1, true),
+                        "Cadastrar Novo Usuário",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
+                new EmptyBorder(10, 10, 10, 10)));
+        panelCadastro.setBackground(backgroundColor);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(5, 10, 5, 10);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // SUBTÍTULO elegante dentro do painel
+        // Subtítulo
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3;
         JLabel lblSubtitulo = new JLabel("Preencha os dados do usuário");
-        lblSubtitulo.setFont(new Font("SansSerif", Font.ITALIC, 13));
+        lblSubtitulo.setFont(labelFont);
         lblSubtitulo.setForeground(Color.DARK_GRAY);
         panelCadastro.add(lblSubtitulo, gbc);
         gbc.gridwidth = 1;
 
-        // LOGIN
+        // Login
         gbc.gridx = 0;
         gbc.gridy = 1;
-        panelCadastro.add(new JLabel("Login:"), gbc);
+        JLabel lblLogin = new JLabel("Login:");
+        lblLogin.setFont(labelFont);
+        panelCadastro.add(lblLogin, gbc);
 
         tfLogin = new JTextField();
+        tfLogin.setPreferredSize(new Dimension(200, 30));
         gbc.gridx = 1;
-        gbc.weightx = 0.5;
+        gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(tfLogin, gbc);
 
         // Label informativo ao lado do login
-        JLabel lblLoginInfo = new JLabel("Use somente letras minusculas e/ou números");
-        lblLoginInfo.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        JLabel lblLoginInfo = new JLabel("Use somente letras minúsculas e/ou números");
+        lblLoginInfo.setFont(labelFont);
         lblLoginInfo.setForeground(Color.GRAY);
         gbc.gridx = 2;
-        gbc.weightx = 0.5;
+        gbc.weightx = 0.0;
         panelCadastro.add(lblLoginInfo, gbc);
 
-        // SENHA
+        // Senha
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.weightx = 0;
+        gbc.weightx = 0.0;
         gbc.fill = GridBagConstraints.NONE;
-        panelCadastro.add(new JLabel("Senha:"), gbc);
+        JLabel lblSenha = new JLabel("Senha:");
+        lblSenha.setFont(labelFont);
+        panelCadastro.add(lblSenha, gbc);
 
         pfSenha = new JPasswordField();
+        pfSenha.setPreferredSize(new Dimension(200, 30));
         gbc.gridx = 1;
-        gbc.weightx = 0.5;
+        gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(pfSenha, gbc);
 
-        // JLabel de feedback da senha ao lado
-        lblSenhaInfo = new JLabel("6 caracteres, 1 número, 1 símbolo");
-        lblSenhaInfo.setFont(new Font("SansSerif", Font.ITALIC, 12));
-        lblSenhaInfo.setForeground(Color.GRAY);
+        // Label de feedback da senha
+        lblSenhaInfo = new JLabel("<html>✖ 6 caracteres &nbsp;&nbsp;✖ 1 número &nbsp;&nbsp;✖ 1 símbolo</html>");
+        lblSenhaInfo.setFont(labelFont);
+        lblSenhaInfo.setForeground(Color.RED);
         gbc.gridx = 2;
+        gbc.weightx = 0.0;
         panelCadastro.add(lblSenhaInfo, gbc);
 
-        // LISTENER DINÂMICO
+        // Listener dinâmico para validação da senha
         pfSenha.getDocument().addDocumentListener(new DocumentListener() {
             private void verificarSenha() {
                 String senha = new String(pfSenha.getPassword());
@@ -174,39 +196,53 @@ public class CadastroUsuarioPanel extends JPanel {
             public void changedUpdate(DocumentEvent e) { verificarSenha(); }
         });
 
-        // TIPO
+        // Tipo
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.weightx = 0;
+        gbc.weightx = 0.0;
         gbc.fill = GridBagConstraints.NONE;
-        panelCadastro.add(new JLabel("Tipo:"), gbc);
+        JLabel lblTipo = new JLabel("Tipo:");
+        lblTipo.setFont(labelFont);
+        panelCadastro.add(lblTipo, gbc);
 
         cbTipo = new JComboBox<>(new String[]{"ADMIN", "FONOAUDIOLOGO", "SECRETARIA", "FINANCEIRO"});
+        cbTipo.setPreferredSize(new Dimension(200, 30));
+        cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
-        gbc.weightx = 0.5;
+        gbc.weightx = 1.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(cbTipo, gbc);
 
-        // Label informativo ao lado do combobox tipo
+        // Label informativo ao lado do tipo
         JLabel lblTipoInfo = new JLabel("Escolha o tipo de login");
-        lblTipoInfo.setFont(new Font("SansSerif", Font.ITALIC, 12));
+        lblTipoInfo.setFont(labelFont);
         lblTipoInfo.setForeground(Color.GRAY);
         gbc.gridx = 2;
+        gbc.weightx = 0.0;
         panelCadastro.add(lblTipoInfo, gbc);
 
-        // Vincular a profissional?
+        // Vincular a profissional
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.weightx = 0;
+        gbc.weightx = 0.0;
         gbc.fill = GridBagConstraints.NONE;
-        panelCadastro.add(new JLabel("Vincular a Profissional?"), gbc);
+        JLabel lblVincular = new JLabel("Vincular a Profissional?");
+        lblVincular.setFont(labelFont);
+        panelCadastro.add(lblVincular, gbc);
 
         rbSim = new JRadioButton("Sim");
         rbNao = new JRadioButton("Não", true);
+        rbSim.setFont(labelFont);
+        rbNao.setFont(labelFont);
+        rbSim.setBackground(backgroundColor);
+        rbNao.setBackground(backgroundColor);
+        rbSim.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        rbNao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         ButtonGroup bg = new ButtonGroup();
         bg.add(rbSim);
         bg.add(rbNao);
         JPanel panelRadios = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        panelRadios.setBackground(backgroundColor);
         panelRadios.add(rbSim);
         panelRadios.add(rbNao);
 
@@ -218,6 +254,8 @@ public class CadastroUsuarioPanel extends JPanel {
 
         // ComboBox de Profissionais
         cbProfissionais = new JComboBox<>();
+        cbProfissionais.setPreferredSize(new Dimension(200, 30));
+        cbProfissionais.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cbProfissionais.setVisible(false);
         gbc.gridx = 1;
         gbc.gridy = 5;
@@ -229,37 +267,67 @@ public class CadastroUsuarioPanel extends JPanel {
         rbSim.addActionListener(e -> cbProfissionais.setVisible(true));
         rbNao.addActionListener(e -> cbProfissionais.setVisible(false));
 
-        // BOTOES
-        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Botões
+        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        panelBotoes.setBackground(backgroundColor);
         btnSalvar = new JButton("Salvar");
+        btnSalvar.setBackground(primaryColor);
+        btnSalvar.setForeground(Color.WHITE);
+        btnSalvar.setPreferredSize(new Dimension(100, 35));
+        btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLimpar = new JButton("Limpar");
-        panelBotoes.add(btnSalvar);
+        btnLimpar.setBackground(Color.LIGHT_GRAY);
+        btnLimpar.setForeground(Color.BLACK);
+        btnLimpar.setPreferredSize(new Dimension(100, 35));
+        btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         panelBotoes.add(btnLimpar);
+        panelBotoes.add(btnSalvar);
 
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.EAST;
         panelCadastro.add(panelBotoes, gbc);
 
-        // Cursor de mãozinha
-        Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
-        btnSalvar.setCursor(handCursor);
-        btnLimpar.setCursor(handCursor);
-        rbSim.setCursor(handCursor);
-        rbNao.setCursor(handCursor);
-        cbProfissionais.setCursor(handCursor);
-        cbTipo.setCursor(handCursor);
-
+        panelCadastroWrapper.add(panelCadastro, BorderLayout.NORTH);
         return panelCadastroWrapper;
     }
 
-
+    // Cria o painel da tabela com pesquisa
     private JPanel criarTabelaUsuariosComPesquisa() {
-        JPanel panelTabelaWrapper = new JPanel(new BorderLayout());
+        JPanel panelTabelaWrapper = new JPanel(new BorderLayout(10, 10));
+        panelTabelaWrapper.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1, true),
+                        "Usuários Cadastrados",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
+                new EmptyBorder(10, 10, 10, 10)));
+        panelTabelaWrapper.setBackground(backgroundColor);
 
-        String[] colunas = {"Login", "Tipo", "Status", "Criação"};
+        // Pesquisa
+        JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        panelPesquisa.setBackground(backgroundColor);
+        JLabel lblPesquisar = new JLabel("Pesquisar por Login:");
+        lblPesquisar.setFont(labelFont);
+        panelPesquisa.add(lblPesquisar);
+        tfPesquisar = new JTextField();
+        tfPesquisar.setPreferredSize(new Dimension(200, 30));
+        panelPesquisa.add(tfPesquisar);
+        tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
+            private void filtrar() {
+                String texto = tfPesquisar.getText().trim();
+                sorter.setRowFilter(texto.isEmpty() ? null : RowFilter.regexFilter("(?i)" + texto, 0));
+            }
+            public void insertUpdate(DocumentEvent e) { filtrar(); }
+            public void removeUpdate(DocumentEvent e) { filtrar(); }
+            public void changedUpdate(DocumentEvent e) { filtrar(); }
+        });
+
+        // Tabela
+        String[] colunas = {"Login", "Tipo", "Status"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             private static final long serialVersionUID = 1L;
             @Override
@@ -269,63 +337,58 @@ public class CadastroUsuarioPanel extends JPanel {
         };
 
         tabelaUsuarios = new JTable(modeloTabela);
+        tabelaUsuarios.setRowHeight(25);
+        tabelaUsuarios.setShowGrid(false);
+        tabelaUsuarios.setIntercellSpacing(new Dimension(0, 0));
+        tabelaUsuarios.setFont(labelFont);
         tabelaUsuarios.setFillsViewportHeight(true);
 
-        DefaultTableCellRenderer centralizado = new DefaultTableCellRenderer();
-        centralizado.setHorizontalAlignment(SwingConstants.CENTER);
+        // Renderizador para alternar cores das linhas
+        DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                           boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rowColorLightLilac : Color.WHITE);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
         for (int i = 0; i < tabelaUsuarios.getColumnCount(); i++) {
-            tabelaUsuarios.getColumnModel().getColumn(i).setCellRenderer(centralizado);
+            tabelaUsuarios.getColumnModel().getColumn(i).setCellRenderer(rowRenderer);
         }
+
+        JTableHeader header = tabelaUsuarios.getTableHeader();
+        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+        header.setBackground(primaryColor);
+        header.setForeground(Color.WHITE);
 
         sorter = new TableRowSorter<>(modeloTabela);
         tabelaUsuarios.setRowSorter(sorter);
 
         JScrollPane scrollTabela = new JScrollPane(tabelaUsuarios);
-
-        JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JLabel lblPesquisar = new JLabel("Pesquisar login:");
-        lblPesquisar.setFont(new Font("SansSerif", Font.ITALIC, 14));
-        lblPesquisar.setForeground(Color.DARK_GRAY);
-        panelPesquisa.add(lblPesquisar);
-
-        tfPesquisar = new JTextField(20);
-        panelPesquisa.add(tfPesquisar);
-        tfPesquisar.getDocument().addDocumentListener(new DocumentListener() {
-            private void filtrar() {
-                String texto = tfPesquisar.getText().trim();
-                if (texto.isEmpty()) sorter.setRowFilter(null);
-                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + texto, 0));
-            }
-            public void insertUpdate(DocumentEvent e) { filtrar(); }
-            public void removeUpdate(DocumentEvent e) { filtrar(); }
-            public void changedUpdate(DocumentEvent e) { filtrar(); }
-        });
+        scrollTabela.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
 
         panelTabelaWrapper.add(panelPesquisa, BorderLayout.NORTH);
         panelTabelaWrapper.add(scrollTabela, BorderLayout.CENTER);
 
-        panelTabelaWrapper.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                int totalWidth = panelTabelaWrapper.getWidth();
-                tabelaUsuarios.getColumnModel().getColumn(0).setPreferredWidth((int)(totalWidth * 0.2));
-                tabelaUsuarios.getColumnModel().getColumn(1).setPreferredWidth((int)(totalWidth * 0.2));
-                tabelaUsuarios.getColumnModel().getColumn(2).setPreferredWidth((int)(totalWidth * 0.2));
-                tabelaUsuarios.getColumnModel().getColumn(3).setPreferredWidth((int)(totalWidth * 0.4));
-            }
-        });
-
         return panelTabelaWrapper;
     }
 
+    // Limpa os campos do formulário
     private void limparCampos() {
         tfLogin.setText("");
         pfSenha.setText("");
         cbTipo.setSelectedIndex(0);
         rbNao.setSelected(true);
         cbProfissionais.setVisible(false);
+        lblSenhaInfo.setText("<html>✖ 6 caracteres &nbsp;&nbsp;✖ 1 número &nbsp;&nbsp;✖ 1 símbolo</html>");
+        lblSenhaInfo.setForeground(Color.RED);
     }
 
+    // Salva o usuário no banco
     private void salvarUsuario() throws SQLException, LoginDuplicadoException {
         String login = tfLogin.getText().trim();
         String senha = new String(pfSenha.getPassword());
@@ -363,6 +426,7 @@ public class CadastroUsuarioPanel extends JPanel {
         }
     }
 
+    // Carrega os usuários na tabela
     private void carregarUsuarios() {
         try {
             UsuarioController uc = new UsuarioController();
@@ -370,17 +434,11 @@ public class CadastroUsuarioPanel extends JPanel {
 
             modeloTabela.setRowCount(0);
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-
             for (Usuario u : usuarios) {
-                String criadoFormatado = u.getCriadoEm() != null ? u.getCriadoEm().format(formatter) : "";
-
                 modeloTabela.addRow(new Object[]{
                         u.getLogin(),
                         u.getTipo(),
-                        u.isAtivo() ? "Ativo" : "Inativo",
-                        "Criado por " + (u.getUsuario() != null ? u.getUsuario() : "?")
-                                + " em " + criadoFormatado
+                        u.isAtivo() ? "Ativo" : "Inativo"
                 });
             }
 
@@ -390,6 +448,7 @@ public class CadastroUsuarioPanel extends JPanel {
         }
     }
 
+    // Carrega os profissionais no JComboBox
     private void carregarProfissionais() {
         try {
             ProfissionalController pc = new ProfissionalController();

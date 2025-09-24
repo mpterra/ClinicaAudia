@@ -5,6 +5,7 @@ import model.Produto;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class ProdutoController {
 
@@ -75,6 +76,12 @@ public class ProdutoController {
         }
         if (produto.getGarantiaMeses() < 0) {
             throw new IllegalArgumentException("Garantia em meses não pode ser negativa.");
+        }
+        if (produto.getPrecoVenda() == null || produto.getPrecoVenda().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Preço de venda deve ser maior ou igual a zero.");
+        }
+        if (produto.getPrecoCusto() == null || produto.getPrecoCusto().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Preço de custo deve ser maior ou igual a zero.");
         }
     }
 }

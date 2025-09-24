@@ -15,11 +15,11 @@ CREATE TABLE usuario (
     usuario VARCHAR(50)
 );
 
-    ALTER TABLE usuario
-    MODIFY COLUMN login VARCHAR(20) 
-    CHARACTER SET utf8mb4 
-    COLLATE utf8mb4_0900_as_cs 
-    NOT NULL;
+ALTER TABLE usuario
+MODIFY COLUMN login VARCHAR(20) 
+CHARACTER SET utf8mb4 
+COLLATE utf8mb4_0900_as_cs 
+NOT NULL;
 
 -- ========================================
 -- TABELA ENDERECO
@@ -53,7 +53,6 @@ CREATE TABLE paciente (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_paciente_endereco
         FOREIGN KEY (id_endereco)
         REFERENCES endereco(id)
@@ -72,7 +71,6 @@ CREATE TABLE documento_paciente (
     tipo_arquivo VARCHAR(50) NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_doc_paciente
         FOREIGN KEY (paciente_id)
         REFERENCES paciente(id)
@@ -95,14 +93,12 @@ CREATE TABLE profissional (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_profissional_endereco
         FOREIGN KEY (id_endereco)
         REFERENCES endereco(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
-
 
 -- ========================================
 -- TABELA DOCUMENTO_PROFISSIONAL
@@ -122,25 +118,25 @@ CREATE TABLE documento_profissional (
         ON UPDATE CASCADE
 );
 
-    ALTER TABLE usuario
-    ADD COLUMN profissional_id INT NULL,
-    ADD CONSTRAINT fk_usuario_profissional FOREIGN KEY (profissional_id) REFERENCES profissional(id);
+ALTER TABLE usuario
+ADD COLUMN profissional_id INT NULL,
+ADD CONSTRAINT fk_usuario_profissional FOREIGN KEY (profissional_id) REFERENCES profissional(id);
 
 -- ========================================
--- ESCALA FIXA DE PROFISSIONAIS (recorrente por dia da semana)
+-- ESCALA FIXA DE PROFISSIONAIS
 -- ========================================
 CREATE TABLE escala_profissional (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     profissional_id INT NOT NULL,
-    dia_semana TINYINT NOT NULL,           -- 1=segunda ... 7=domingo
+    dia_semana TINYINT NOT NULL, -- 1=segunda ... 7=domingo
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     disponivel TINYINT DEFAULT 1,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
-    CONSTRAINT fk_escala_profissional FOREIGN KEY (profissional_id)
+    CONSTRAINT fk_escala_profissional
+        FOREIGN KEY (profissional_id)
         REFERENCES profissional(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -162,7 +158,6 @@ CREATE TABLE atendimento (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_at_paciente
         FOREIGN KEY (paciente_id)
         REFERENCES paciente(id),
@@ -182,7 +177,6 @@ CREATE TABLE documento_atendimento (
     tipo_arquivo VARCHAR(50) NOT NULL,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_doc_atendimento
         FOREIGN KEY (atendimento_id)
         REFERENCES atendimento(id)
@@ -212,11 +206,13 @@ CREATE TABLE produto (
     codigo_serial VARCHAR(100),
     descricao TEXT,
     garantia_meses INT DEFAULT 0,
+    preco_venda DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'Preço de venda padrão para o produto, usado na tela de vendas',
+    preco_custo DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'Preço de custo médio ou último, atualizado a partir de compras para cálculo de lucro',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
-    CONSTRAINT fk_produto_tipo FOREIGN KEY (tipo_produto_id)
+    CONSTRAINT fk_produto_tipo
+        FOREIGN KEY (tipo_produto_id)
         REFERENCES tipo_produto(id)
 );
 
@@ -230,8 +226,8 @@ CREATE TABLE estoque (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
-    CONSTRAINT fk_estoque_produto FOREIGN KEY (produto_id)
+    CONSTRAINT fk_estoque_produto
+        FOREIGN KEY (produto_id)
         REFERENCES produto(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -240,7 +236,6 @@ CREATE TABLE estoque (
 -- ========================================
 -- MOVIMENTO DE ESTOQUE
 -- ========================================
-
 CREATE TABLE movimento_estoque (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     produto_id INT NOT NULL,
@@ -249,7 +244,8 @@ CREATE TABLE movimento_estoque (
     observacoes TEXT,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-    CONSTRAINT fk_mov_estoque_produto FOREIGN KEY (produto_id)
+    CONSTRAINT fk_mov_estoque_produto
+        FOREIGN KEY (produto_id)
         REFERENCES produto(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -269,36 +265,62 @@ CREATE TABLE compra_produto (
     compra_id INT NOT NULL,
     produto_id INT NOT NULL,
     quantidade INT NOT NULL,
-    preco_unitario DECIMAL(10,2) NOT NULL, -- custo de cada unidade
+    preco_unitario DECIMAL(10,2) NOT NULL,
     PRIMARY KEY(compra_id, produto_id),
-    CONSTRAINT fk_compra_produto FOREIGN KEY (compra_id) REFERENCES compra(id),
-    CONSTRAINT fk_produto_compra FOREIGN KEY (produto_id) REFERENCES produto(id)
+    CONSTRAINT fk_compra_produto
+        FOREIGN KEY (compra_id)
+        REFERENCES compra(id),
+    CONSTRAINT fk_produto_compra
+        FOREIGN KEY (produto_id)
+        REFERENCES produto(id)
 );
+
+-- ========================================
+-- TRIGGER PARA ATUALIZAR PRECO_CUSTO
+-- ========================================
+DELIMITER //
+CREATE TRIGGER trg_atualiza_preco_custo AFTER INSERT ON compra_produto
+FOR EACH ROW
+BEGIN
+    DECLARE total_quantidade INT;
+    DECLARE total_valor DECIMAL(10,2);
+    
+    SELECT SUM(quantidade), SUM(quantidade * preco_unitario)
+    INTO total_quantidade, total_valor
+    FROM compra_produto
+    WHERE produto_id = NEW.produto_id;
+    
+    UPDATE produto
+    SET preco_custo = total_valor / total_quantidade
+    WHERE id = NEW.produto_id;
+END //
+DELIMITER ;
 
 -- ========================================
 -- TABELA ORCAMENTO
 -- ========================================
 CREATE TABLE orcamento (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    paciente_id INT NULL,                  -- opcional, se for para um paciente
-    profissional_id INT NULL,             -- opcional, quem fez o orçamento
+    paciente_id INT NULL,
+    profissional_id INT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) DEFAULT 0,
     observacoes TEXT,
-    usuario VARCHAR(50),                   -- controle de auditoria
-
+    usuario VARCHAR(50),
     CONSTRAINT fk_orcamento_paciente
-        FOREIGN KEY (paciente_id) REFERENCES paciente(id)
+        FOREIGN KEY (paciente_id)
+        REFERENCES paciente(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE,
     CONSTRAINT fk_orcamento_profissional
-        FOREIGN KEY (profissional_id) REFERENCES profissional(id)
+        FOREIGN KEY (profissional_id)
+        REFERENCES profissional(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
 
 -- ========================================
--- TABELA ORCAMENTO_PRODUTO (itens do orçamento)
+-- TABELA ORCAMENTO_PRODUTO
 -- ========================================
 CREATE TABLE orcamento_produto (
     orcamento_id INT NOT NULL,
@@ -307,13 +329,14 @@ CREATE TABLE orcamento_produto (
     preco_unitario DECIMAL(10,2) NOT NULL,
     data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (orcamento_id, produto_id),
-
     CONSTRAINT fk_orcprod_orcamento
-        FOREIGN KEY (orcamento_id) REFERENCES orcamento(id)
+        FOREIGN KEY (orcamento_id)
+        REFERENCES orcamento(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
     CONSTRAINT fk_orcprod_produto
-        FOREIGN KEY (produto_id) REFERENCES produto(id)
+        FOREIGN KEY (produto_id)
+        REFERENCES produto(id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
 );
@@ -323,18 +346,16 @@ CREATE TABLE orcamento_produto (
 -- ========================================
 CREATE TABLE venda (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    atendimento_id INT NULL,       -- agora pode ser NULL (venda sem atendimento)
-    orcamento_id INT NULL,         -- vinculo opcional a um orçamento
+    atendimento_id INT NULL,
+    orcamento_id INT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) DEFAULT 0,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_venda_atendimento
         FOREIGN KEY (atendimento_id)
         REFERENCES atendimento(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-
     CONSTRAINT fk_venda_orcamento
         FOREIGN KEY (orcamento_id)
         REFERENCES orcamento(id)
@@ -351,7 +372,6 @@ CREATE TABLE venda_produto (
     garantia_meses INT DEFAULT 0,
     fim_garantia DATE,
     PRIMARY KEY (venda_id, produto_id),
-    
     CONSTRAINT fk_vendaprod_venda
         FOREIGN KEY (venda_id)
         REFERENCES venda(id)
@@ -364,13 +384,8 @@ CREATE TABLE venda_produto (
         ON UPDATE CASCADE
 );
 
--- =====================================================================
--- =======================  MODULO DE PAGAMENTOS  ======================
--- =====================================================================
-
-
 -- ========================================
--- PAGAMENTO DE VENDA
+-- MÓDULO DE PAGAMENTOS
 -- ========================================
 CREATE TABLE pagamento_venda (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -382,7 +397,6 @@ CREATE TABLE pagamento_venda (
     total_parcelas INT DEFAULT 1,
     observacoes TEXT,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_pag_venda
         FOREIGN KEY (venda_id)
         REFERENCES venda(id)
@@ -390,9 +404,6 @@ CREATE TABLE pagamento_venda (
         ON UPDATE CASCADE
 );
 
--- ========================================
--- PAGAMENTO DE ATENDIMENTO
--- ========================================
 CREATE TABLE pagamento_atendimento (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     atendimento_id INT NOT NULL,
@@ -401,7 +412,6 @@ CREATE TABLE pagamento_atendimento (
     metodo_pagamento ENUM('DINHEIRO','PIX','CARTAO') NOT NULL,
     observacoes TEXT,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_pag_atendimento
         FOREIGN KEY (atendimento_id)
         REFERENCES atendimento(id)
@@ -409,13 +419,8 @@ CREATE TABLE pagamento_atendimento (
         ON UPDATE CASCADE
 );
 
-
--- =====================================================================
--- =======================  MÓDULO DE CAIXA  ===========================
--- =====================================================================
-
 -- ========================================
--- CAIXA (abertura/fechamento e saldos iniciais por forma)
+-- MÓDULO DE CAIXA
 -- ========================================
 CREATE TABLE caixa (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -428,10 +433,6 @@ CREATE TABLE caixa (
     usuario VARCHAR(50)
 );
 
--- ========================================
--- MOVIMENTOS DE CAIXA (entradas/saídas)
--- Integrado a pagamentos de atendimento e venda
--- ========================================
 CREATE TABLE caixa_movimento (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     caixa_id INT NULL,
@@ -444,21 +445,21 @@ CREATE TABLE caixa_movimento (
     descricao VARCHAR(255),
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
-
     CONSTRAINT fk_cxmov_caixa
-        FOREIGN KEY (caixa_id) REFERENCES caixa(id)
+        FOREIGN KEY (caixa_id)
+        REFERENCES caixa(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE,
-
     CONSTRAINT fk_cxmov_pag_at
-        FOREIGN KEY (pagamento_atendimento_id) REFERENCES pagamento_atendimento(id)
+        FOREIGN KEY (pagamento_atendimento_id)
+        REFERENCES pagamento_atendimento(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE,
-
     CONSTRAINT fk_cxmov_pag_venda
-        FOREIGN KEY (pagamento_venda_id) REFERENCES pagamento_venda(id)
+        FOREIGN KEY (pagamento_venda_id)
+        REFERENCES pagamento_venda(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );
 
--- ========================================
+-- ==============================================

@@ -20,7 +20,9 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import controller.CaixaController;
 import controller.CaixaMovimentoController;
@@ -50,29 +52,29 @@ public class VendaProdutoPanel extends JPanel {
     // Componentes do formulário
     private JTextField txtBuscaPaciente;
     private JTextField txtBuscaProduto;
-    private JLabel lblNomePaciente;
-    private JLabel lblTelefone;
-    private JLabel lblIdade;
-    private JLabel lblEmail;
-    private JLabel lblNomeProduto;
-    private JLabel lblEstoque;
+    private JTextField txtNomePaciente;
+    private JTextField txtTelefone;
+    private JTextField txtIdade;
+    private JTextField txtEmail;
+    private JTextField txtNomeProduto;
+    private JTextField txtEstoque;
     private JSpinner spinnerQuantidade;
     private JTextField txtPrecoUnitario;
     private JComboBox<String> cbMetodoPagamento;
     private JSpinner spinnerParcelas;
-    private JTextArea txtObservacoes;
     // Componentes da tabela de itens da venda atual
     private JTable tabelaItensVenda;
     private DefaultTableModel modeloTabelaItens;
-    // Componentes da tabela de histórico (removida para outra tela futura)
-    private JTable tabelaVendas;
-    private DefaultTableModel modeloTabelaVendas;
+    private JLabel lblValorTotal;
 
     // Estilo
     private final Color primaryColor = new Color(34, 139, 34); // Verde
-    private final Color backgroundColor = new Color(245, 245, 245);
+    private final Color secondaryColor = new Color(200, 255, 200); // Verde claro
+    private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
+    private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde muito claro
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
+    private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
 
     // Controladores
     private final PacienteController pacienteController = new PacienteController();
@@ -88,26 +90,35 @@ public class VendaProdutoPanel extends JPanel {
     // Variáveis de estado
     private Paciente pacienteSelecionado;
     private Produto produtoSelecionado;
-    private List<VendaProduto> itensVendaAtual; // Lista de itens da venda atual
-    private BigDecimal valorTotalVenda; // Valor total da venda atual
+    private List<VendaProduto> itensVendaAtual;
+    private BigDecimal valorTotalVenda;
+    private Map<Integer, Paciente> cachePacientes;
+    private Map<Integer, Produto> cacheProdutos;
+    private Map<Integer, Estoque> cacheEstoque;
 
     // Formas de pagamento disponíveis
     private static final String[] FORMAS_PAGAMENTO = {"DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO"};
 
     public VendaProdutoPanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(5, 15, 15, 15));
+        setBorder(new EmptyBorder(15, 15, 15, 15));
         setBackground(backgroundColor);
 
-        // Inicializa lista de itens da venda atual
+        // Inicializa estado
         itensVendaAtual = new ArrayList<>();
         valorTotalVenda = BigDecimal.ZERO;
+        cachePacientes = new HashMap<>();
+        cacheProdutos = new HashMap<>();
+        cacheEstoque = new HashMap<>();
+
+        // Carrega dados iniciais em cache
+        carregarCacheInicial();
 
         // Título
         JLabel lblTitulo = new JLabel("Venda de Produtos", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
+        lblTitulo.setBorder(new EmptyBorder(5, 0, 15, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         // Painéis de formulário e tabela
@@ -116,261 +127,321 @@ public class VendaProdutoPanel extends JPanel {
 
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
-        splitPane.setResizeWeight(0.4);
+        splitPane.setResizeWeight(0.5); // 50% formulário, 50% tabela
         splitPane.setDividerSize(7);
+        splitPane.setContinuousLayout(true);
         splitPane.setBackground(backgroundColor);
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.5));
         add(splitPane, BorderLayout.CENTER);
+    }
+
+    // Carrega dados iniciais em cache para melhorar desempenho
+    private void carregarCacheInicial() {
+        try {
+            for (Paciente p : pacienteController.listarTodos()) {
+                cachePacientes.put(p.getId(), p);
+            }
+            for (Produto p : produtoController.listarTodos()) {
+                cacheProdutos.put(p.getId(), p);
+            }
+            for (Estoque e : estoqueController.listarTodos()) {
+                cacheEstoque.put(e.getProdutoId(), e);
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Erro ao carregar dados iniciais: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     // Cria o painel de formulário para registrar vendas
     private JPanel criarPainelFormulario() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true),
-                        "Registrar Venda", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1),
+                        "Registrar Venda",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
+                new EmptyBorder(5, 10, 5, 10)));
         panel.setBackground(backgroundColor);
 
-        JPanel mainGrid = new JPanel(new GridBagLayout());
-        mainGrid.setBackground(backgroundColor);
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.insets = new Insets(5, 5, 5, 5); // Reduzido espaçamento entre seções
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
 
-        // Row 1: Busca Paciente
-        JLabel lblBuscaPaciente = new JLabel("Buscar Paciente:");
-        lblBuscaPaciente.setFont(labelFont);
+        // Seção de Busca
+        JPanel buscaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        buscaPanel.setBackground(backgroundColor);
+        buscaPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(5, 10, 5, 10)));
+
+        // Ícone de pessoa
+        ImageIcon pessoaIcon = new ImageIcon(getClass().getResource("/images/pessoa.png"));
+        Image pessoaImage = pessoaIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
+        JLabel lblIconPaciente = new JLabel(new ImageIcon(pessoaImage));
         txtBuscaPaciente = new JTextField(20);
+        txtBuscaPaciente.setPreferredSize(new Dimension(250, 30));
+        txtBuscaPaciente.setFont(fieldFont);
+        txtBuscaPaciente.setToolTipText("Digite o nome do paciente");
+        buscaPanel.add(lblIconPaciente);
+        buscaPanel.add(txtBuscaPaciente);
+
+        // Ícone de produto
+        ImageIcon produtoIcon = new ImageIcon(getClass().getResource("/images/produto.png"));
+        Image produtoImage = produtoIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
+        JLabel lblIconProduto = new JLabel(new ImageIcon(produtoImage));
+        txtBuscaProduto = new JTextField(20);
+        txtBuscaProduto.setPreferredSize(new Dimension(250, 30));
+        txtBuscaProduto.setFont(fieldFont);
+        txtBuscaProduto.setToolTipText("Digite o nome do produto");
+        buscaPanel.add(lblIconProduto);
+        buscaPanel.add(txtBuscaProduto);
+
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0.0;
-        mainGrid.add(lblBuscaPaciente, gbc);
-        gbc.gridx = 1;
         gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        mainGrid.add(txtBuscaPaciente, gbc);
+        mainPanel.add(buscaPanel, gbc);
 
-        // Row 2: Busca Produto
-        JLabel lblBuscaProduto = new JLabel("Buscar Produto:");
-        lblBuscaProduto.setFont(labelFont);
-        txtBuscaProduto = new JTextField(20);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0.0;
-        mainGrid.add(lblBuscaProduto, gbc);
-        gbc.gridx = 1;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
-        mainGrid.add(txtBuscaProduto, gbc);
+        // Seção de Dados
+        JPanel dataPanel = new JPanel(new GridBagLayout());
+        dataPanel.setBackground(backgroundColor);
+        dataPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(5, 10, 5, 10)));
+        GridBagConstraints gbcData = new GridBagConstraints();
+        gbcData.insets = new Insets(5, 5, 5, 5);
+        gbcData.fill = GridBagConstraints.HORIZONTAL;
+        gbcData.anchor = GridBagConstraints.WEST;
 
-        // Row 3: Dados Paciente e Produto
-        JPanel dataSection = new JPanel(new GridBagLayout());
-        dataSection.setBackground(backgroundColor);
-        GridBagConstraints gbcS = new GridBagConstraints();
-        gbcS.insets = new Insets(10, 10, 10, 10);
-        gbcS.fill = GridBagConstraints.BOTH;
-        gbcS.weightx = 1.0;
-        gbcS.weighty = 1.0;
+        // Dados do Paciente
+        JLabel lblPacienteTitle = new JLabel("Dados do Paciente");
+        lblPacienteTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblPacienteTitle.setForeground(primaryColor);
+        gbcData.gridx = 0;
+        gbcData.gridy = 0;
+        gbcData.gridwidth = 2;
+        dataPanel.add(lblPacienteTitle, gbcData);
 
-        // Seção Paciente
-        JPanel pacientePanel = new JPanel(new GridBagLayout());
-        pacientePanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(primaryColor, 1, true),
-                "Dados do Paciente", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor));
-        pacientePanel.setBackground(backgroundColor);
-        GridBagConstraints gbcP = new GridBagConstraints();
-        gbcP.insets = new Insets(5, 5, 5, 5);
-        gbcP.anchor = GridBagConstraints.WEST;
-        gbcP.fill = GridBagConstraints.HORIZONTAL;
+        JLabel lblNomePaciente = new JLabel("Nome:");
+        lblNomePaciente.setFont(labelFont);
+        gbcData.gridx = 0;
+        gbcData.gridy = 1;
+        gbcData.gridwidth = 1;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblNomePaciente, gbcData);
 
-        lblNomePaciente = new JLabel("Nome:");
-        lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
-        lblNomePaciente.setPreferredSize(new Dimension(300, 20));
-        lblNomePaciente.setHorizontalAlignment(SwingConstants.LEFT);
-        gbcP.gridx = 0;
-        gbcP.gridy = 0;
-        pacientePanel.add(lblNomePaciente, gbcP);
+        txtNomePaciente = new JTextField(20);
+        txtNomePaciente.setEditable(false);
+        txtNomePaciente.setBackground(Color.WHITE);
+        txtNomePaciente.setPreferredSize(new Dimension(200, 30));
+        txtNomePaciente.setFont(fieldFont);
+        gbcData.gridx = 1;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtNomePaciente, gbcData);
 
-        lblTelefone = new JLabel("Telefone:");
+        JLabel lblTelefone = new JLabel("Telefone:");
         lblTelefone.setFont(labelFont);
-        lblTelefone.setPreferredSize(new Dimension(300, 20));
-        lblTelefone.setHorizontalAlignment(SwingConstants.LEFT);
-        gbcP.gridy = 1;
-        pacientePanel.add(lblTelefone, gbcP);
+        gbcData.gridx = 0;
+        gbcData.gridy = 2;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblTelefone, gbcData);
 
-        lblIdade = new JLabel("Idade:");
+        txtTelefone = new JTextField(20);
+        txtTelefone.setEditable(false);
+        txtTelefone.setBackground(Color.WHITE);
+        txtTelefone.setPreferredSize(new Dimension(200, 30));
+        txtTelefone.setFont(fieldFont);
+        gbcData.gridx = 1;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtTelefone, gbcData);
+
+        JLabel lblIdade = new JLabel("Idade:");
         lblIdade.setFont(labelFont);
-        lblIdade.setPreferredSize(new Dimension(300, 20));
-        lblIdade.setHorizontalAlignment(SwingConstants.LEFT);
-        gbcP.gridy = 2;
-        pacientePanel.add(lblIdade, gbcP);
+        gbcData.gridx = 0;
+        gbcData.gridy = 3;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblIdade, gbcData);
 
-        lblEmail = new JLabel("Email:");
+        txtIdade = new JTextField(20);
+        txtIdade.setEditable(false);
+        txtIdade.setBackground(Color.WHITE);
+        txtIdade.setPreferredSize(new Dimension(200, 30));
+        txtIdade.setFont(fieldFont);
+        gbcData.gridx = 1;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtIdade, gbcData);
+
+        JLabel lblEmail = new JLabel("Email:");
         lblEmail.setFont(labelFont);
-        lblEmail.setPreferredSize(new Dimension(300, 20));
-        lblEmail.setHorizontalAlignment(SwingConstants.LEFT);
-        gbcP.gridy = 3;
-        pacientePanel.add(lblEmail, gbcP);
+        gbcData.gridx = 0;
+        gbcData.gridy = 4;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblEmail, gbcData);
 
-        gbcS.gridx = 0;
-        gbcS.gridy = 0;
-        dataSection.add(pacientePanel, gbcS);
+        txtEmail = new JTextField(20);
+        txtEmail.setEditable(false);
+        txtEmail.setBackground(Color.WHITE);
+        txtEmail.setPreferredSize(new Dimension(200, 30));
+        txtEmail.setFont(fieldFont);
+        gbcData.gridx = 1;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtEmail, gbcData);
 
-        // Seção Produto
-        JPanel produtoPanel = new JPanel(new GridBagLayout());
-        produtoPanel.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(primaryColor, 1, true),
-                "Dados do Produto", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor));
-        produtoPanel.setBackground(backgroundColor);
-        GridBagConstraints gbcProd = new GridBagConstraints();
-        gbcProd.insets = new Insets(5, 5, 5, 5);
-        gbcProd.anchor = GridBagConstraints.WEST;
-        gbcProd.fill = GridBagConstraints.HORIZONTAL;
+        // Dados do Produto
+        JLabel lblProdutoTitle = new JLabel("Dados do Produto");
+        lblProdutoTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblProdutoTitle.setForeground(primaryColor);
+        gbcData.gridx = 2;
+        gbcData.gridy = 0;
+        gbcData.gridwidth = 2;
+        dataPanel.add(lblProdutoTitle, gbcData);
 
-        lblNomeProduto = new JLabel("Produto:");
-        lblNomeProduto.setFont(new Font("SansSerif", Font.BOLD, 16));
-        lblNomeProduto.setPreferredSize(new Dimension(300, 20));
-        lblNomeProduto.setHorizontalAlignment(SwingConstants.LEFT);
-        gbcProd.gridx = 0;
-        gbcProd.gridy = 0;
-        produtoPanel.add(lblNomeProduto, gbcProd);
+        JLabel lblNomeProduto = new JLabel("Produto:");
+        lblNomeProduto.setFont(labelFont);
+        gbcData.gridx = 2;
+        gbcData.gridy = 1;
+        gbcData.gridwidth = 1;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblNomeProduto, gbcData);
 
-        lblEstoque = new JLabel("Estoque Disponível:");
+        txtNomeProduto = new JTextField(20);
+        txtNomeProduto.setEditable(false);
+        txtNomeProduto.setBackground(Color.WHITE);
+        txtNomeProduto.setPreferredSize(new Dimension(200, 30));
+        txtNomeProduto.setFont(fieldFont);
+        gbcData.gridx = 3;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtNomeProduto, gbcData);
+
+        JLabel lblEstoque = new JLabel("Estoque:");
         lblEstoque.setFont(labelFont);
-        lblEstoque.setPreferredSize(new Dimension(300, 20));
-        lblEstoque.setHorizontalAlignment(SwingConstants.LEFT);
-        gbcProd.gridy = 1;
-        produtoPanel.add(lblEstoque, gbcProd);
+        gbcData.gridx = 2;
+        gbcData.gridy = 2;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblEstoque, gbcData);
+
+        txtEstoque = new JTextField(20);
+        txtEstoque.setEditable(false);
+        txtEstoque.setBackground(Color.WHITE);
+        txtEstoque.setPreferredSize(new Dimension(200, 30));
+        txtEstoque.setFont(fieldFont);
+        gbcData.gridx = 3;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtEstoque, gbcData);
 
         JLabel lblQuantidade = new JLabel("Quantidade:");
         lblQuantidade.setFont(labelFont);
-        gbcProd.gridy = 2;
-        produtoPanel.add(lblQuantidade, gbcProd);
+        gbcData.gridx = 2;
+        gbcData.gridy = 3;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblQuantidade, gbcData);
+
         spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         spinnerQuantidade.setPreferredSize(new Dimension(100, 30));
-        gbcProd.gridx = 1;
-        produtoPanel.add(spinnerQuantidade, gbcProd);
+        spinnerQuantidade.setFont(fieldFont);
+        gbcData.gridx = 3;
+        gbcData.weightx = 1.0;
+        dataPanel.add(spinnerQuantidade, gbcData);
 
-        JLabel lblPreco = new JLabel("Preço Unitário (R$):");
+        JLabel lblPreco = new JLabel("Preço Unitário:");
         lblPreco.setFont(labelFont);
-        gbcProd.gridx = 0;
-        gbcProd.gridy = 3;
-        produtoPanel.add(lblPreco, gbcProd);
+        gbcData.gridx = 2;
+        gbcData.gridy = 4;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblPreco, gbcData);
+
         txtPrecoUnitario = new JTextField(20);
         txtPrecoUnitario.setText("0,00");
-        gbcProd.gridx = 1;
-        produtoPanel.add(txtPrecoUnitario, gbcProd);
-
-        // Botão para adicionar item à venda atual
-        JButton btnAdicionarItem = new JButton("Adicionar Item");
-        btnAdicionarItem.setBackground(primaryColor);
-        btnAdicionarItem.setForeground(Color.WHITE);
-        btnAdicionarItem.setPreferredSize(new Dimension(120, 30));
-        btnAdicionarItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        gbcProd.gridx = 0;
-        gbcProd.gridy = 4;
-        gbcProd.gridwidth = 2;
-        gbcProd.anchor = GridBagConstraints.CENTER;
-        produtoPanel.add(btnAdicionarItem, gbcProd);
-
-        // Adiciona filtro para formatação automática de valores
+        txtPrecoUnitario.setPreferredSize(new Dimension(100, 30));
+        txtPrecoUnitario.setFont(fieldFont);
         ((AbstractDocument) txtPrecoUnitario.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
-
-        gbcS.gridx = 0;
-        gbcS.gridy = 1;
-        dataSection.add(produtoPanel, gbcS);
+        gbcData.gridx = 3;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtPrecoUnitario, gbcData);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 3;
-        gbc.weighty = 0.3;
-        mainGrid.add(dataSection, gbc);
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        gbc.weighty = 0.4;
+        mainPanel.add(dataPanel, gbc);
 
-        // Row 4: Pagamento
-        JPanel pagamentoPanel = new JPanel(new GridBagLayout());
+        // Seção de Pagamento
+        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         pagamentoPanel.setBackground(backgroundColor);
-        GridBagConstraints gbcPag = new GridBagConstraints();
-        gbcPag.insets = new Insets(5, 5, 5, 5);
-        gbcPag.fill = GridBagConstraints.HORIZONTAL;
-        gbcPag.weightx = 1.0;
+        pagamentoPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(5, 10, 5, 10)));
 
         JLabel lblMetodo = new JLabel("Método Pagamento:");
         lblMetodo.setFont(labelFont);
-        gbcPag.gridx = 0;
-        gbcPag.gridy = 0;
-        gbcPag.weightx = 0.0;
-        pagamentoPanel.add(lblMetodo, gbcPag);
+        pagamentoPanel.add(lblMetodo);
         cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
         cbMetodoPagamento.setPreferredSize(new Dimension(150, 30));
+        cbMetodoPagamento.setFont(fieldFont);
         cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        gbcPag.gridx = 1;
-        gbcPag.weightx = 1.0;
-        pagamentoPanel.add(cbMetodoPagamento, gbcPag);
+        pagamentoPanel.add(cbMetodoPagamento);
 
         JLabel lblParcelas = new JLabel("Parcelas:");
         lblParcelas.setFont(labelFont);
-        gbcPag.gridx = 2;
-        gbcPag.weightx = 0.0;
-        pagamentoPanel.add(lblParcelas, gbcPag);
+        pagamentoPanel.add(lblParcelas);
         spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
         spinnerParcelas.setPreferredSize(new Dimension(100, 30));
+        spinnerParcelas.setFont(fieldFont);
         spinnerParcelas.setEnabled(false);
-        gbcPag.gridx = 3;
-        gbcPag.weightx = 1.0;
-        pagamentoPanel.add(spinnerParcelas, gbcPag);
+        pagamentoPanel.add(spinnerParcelas);
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 3;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
         gbc.weighty = 0.0;
-        mainGrid.add(pagamentoPanel, gbc);
+        mainPanel.add(pagamentoPanel, gbc);
 
-        // Row 5: Observações
-        JPanel observacaoPanel = new JPanel(new BorderLayout());
-        observacaoPanel.setBackground(backgroundColor);
-        JLabel lblObservacoes = new JLabel("Observações:");
-        lblObservacoes.setFont(labelFont);
-        lblObservacoes.setBorder(new EmptyBorder(0, 0, 5, 0));
-        observacaoPanel.add(lblObservacoes, BorderLayout.NORTH);
-        txtObservacoes = new JTextArea(4, 20);
-        txtObservacoes.setLineWrap(true);
-        txtObservacoes.setWrapStyleWord(true);
-        JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
-        observacaoPanel.add(scrollObservacoes, BorderLayout.CENTER);
+        // Seção de Botões
+        JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        botoesPanel.setBackground(backgroundColor);
 
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        gbc.gridwidth = 3;
-        gbc.weighty = 0.2;
-        mainGrid.add(observacaoPanel, gbc);
-
-        // Row 6: Botões
-        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        panelBotoes.setBackground(backgroundColor);
-        JButton btnRealizarVenda = new JButton("Realizar Venda");
-        btnRealizarVenda.setBackground(primaryColor);
-        btnRealizarVenda.setForeground(Color.WHITE);
-        btnRealizarVenda.setPreferredSize(new Dimension(120, 35));
-        btnRealizarVenda.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
+        btnLimpar.setBorder(BorderFactory.createEmptyBorder());
         btnLimpar.setPreferredSize(new Dimension(100, 35));
+        btnLimpar.setHorizontalAlignment(SwingConstants.CENTER);
         btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        panelBotoes.add(btnLimpar);
-        panelBotoes.add(btnRealizarVenda);
+        btnLimpar.setToolTipText("Limpar todos os campos");
+        botoesPanel.add(btnLimpar);
+
+        JButton btnAdicionarItem = new JButton("Adicionar Item");
+        btnAdicionarItem.setBackground(primaryColor);
+        btnAdicionarItem.setForeground(Color.WHITE);
+        btnAdicionarItem.setBorder(BorderFactory.createEmptyBorder());
+        btnAdicionarItem.setPreferredSize(new Dimension(120, 35));
+        btnAdicionarItem.setHorizontalAlignment(SwingConstants.CENTER);
+        btnAdicionarItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnAdicionarItem.setToolTipText("Adicionar produto à venda");
+        botoesPanel.add(btnAdicionarItem);
+
+        JButton btnRealizarVenda = new JButton("Realizar Venda");
+        btnRealizarVenda.setBackground(primaryColor);
+        btnRealizarVenda.setForeground(Color.WHITE);
+        btnRealizarVenda.setBorder(BorderFactory.createEmptyBorder());
+        btnRealizarVenda.setPreferredSize(new Dimension(120, 35));
+        btnRealizarVenda.setHorizontalAlignment(SwingConstants.CENTER);
+        btnRealizarVenda.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRealizarVenda.setToolTipText("Finalizar a venda");
+        botoesPanel.add(btnRealizarVenda);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.gridwidth = 3;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
         gbc.weighty = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
-        mainGrid.add(panelBotoes, gbc);
+        mainPanel.add(botoesPanel, gbc);
 
         // Listeners
         btnAdicionarItem.addActionListener(e -> adicionarItemVenda());
@@ -388,7 +459,7 @@ public class VendaProdutoPanel extends JPanel {
         });
         cbMetodoPagamento.addActionListener(e -> atualizarParcelas());
 
-        panel.add(mainGrid, BorderLayout.CENTER);
+        panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
     }
 
@@ -396,13 +467,18 @@ public class VendaProdutoPanel extends JPanel {
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true),
-                        "Itens da Venda Atual", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1),
+                        "Itens da Venda Atual",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
 
         // Configuração da tabela de itens
-        String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal", "Garantia (meses)"};
+        String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -413,10 +489,10 @@ public class VendaProdutoPanel extends JPanel {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
-                c.setBackground(row % 2 == 0 ? backgroundColor : new Color(230, 230, 230));
+                c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
                 c.setForeground(Color.BLACK);
                 if (isRowSelected(row)) {
-                    c.setBackground(new Color(144, 238, 144));
+                    c.setBackground(secondaryColor);
                     ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, column == 0 ? 1 : 0, 1, column == getColumnCount() - 1 ? 1 : 0, Color.BLACK));
                 } else {
                     ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
@@ -429,7 +505,7 @@ public class VendaProdutoPanel extends JPanel {
         tabelaItensVenda.setIntercellSpacing(new Dimension(0, 0));
         tabelaItensVenda.setFillsViewportHeight(true);
         tabelaItensVenda.setRowHeight(25);
-        tabelaItensVenda.setFont(labelFont);
+        tabelaItensVenda.setFont(fieldFont);
         tabelaItensVenda.setBackground(backgroundColor);
 
         JTableHeader header = tabelaItensVenda.getTableHeader();
@@ -448,8 +524,9 @@ public class VendaProdutoPanel extends JPanel {
         panel.add(scroll, BorderLayout.CENTER);
 
         // Label para valor total
-        JLabel lblValorTotal = new JLabel("Valor Total: R$ 0,00");
+        lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblValorTotal.setForeground(primaryColor);
         lblValorTotal.setBorder(new EmptyBorder(5, 10, 5, 10));
         panel.add(lblValorTotal, BorderLayout.SOUTH);
 
@@ -458,62 +535,76 @@ public class VendaProdutoPanel extends JPanel {
 
     // Atualiza os dados do paciente com base na busca
     private void atualizarPaciente() {
-        String busca = txtBuscaPaciente.getText().toLowerCase();
+        String busca = txtBuscaPaciente.getText().trim().toLowerCase();
         pacienteSelecionado = null;
 
-        try {
-            for (Paciente p : pacienteController.listarTodos()) {
-                if (p.getNome().toLowerCase().contains(busca)) {
-                    if (pacienteSelecionado == null || p.getId() > pacienteSelecionado.getId()) {
-                        pacienteSelecionado = p;
-                    }
+        if (busca.isEmpty()) {
+            limparCamposPaciente();
+            return;
+        }
+
+        for (Paciente p : cachePacientes.values()) {
+            if (p.getNome().toLowerCase().contains(busca)) {
+                if (pacienteSelecionado == null || p.getId() > pacienteSelecionado.getId()) {
+                    pacienteSelecionado = p;
                 }
             }
-
-            if (pacienteSelecionado != null) {
-                lblNomePaciente.setText("Nome: " + pacienteSelecionado.getNome());
-                lblTelefone.setText("Telefone: " + (pacienteSelecionado.getTelefone() != null ? pacienteSelecionado.getTelefone() : "N/A"));
-                long idade = pacienteSelecionado.getDataNascimento() != null
-                        ? java.time.temporal.ChronoUnit.YEARS.between(pacienteSelecionado.getDataNascimento(), LocalDate.now())
-                        : 0;
-                lblIdade.setText("Idade: " + idade);
-                lblEmail.setText("Email: " + (pacienteSelecionado.getEmail() != null ? pacienteSelecionado.getEmail() : "N/A"));
-            } else {
-                lblNomePaciente.setText("Nome:");
-                lblTelefone.setText("Telefone:");
-                lblIdade.setText("Idade:");
-                lblEmail.setText("Email:");
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao buscar paciente: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
+
+        if (pacienteSelecionado != null) {
+            txtNomePaciente.setText(pacienteSelecionado.getNome());
+            txtTelefone.setText(pacienteSelecionado.getTelefone() != null ? pacienteSelecionado.getTelefone() : "N/A");
+            long idade = pacienteSelecionado.getDataNascimento() != null
+                    ? java.time.temporal.ChronoUnit.YEARS.between(pacienteSelecionado.getDataNascimento(), LocalDate.now())
+                    : 0;
+            txtIdade.setText(String.valueOf(idade));
+            txtEmail.setText(pacienteSelecionado.getEmail() != null ? pacienteSelecionado.getEmail() : "N/A");
+        } else {
+            limparCamposPaciente();
+        }
+    }
+
+    // Limpa os campos do paciente
+    private void limparCamposPaciente() {
+        txtNomePaciente.setText("");
+        txtTelefone.setText("");
+        txtIdade.setText("");
+        txtEmail.setText("");
     }
 
     // Atualiza os dados do produto com base na busca
     private void atualizarProduto() {
-        String busca = txtBuscaProduto.getText().toLowerCase();
+        String busca = txtBuscaProduto.getText().trim().toLowerCase();
         produtoSelecionado = null;
 
-        try {
-            for (Produto p : produtoController.listarTodos()) {
-                if (p.getNome().toLowerCase().contains(busca)) {
-                    if (produtoSelecionado == null || p.getId() > produtoSelecionado.getId()) {
-                        produtoSelecionado = p;
-                    }
+        if (busca.isEmpty()) {
+            limparCamposProduto();
+            return;
+        }
+
+        for (Produto p : cacheProdutos.values()) {
+            if (p.getNome().toLowerCase().contains(busca)) {
+                if (produtoSelecionado == null || p.getId() > produtoSelecionado.getId()) {
+                    produtoSelecionado = p;
                 }
             }
-
-            if (produtoSelecionado != null) {
-                lblNomeProduto.setText("Produto: " + produtoSelecionado.getNome());
-                Estoque estoque = estoqueController.buscarPorProdutoId(produtoSelecionado.getId());
-                lblEstoque.setText("Estoque Disponível: " + (estoque != null ? estoque.getQuantidade() : 0));
-            } else {
-                lblNomeProduto.setText("Produto:");
-                lblEstoque.setText("Estoque Disponível:");
-            }
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao buscar produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
+
+        if (produtoSelecionado != null) {
+            txtNomeProduto.setText(produtoSelecionado.getNome());
+            Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
+            txtEstoque.setText(estoque != null ? String.valueOf(estoque.getQuantidade()) : "0");
+            txtPrecoUnitario.setText(String.format("%.2f", produtoSelecionado.getPrecoVenda()).replace(".", ","));
+        } else {
+            limparCamposProduto();
+        }
+    }
+
+    // Limpa os campos do produto
+    private void limparCamposProduto() {
+        txtNomeProduto.setText("");
+        txtEstoque.setText("");
+        txtPrecoUnitario.setText("0,00");
     }
 
     // Atualiza opções de parcelas com base no método de pagamento
@@ -548,7 +639,7 @@ public class VendaProdutoPanel extends JPanel {
             }
 
             // Verifica estoque
-            Estoque estoque = estoqueController.buscarPorProdutoId(produtoSelecionado.getId());
+            Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
             if (estoque == null || estoque.getQuantidade() < quantidade) {
                 throw new IllegalArgumentException("Estoque insuficiente para o produto!");
             }
@@ -558,10 +649,8 @@ public class VendaProdutoPanel extends JPanel {
             vendaProduto.setProdutoId(produtoSelecionado.getId());
             vendaProduto.setQuantidade(quantidade);
             vendaProduto.setPrecoUnitario(precoUnitario);
-            vendaProduto.setGarantiaMeses(produtoSelecionado.getGarantiaMeses());
             LocalDate dataVenda = LocalDate.now();
             vendaProduto.setDataVenda(Timestamp.valueOf(dataVenda.atStartOfDay()));
-            vendaProduto.setFimGarantia(Date.valueOf(dataVenda.plusMonths(produtoSelecionado.getGarantiaMeses())));
 
             // Adiciona à lista de itens da venda atual
             itensVendaAtual.add(vendaProduto);
@@ -572,9 +661,8 @@ public class VendaProdutoPanel extends JPanel {
             // Limpa campos do produto
             txtBuscaProduto.setText("");
             spinnerQuantidade.setValue(1);
-            txtPrecoUnitario.setText("0,00");
+            limparCamposProduto();
             produtoSelecionado = null;
-            atualizarProduto();
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao adicionar item: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -587,24 +675,27 @@ public class VendaProdutoPanel extends JPanel {
         valorTotalVenda = BigDecimal.ZERO;
 
         for (VendaProduto vp : itensVendaAtual) {
-            try {
-                Produto p = produtoController.buscarPorId(vp.getProdutoId());
-                BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
-                valorTotalVenda = valorTotalVenda.add(subtotal);
-                modeloTabelaItens.addRow(new Object[]{
-                        p.getNome(),
-                        vp.getQuantidade(),
-                        String.format("R$ %.2f", vp.getPrecoUnitario()),
-                        String.format("R$ %.2f", subtotal),
-                        vp.getGarantiaMeses()
-                });
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, "Erro ao carregar produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            Produto p = cacheProdutos.get(vp.getProdutoId());
+            if (p == null) {
+                try {
+                    p = produtoController.buscarPorId(vp.getProdutoId());
+                    cacheProdutos.put(p.getId(), p);
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(this, "Erro ao carregar produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                    continue;
+                }
             }
+            BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
+            valorTotalVenda = valorTotalVenda.add(subtotal);
+            modeloTabelaItens.addRow(new Object[]{
+                    p.getNome(),
+                    vp.getQuantidade(),
+                    String.format("R$ %.2f", vp.getPrecoUnitario()),
+                    String.format("R$ %.2f", subtotal)
+            });
         }
 
         // Atualiza label do valor total
-        JLabel lblValorTotal = (JLabel) ((JPanel) tabelaItensVenda.getParent().getParent()).getComponent(1);
         lblValorTotal.setText(String.format("Valor Total: R$ %.2f", valorTotalVenda));
     }
 
@@ -649,12 +740,13 @@ public class VendaProdutoPanel extends JPanel {
                 }
 
                 // Atualiza estoque
-                Estoque estoque = estoqueController.buscarPorProdutoId(vp.getProdutoId());
+                Estoque estoque = cacheEstoque.get(vp.getProdutoId());
                 estoque.setQuantidade(estoque.getQuantidade() - vp.getQuantidade());
                 estoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
                 if (!estoqueController.salvarOuAtualizarEstoque(estoque, Sessao.getUsuarioLogado().getLogin())) {
                     throw new SQLException("Falha ao atualizar estoque!");
                 }
+                cacheEstoque.put(estoque.getProdutoId(), estoque);
 
                 // Registra movimento de estoque
                 MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
@@ -678,7 +770,6 @@ public class VendaProdutoPanel extends JPanel {
                     pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.valueOf(metodo));
                     pagamento.setParcela(i);
                     pagamento.setTotalParcelas(parcelas);
-                    pagamento.setObservacoes(txtObservacoes.getText());
                     pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
                     pagamento.setDataHora(LocalDateTime.now());
                     pagamentoVendaController.inserir(pagamento);
@@ -702,7 +793,6 @@ public class VendaProdutoPanel extends JPanel {
                     pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.valueOf(metodo));
                     pagamento.setParcela(i);
                     pagamento.setTotalParcelas(parcelas);
-                    pagamento.setObservacoes(txtObservacoes.getText());
                     pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
                     pagamento.setDataHora(LocalDateTime.now());
                     pagamentoVendaController.inserir(pagamento);
@@ -726,7 +816,6 @@ public class VendaProdutoPanel extends JPanel {
                     pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.valueOf(metodo));
                     pagamento.setParcela(i);
                     pagamento.setTotalParcelas(parcelas);
-                    pagamento.setObservacoes(txtObservacoes.getText());
                     pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
                     pagamento.setDataHora(LocalDateTime.now());
                     pagamentoVendaController.inserir(pagamento);
@@ -744,17 +833,20 @@ public class VendaProdutoPanel extends JPanel {
     private void limparCampos() {
         txtBuscaPaciente.setText("");
         txtBuscaProduto.setText("");
+        txtNomePaciente.setText("");
+        txtTelefone.setText("");
+        txtIdade.setText("");
+        txtEmail.setText("");
+        txtNomeProduto.setText("");
+        txtEstoque.setText("");
         spinnerQuantidade.setValue(1);
         txtPrecoUnitario.setText("0,00");
         cbMetodoPagamento.setSelectedIndex(0);
         spinnerParcelas.setValue(1);
         spinnerParcelas.setEnabled(false);
-        txtObservacoes.setText("");
         pacienteSelecionado = null;
         produtoSelecionado = null;
         itensVendaAtual.clear();
-        atualizarPaciente();
-        atualizarProduto();
         atualizarTabelaItens();
     }
 

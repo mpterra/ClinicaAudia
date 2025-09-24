@@ -9,12 +9,17 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 import controller.ProdutoController;
 import controller.TipoProdutoController;
 import model.Produto;
 import model.TipoProduto;
 import util.Sessao;
 import java.awt.*;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -24,7 +29,7 @@ public class CadastroProdutoPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     // Componentes de entrada
-    private JTextField tfNome, tfCodigoSerial, tfPesquisar;
+    private JTextField tfNome, tfCodigoSerial, tfPesquisar, tfPrecoVenda, tfPrecoCusto;
     private JTextArea taDescricao;
     private JComboBox<TipoProduto> cbTipoProduto;
     private JComboBox<Integer> cbGarantiaMeses;
@@ -61,9 +66,10 @@ public class CadastroProdutoPanel extends JPanel {
 
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.495);
+        splitPane.setResizeWeight(0.4); // 40% para cadastro, 60% para tabela
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4)); // Ajusta divisor para 40-60
 
         add(splitPane, BorderLayout.CENTER);
 
@@ -149,7 +155,7 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.weightx = 1.0;
         mainGrid.add(tfCodigoSerial, gbc);
 
-        // Garantia em meses (JComboBox editável com padrões)
+        // Garantia em meses
         JLabel lblGarantia = new JLabel("Garantia (meses):");
         lblGarantia.setFont(labelFont);
         gbc.gridx = 0;
@@ -165,11 +171,43 @@ public class CadastroProdutoPanel extends JPanel {
         gbc.weightx = 1.0;
         mainGrid.add(cbGarantiaMeses, gbc);
 
+        // Preço de Venda
+        JLabel lblPrecoVenda = new JLabel("Preço de Venda (R$):");
+        lblPrecoVenda.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0.0;
+        mainGrid.add(lblPrecoVenda, gbc);
+
+        tfPrecoVenda = new JTextField(20);
+        tfPrecoVenda.setText("0,00");
+        tfPrecoVenda.setPreferredSize(new Dimension(200, 30));
+        ((AbstractDocument) tfPrecoVenda.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        mainGrid.add(tfPrecoVenda, gbc);
+
+        // Preço de Custo
+        JLabel lblPrecoCusto = new JLabel("Preço de Custo (R$):");
+        lblPrecoCusto.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 0.0;
+        mainGrid.add(lblPrecoCusto, gbc);
+
+        tfPrecoCusto = new JTextField(20);
+        tfPrecoCusto.setText("0,00");
+        tfPrecoCusto.setPreferredSize(new Dimension(200, 30));
+        ((AbstractDocument) tfPrecoCusto.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        mainGrid.add(tfPrecoCusto, gbc);
+
         // Descrição
         JLabel lblDescricao = new JLabel("Descrição:");
         lblDescricao.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         gbc.weightx = 0.0;
         mainGrid.add(lblDescricao, gbc);
 
@@ -199,7 +237,7 @@ public class CadastroProdutoPanel extends JPanel {
         panelBotoes.add(btnSalvar);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 7;
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         mainGrid.add(panelBotoes, gbc);
@@ -247,7 +285,7 @@ public class CadastroProdutoPanel extends JPanel {
         });
 
         // Tabela
-        String[] colunas = {"Tipo", "Nome", "Código Serial", "Garantia (meses)", "Descrição"};
+        String[] colunas = {"Tipo", "Nome", "Código Serial", "Preço Venda (R$)", "Preço Custo (R$)", "Garantia (meses)", "Descrição"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -295,6 +333,8 @@ public class CadastroProdutoPanel extends JPanel {
     private void limparCampos() {
         tfNome.setText("");
         tfCodigoSerial.setText("");
+        tfPrecoVenda.setText("0,00");
+        tfPrecoCusto.setText("0,00");
         taDescricao.setText("");
         cbTipoProduto.setSelectedIndex(-1);
         cbGarantiaMeses.setSelectedIndex(0);
@@ -315,7 +355,35 @@ public class CadastroProdutoPanel extends JPanel {
                 return;
             }
 
-            // Obtém valor da garantia do ComboBox editável
+            // Valida preço de venda
+            String precoVendaStr = tfPrecoVenda.getText().replace(".", "").replace(",", ".");
+            BigDecimal precoVenda;
+            try {
+                precoVenda = new BigDecimal(precoVendaStr);
+                if (precoVenda.compareTo(BigDecimal.ZERO) < 0) {
+                    JOptionPane.showMessageDialog(this, "Preço de venda não pode ser negativo.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Preço de venda inválido.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Valida preço de custo
+            String precoCustoStr = tfPrecoCusto.getText().replace(".", "").replace(",", ".");
+            BigDecimal precoCusto;
+            try {
+                precoCusto = new BigDecimal(precoCustoStr);
+                if (precoCusto.compareTo(BigDecimal.ZERO) < 0) {
+                    JOptionPane.showMessageDialog(this, "Preço de custo não pode ser negativo.", "Erro", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Preço de custo inválido.", "Erro", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Valida garantia
             Object selectedGarantia = cbGarantiaMeses.getSelectedItem();
             String garantiaStr = String.valueOf(selectedGarantia);
             int garantiaMeses = 0;
@@ -330,12 +398,15 @@ public class CadastroProdutoPanel extends JPanel {
                 return;
             }
 
+            // Cria o produto
             Produto produto = new Produto();
             produto.setTipoProdutoId(tipoSelecionado.getId());
             produto.setNome(nome);
             produto.setCodigoSerial(tfCodigoSerial.getText().trim());
             produto.setDescricao(taDescricao.getText().trim());
             produto.setGarantiaMeses(garantiaMeses);
+            produto.setPrecoVenda(precoVenda);
+            produto.setPrecoCusto(precoCusto);
             produto.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
             ProdutoController controller = new ProdutoController();
@@ -372,6 +443,8 @@ public class CadastroProdutoPanel extends JPanel {
                         tipoNome,
                         p.getNome(),
                         p.getCodigoSerial(),
+                        String.format("R$ %.2f", p.getPrecoVenda()),
+                        String.format("R$ %.2f", p.getPrecoCusto()),
                         p.getGarantiaMeses(),
                         p.getDescricao()
                 });
@@ -393,6 +466,66 @@ public class CadastroProdutoPanel extends JPanel {
             cbTipoProduto.setSelectedIndex(-1);
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar tipos de produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Filtro para formatar entrada de valores monetários
+    private class CurrencyDocumentFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
+            sb.insert(offset, string);
+            if (isValidInput(sb.toString())) {
+                String formatted = formatCurrency(removeNonDigits(sb.toString()));
+                super.replace(fb, 0, fb.getDocument().getLength(), formatted, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String string, AttributeSet attrs) throws BadLocationException {
+            StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
+            sb.replace(offset, offset + length, string);
+            if (isValidInput(sb.toString())) {
+                String formatted = formatCurrency(removeNonDigits(sb.toString()));
+                super.replace(fb, 0, fb.getDocument().getLength(), formatted, attrs);
+            }
+        }
+
+        @Override
+        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+            StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
+            sb.delete(offset, offset + length);
+            String formatted = formatCurrency(removeNonDigits(sb.toString()));
+            super.replace(fb, 0, fb.getDocument().getLength(), formatted, null);
+        }
+
+        private boolean isValidInput(String text) {
+            return text.matches("[0-9,.]*");
+        }
+
+        private String removeNonDigits(String text) {
+            return text.replaceAll("[^0-9]", "");
+        }
+
+        private String formatCurrency(String digits) {
+            if (digits.isEmpty()) return "0,00";
+            while (digits.length() < 3) {
+                digits = "0" + digits;
+            }
+            String cents = digits.substring(digits.length() - 2);
+            String reais = digits.substring(0, digits.length() - 2);
+            reais = reais.replaceFirst("^0+(?!$)", "");
+            if (reais.isEmpty()) reais = "0";
+            StringBuilder formattedReais = new StringBuilder();
+            int count = 0;
+            for (int i = reais.length() - 1; i >= 0; i--) {
+                formattedReais.insert(0, reais.charAt(i));
+                count++;
+                if (count % 3 == 0 && i > 0) {
+                    formattedReais.insert(0, ".");
+                }
+            }
+            return formattedReais + "," + cents;
         }
     }
 }

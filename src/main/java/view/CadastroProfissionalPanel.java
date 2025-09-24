@@ -43,8 +43,8 @@ public class CadastroProfissionalPanel extends JPanel {
     private final Color primaryColor = new Color(138, 43, 226); // Roxo
     private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
     private final Color rowColorLightLilac = new Color(230, 230, 250); // Lilás claro para linhas pares
-    private final Font titleFont = new Font("SansSerif", Font.BOLD, 16);
-    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 12);
+    private final Font titleFont = new Font("SansSerif", Font.BOLD, 17); // Aumentado de 16 para 17
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 13); // Aumentado de 12 para 13
     private final Font tableFont = new Font("SansSerif", Font.PLAIN, 13);
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -67,14 +67,14 @@ public class CadastroProfissionalPanel extends JPanel {
 
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.50);
+        splitPane.setResizeWeight(0.48);
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
 
         add(splitPane, BorderLayout.CENTER);
 
         // Garantir que o JSplitPane inicie com proporção correta
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.50));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.48));
         revalidate();
         repaint();
 
@@ -186,6 +186,7 @@ public class CadastroProfissionalPanel extends JPanel {
 
         // Data Nascimento
         gbc.gridx = 2;
+        gbc.gridy = 2;
         JLabel lblDataNascimento = new JLabel("Data Nascimento:");
         lblDataNascimento.setFont(labelFont);
         panelProfissional.add(lblDataNascimento, gbc);
@@ -336,6 +337,7 @@ public class CadastroProfissionalPanel extends JPanel {
 
         // Rua
         gbcEnd.gridx = 2;
+        gbcEnd.gridy = 0;
         JLabel lblRua = new JLabel("Rua:");
         lblRua.setFont(labelFont);
         panelEndereco.add(lblRua, gbcEnd);

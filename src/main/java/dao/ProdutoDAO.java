@@ -6,6 +6,7 @@ import util.Database;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 public class ProdutoDAO {
 
@@ -13,8 +14,8 @@ public class ProdutoDAO {
     // CREATE
     // ============================
     public boolean salvar(Produto produto, String usuarioLogado) throws SQLException {
-        String sql = "INSERT INTO produto (tipo_produto_id, nome, codigo_serial, descricao, usuario, garantia_meses) " +
-                     "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO produto (tipo_produto_id, nome, codigo_serial, descricao, usuario, garantia_meses, preco_venda, preco_custo) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -25,6 +26,8 @@ public class ProdutoDAO {
             stmt.setString(4, produto.getDescricao());
             stmt.setString(5, usuarioLogado);
             stmt.setInt(6, produto.getGarantiaMeses());
+            stmt.setBigDecimal(7, produto.getPrecoVenda());
+            stmt.setBigDecimal(8, produto.getPrecoCusto());
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
@@ -76,7 +79,7 @@ public class ProdutoDAO {
     // ============================
     public boolean atualizar(Produto produto, String usuarioLogado) throws SQLException {
         String sql = "UPDATE produto SET tipo_produto_id = ?, nome = ?, codigo_serial = ?, descricao = ?, " +
-                     "usuario = ?, atualizado_em = CURRENT_TIMESTAMP, garantia_meses = ? WHERE id = ?";
+                     "usuario = ?, atualizado_em = CURRENT_TIMESTAMP, garantia_meses = ?, preco_venda = ?, preco_custo = ? WHERE id = ?";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -87,7 +90,9 @@ public class ProdutoDAO {
             stmt.setString(4, produto.getDescricao());
             stmt.setString(5, usuarioLogado);
             stmt.setInt(6, produto.getGarantiaMeses());
-            stmt.setInt(7, produto.getId());
+            stmt.setBigDecimal(7, produto.getPrecoVenda());
+            stmt.setBigDecimal(8, produto.getPrecoCusto());
+            stmt.setInt(9, produto.getId());
 
             return stmt.executeUpdate() > 0;
         }
@@ -120,6 +125,8 @@ public class ProdutoDAO {
         p.setAtualizadoEm(rs.getTimestamp("atualizado_em"));
         p.setUsuario(rs.getString("usuario"));
         p.setGarantiaMeses(rs.getInt("garantia_meses"));
+        p.setPrecoVenda(rs.getBigDecimal("preco_venda"));
+        p.setPrecoCusto(rs.getBigDecimal("preco_custo"));
         return p;
     }
 }

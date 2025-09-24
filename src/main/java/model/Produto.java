@@ -1,6 +1,7 @@
 package model;
 
 import java.sql.Timestamp;
+import java.math.BigDecimal;
 
 public class Produto {
 
@@ -9,13 +10,32 @@ public class Produto {
     private String nome;
     private String codigoSerial;
     private String descricao;
+    private int garantiaMeses;
+    private BigDecimal precoVenda; // Preço de venda padrão para a tela de vendas
+    private BigDecimal precoCusto; // Preço de custo médio para cálculo de lucro
     private Timestamp criadoEm;
     private Timestamp atualizadoEm;
     private String usuario;
-    private int garantiaMeses;
 
     // Construtor vazio
     public Produto() {}
+
+    // Construtor completo
+    public Produto(int id, int tipoProdutoId, String nome, String codigoSerial, String descricao,
+                   int garantiaMeses, BigDecimal precoVenda, BigDecimal precoCusto,
+                   Timestamp criadoEm, Timestamp atualizadoEm, String usuario) {
+        this.id = id;
+        this.tipoProdutoId = tipoProdutoId;
+        this.nome = nome;
+        this.codigoSerial = codigoSerial;
+        this.descricao = descricao;
+        this.garantiaMeses = garantiaMeses;
+        this.precoVenda = precoVenda;
+        this.precoCusto = precoCusto;
+        this.criadoEm = criadoEm;
+        this.atualizadoEm = atualizadoEm;
+        this.usuario = usuario;
+    }
 
     // Getters e Setters
     public int getId() { return id; }
@@ -33,6 +53,15 @@ public class Produto {
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
 
+    public int getGarantiaMeses() { return garantiaMeses; }
+    public void setGarantiaMeses(int garantiaMeses) { this.garantiaMeses = garantiaMeses; }
+
+    public BigDecimal getPrecoVenda() { return precoVenda; }
+    public void setPrecoVenda(BigDecimal precoVenda) { this.precoVenda = precoVenda; }
+
+    public BigDecimal getPrecoCusto() { return precoCusto; }
+    public void setPrecoCusto(BigDecimal precoCusto) { this.precoCusto = precoCusto; }
+
     public Timestamp getCriadoEm() { return criadoEm; }
     public void setCriadoEm(Timestamp criadoEm) { this.criadoEm = criadoEm; }
 
@@ -41,7 +70,4 @@ public class Produto {
 
     public String getUsuario() { return usuario; }
     public void setUsuario(String usuario) { this.usuario = usuario; }
-    
-    public int getGarantiaMeses() { return garantiaMeses; }
-    public void setGarantiaMeses(int garantiaMeses) { this.garantiaMeses = garantiaMeses; }
 }
