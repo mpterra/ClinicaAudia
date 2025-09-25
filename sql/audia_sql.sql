@@ -347,6 +347,7 @@ CREATE TABLE orcamento_produto (
 CREATE TABLE venda (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     atendimento_id INT NULL,
+    paciente_id INT NULL,
     orcamento_id INT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) DEFAULT 0,
@@ -359,6 +360,11 @@ CREATE TABLE venda (
     CONSTRAINT fk_venda_orcamento
         FOREIGN KEY (orcamento_id)
         REFERENCES orcamento(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+    CONSTRAINT fk_venda_paciente
+        FOREIGN KEY (paciente_id)
+        REFERENCES paciente(id)
         ON DELETE SET NULL
         ON UPDATE CASCADE
 );

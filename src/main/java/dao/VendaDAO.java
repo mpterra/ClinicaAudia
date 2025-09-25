@@ -13,25 +13,36 @@ public class VendaDAO {
     // CREATE
     // ============================
     public boolean salvar(Venda venda, String usuarioLogado) throws SQLException {
-        String sql = "INSERT INTO venda (atendimento_id, orcamento_id, valor_total, usuario) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO venda (atendimento_id, paciente_id, orcamento_id, valor_total, usuario) " +
+                     "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
+            // atendimento_id
             if (venda.getAtendimentoId() != null) {
                 stmt.setInt(1, venda.getAtendimentoId());
             } else {
                 stmt.setNull(1, Types.INTEGER);
             }
 
-            if (venda.getOrcamentoId() != null) {
-                stmt.setInt(2, venda.getOrcamentoId());
+            // paciente_id
+            if (venda.getPacienteId() != null) {
+                stmt.setInt(2, venda.getPacienteId());
             } else {
                 stmt.setNull(2, Types.INTEGER);
             }
 
-            stmt.setBigDecimal(3, venda.getValorTotal());
-            stmt.setString(4, usuarioLogado);
+            // orcamento_id
+            if (venda.getOrcamentoId() != null) {
+                stmt.setInt(3, venda.getOrcamentoId());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+
+            // valor_total e usuario
+            stmt.setBigDecimal(4, venda.getValorTotal());
+            stmt.setString(5, usuarioLogado);
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
@@ -77,6 +88,51 @@ public class VendaDAO {
         }
         return lista;
     }
+    
+    // ============================
+    // UPDATE
+    // ============================
+    public boolean atualizar(Venda venda, String usuarioLogado) throws SQLException {
+        String sql = "UPDATE venda SET atendimento_id = ?, paciente_id = ?, orcamento_id = ?, " +
+                     "valor_total = ?, usuario = ? WHERE id = ?";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // atendimento_id
+            if (venda.getAtendimentoId() != null) {
+                stmt.setInt(1, venda.getAtendimentoId());
+            } else {
+                stmt.setNull(1, Types.INTEGER);
+            }
+
+            // paciente_id
+            if (venda.getPacienteId() != null) {
+                stmt.setInt(2, venda.getPacienteId());
+            } else {
+                stmt.setNull(2, Types.INTEGER);
+            }
+
+            // orcamento_id
+            if (venda.getOrcamentoId() != null) {
+                stmt.setInt(3, venda.getOrcamentoId());
+            } else {
+                stmt.setNull(3, Types.INTEGER);
+            }
+
+            // valor_total
+            stmt.setBigDecimal(4, venda.getValorTotal());
+
+            // usuário logado
+            stmt.setString(5, usuarioLogado);
+
+            // id da venda (WHERE)
+            stmt.setInt(6, venda.getId());
+
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
 
     // ============================
     // DELETE
@@ -96,13 +152,23 @@ public class VendaDAO {
     // ============================
     private Venda mapRow(ResultSet rs) throws SQLException {
         Venda v = new Venda();
+
+        // id
+        v.setId(rs.getInt("id"));
+
+        // atendimento_id
         int atendimentoId = rs.getInt("atendimento_id");
         if (!rs.wasNull()) v.setAtendimentoId(atendimentoId);
 
+        // paciente_id
+        int pacienteId = rs.getInt("paciente_id");
+        if (!rs.wasNull()) v.setPacienteId(pacienteId);
+
+        // orcamento_id
         int orcamentoId = rs.getInt("orcamento_id");
         if (!rs.wasNull()) v.setOrcamentoId(orcamentoId);
 
-        v.setId(rs.getInt("id"));
+        // demais campos
         v.setValorTotal(rs.getBigDecimal("valor_total"));
         v.setDataHora(rs.getTimestamp("data_hora"));
         v.setUsuario(rs.getString("usuario"));
