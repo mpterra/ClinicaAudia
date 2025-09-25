@@ -14,7 +14,7 @@ public class ProdutoDAO {
     // CREATE
     // ============================
     public boolean salvar(Produto produto, String usuarioLogado) throws SQLException {
-        String sql = "INSERT INTO produto (tipo_produto_id, nome, codigo_serial, descricao, usuario, garantia_meses, preco_venda, preco_custo) " +
+        String sql = "INSERT INTO produto (tipo_produto_id, nome, codigo, descricao, usuario, garantia_meses, preco_venda, preco_custo) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();

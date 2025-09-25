@@ -13,7 +13,7 @@ public class VendaProdutoDAO {
     // CREATE
     // ============================
     public boolean salvar(VendaProduto vp) throws SQLException {
-        String sql = "INSERT INTO venda_produto (venda_id, produto_id, quantidade, preco_unitario, data_venda, garantia_meses, fim_garantia) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO venda_produto (venda_id, produto_id, quantidade, preco_unitario, data_venda, garantia_meses, fim_garantia, codigo_serial) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -25,6 +25,7 @@ public class VendaProdutoDAO {
             stmt.setTimestamp(5, vp.getDataVenda());
             stmt.setInt(6, vp.getGarantiaMeses());
             stmt.setDate(7, vp.getFimGarantia());
+            stmt.setString(8, vp.getCogidoSerial());
 
             return stmt.executeUpdate() > 0;
         }
@@ -91,6 +92,7 @@ public class VendaProdutoDAO {
         vp.setDataVenda(rs.getTimestamp("data_venda"));
         vp.setGarantiaMeses(rs.getInt("garantia_meses"));
         vp.setFimGarantia(rs.getDate("fim_garantia"));
+        vp.setCogidoSerial(rs.getString("codigo_serial"));
         return vp;
     }
 }

@@ -142,7 +142,7 @@ public class CadastroProdutoPanel extends JPanel {
         mainGrid.add(tfNome, gbc);
 
         // Código Serial
-        JLabel lblCodigoSerial = new JLabel("Código Serial:");
+        JLabel lblCodigoSerial = new JLabel("Código:");
         lblCodigoSerial.setFont(labelFont);
         gbc.gridx = 0;
         gbc.gridy = 2;

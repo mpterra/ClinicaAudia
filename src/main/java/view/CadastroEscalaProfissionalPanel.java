@@ -68,14 +68,14 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
 
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.60); // Ajustado para 60-40
+        splitPane.setResizeWeight(0.55); // Ajustado para 60-40
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
 
         add(splitPane, BorderLayout.CENTER);
 
         // Garantir proporção 60-40 do JSplitPane
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.60));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.55));
         revalidate();
         repaint();
 

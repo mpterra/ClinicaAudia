@@ -203,7 +203,7 @@ CREATE TABLE produto (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     tipo_produto_id INT NOT NULL,
     nome VARCHAR(120) NOT NULL,
-    codigo_serial VARCHAR(100),
+    codigo VARCHAR(100),
     descricao TEXT,
     garantia_meses INT DEFAULT 0,
     preco_venda DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'Preço de venda padrão para o produto, usado na tela de vendas',
@@ -371,6 +371,7 @@ CREATE TABLE venda_produto (
     data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     garantia_meses INT DEFAULT 0,
     fim_garantia DATE,
+    codigo_serial VARCHAR(100) UNIQUE,
     PRIMARY KEY (venda_id, produto_id),
     CONSTRAINT fk_vendaprod_venda
         FOREIGN KEY (venda_id)

@@ -13,6 +13,7 @@ public class VendaProduto {
     private Timestamp dataVenda;
     private int garantiaMeses = 0;
     private Date fimGarantia;
+    private String cogidoSerial;
 
     public VendaProduto() {}
 
@@ -37,4 +38,7 @@ public class VendaProduto {
 
     public Date getFimGarantia() { return fimGarantia; }
     public void setFimGarantia(Date fimGarantia) { this.fimGarantia = fimGarantia; }
+    
+    public String getCogidoSerial() { return cogidoSerial; }
+    public void setCogidoSerial(String cogidoSerial) { this.cogidoSerial = cogidoSerial; }
 }

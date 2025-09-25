@@ -70,6 +70,7 @@ public class VendaProdutoPanel extends JPanel {
     // Estilo
     private final Color primaryColor = new Color(34, 139, 34); // Verde
     private final Color secondaryColor = new Color(200, 255, 200); // Verde claro
+    private final Color thirdiaryColor = new Color(45, 99, 255); // Azul claro
     private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
     private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde muito claro
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
@@ -101,7 +102,7 @@ public class VendaProdutoPanel extends JPanel {
 
     public VendaProdutoPanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(backgroundColor);
 
         // Inicializa estado
@@ -118,7 +119,7 @@ public class VendaProdutoPanel extends JPanel {
         JLabel lblTitulo = new JLabel("Venda de Produtos", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(5, 0, 15, 0));
+        lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         // Painéis de formulário e tabela
@@ -127,11 +128,11 @@ public class VendaProdutoPanel extends JPanel {
 
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
-        splitPane.setResizeWeight(0.5); // 50% formulário, 50% tabela
-        splitPane.setDividerSize(7);
+        splitPane.setResizeWeight(0.45); // 45% formulário, 55% tabela
+        splitPane.setDividerSize(5);
         splitPane.setContinuousLayout(true);
         splitPane.setBackground(backgroundColor);
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.5));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.45));
         add(splitPane, BorderLayout.CENTER);
     }
 
@@ -154,7 +155,7 @@ public class VendaProdutoPanel extends JPanel {
 
     // Cria o painel de formulário para registrar vendas
     private JPanel criarPainelFormulario() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(primaryColor, 1),
@@ -163,30 +164,28 @@ public class VendaProdutoPanel extends JPanel {
                         TitledBorder.TOP,
                         labelFont,
                         primaryColor),
-                new EmptyBorder(5, 10, 5, 10)));
+                new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5); // Reduzido espaçamento entre seções
+        gbc.insets = new Insets(2, 2, 2, 2);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
 
         // Seção de Busca
-        JPanel buscaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JPanel buscaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         buscaPanel.setBackground(backgroundColor);
-        buscaPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(5, 10, 5, 10)));
+        buscaPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
 
         // Ícone de pessoa
         ImageIcon pessoaIcon = new ImageIcon(getClass().getResource("/images/pessoa.png"));
         Image pessoaImage = pessoaIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
         JLabel lblIconPaciente = new JLabel(new ImageIcon(pessoaImage));
         txtBuscaPaciente = new JTextField(20);
-        txtBuscaPaciente.setPreferredSize(new Dimension(250, 30));
+        txtBuscaPaciente.setPreferredSize(new Dimension(200, 25));
         txtBuscaPaciente.setFont(fieldFont);
         txtBuscaPaciente.setToolTipText("Digite o nome do paciente");
         buscaPanel.add(lblIconPaciente);
@@ -197,7 +196,7 @@ public class VendaProdutoPanel extends JPanel {
         Image produtoImage = produtoIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
         JLabel lblIconProduto = new JLabel(new ImageIcon(produtoImage));
         txtBuscaProduto = new JTextField(20);
-        txtBuscaProduto.setPreferredSize(new Dimension(250, 30));
+        txtBuscaProduto.setPreferredSize(new Dimension(200, 25));
         txtBuscaProduto.setFont(fieldFont);
         txtBuscaProduto.setToolTipText("Digite o nome do produto");
         buscaPanel.add(lblIconProduto);
@@ -211,17 +210,15 @@ public class VendaProdutoPanel extends JPanel {
         // Seção de Dados
         JPanel dataPanel = new JPanel(new GridBagLayout());
         dataPanel.setBackground(backgroundColor);
-        dataPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(5, 10, 5, 10)));
+        dataPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
         GridBagConstraints gbcData = new GridBagConstraints();
-        gbcData.insets = new Insets(5, 5, 5, 5);
+        gbcData.insets = new Insets(2, 2, 2, 2);
         gbcData.fill = GridBagConstraints.HORIZONTAL;
         gbcData.anchor = GridBagConstraints.WEST;
 
         // Dados do Paciente
         JLabel lblPacienteTitle = new JLabel("Dados do Paciente");
-        lblPacienteTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblPacienteTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
         lblPacienteTitle.setForeground(primaryColor);
         gbcData.gridx = 0;
         gbcData.gridy = 0;
@@ -236,10 +233,10 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblNomePaciente, gbcData);
 
-        txtNomePaciente = new JTextField(20);
+        txtNomePaciente = new JTextField(15);
         txtNomePaciente.setEditable(false);
         txtNomePaciente.setBackground(Color.WHITE);
-        txtNomePaciente.setPreferredSize(new Dimension(200, 30));
+        txtNomePaciente.setPreferredSize(new Dimension(150, 25));
         txtNomePaciente.setFont(fieldFont);
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
@@ -252,10 +249,10 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblTelefone, gbcData);
 
-        txtTelefone = new JTextField(20);
+        txtTelefone = new JTextField(15);
         txtTelefone.setEditable(false);
         txtTelefone.setBackground(Color.WHITE);
-        txtTelefone.setPreferredSize(new Dimension(200, 30));
+        txtTelefone.setPreferredSize(new Dimension(150, 25));
         txtTelefone.setFont(fieldFont);
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
@@ -268,10 +265,10 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblIdade, gbcData);
 
-        txtIdade = new JTextField(20);
+        txtIdade = new JTextField(15);
         txtIdade.setEditable(false);
         txtIdade.setBackground(Color.WHITE);
-        txtIdade.setPreferredSize(new Dimension(200, 30));
+        txtIdade.setPreferredSize(new Dimension(150, 25));
         txtIdade.setFont(fieldFont);
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
@@ -284,10 +281,10 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblEmail, gbcData);
 
-        txtEmail = new JTextField(20);
+        txtEmail = new JTextField(15);
         txtEmail.setEditable(false);
         txtEmail.setBackground(Color.WHITE);
-        txtEmail.setPreferredSize(new Dimension(200, 30));
+        txtEmail.setPreferredSize(new Dimension(150, 25));
         txtEmail.setFont(fieldFont);
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
@@ -295,7 +292,7 @@ public class VendaProdutoPanel extends JPanel {
 
         // Dados do Produto
         JLabel lblProdutoTitle = new JLabel("Dados do Produto");
-        lblProdutoTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblProdutoTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
         lblProdutoTitle.setForeground(primaryColor);
         gbcData.gridx = 2;
         gbcData.gridy = 0;
@@ -310,10 +307,10 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblNomeProduto, gbcData);
 
-        txtNomeProduto = new JTextField(20);
+        txtNomeProduto = new JTextField(15);
         txtNomeProduto.setEditable(false);
         txtNomeProduto.setBackground(Color.WHITE);
-        txtNomeProduto.setPreferredSize(new Dimension(200, 30));
+        txtNomeProduto.setPreferredSize(new Dimension(150, 25));
         txtNomeProduto.setFont(fieldFont);
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
@@ -326,10 +323,10 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblEstoque, gbcData);
 
-        txtEstoque = new JTextField(20);
+        txtEstoque = new JTextField(15);
         txtEstoque.setEditable(false);
         txtEstoque.setBackground(Color.WHITE);
-        txtEstoque.setPreferredSize(new Dimension(200, 30));
+        txtEstoque.setPreferredSize(new Dimension(150, 25));
         txtEstoque.setFont(fieldFont);
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
@@ -343,7 +340,7 @@ public class VendaProdutoPanel extends JPanel {
         dataPanel.add(lblQuantidade, gbcData);
 
         spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
-        spinnerQuantidade.setPreferredSize(new Dimension(100, 30));
+        spinnerQuantidade.setPreferredSize(new Dimension(80, 25));
         spinnerQuantidade.setFont(fieldFont);
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
@@ -356,9 +353,9 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblPreco, gbcData);
 
-        txtPrecoUnitario = new JTextField(20);
+        txtPrecoUnitario = new JTextField(15);
         txtPrecoUnitario.setText("0,00");
-        txtPrecoUnitario.setPreferredSize(new Dimension(100, 30));
+        txtPrecoUnitario.setPreferredSize(new Dimension(80, 25));
         txtPrecoUnitario.setFont(fieldFont);
         ((AbstractDocument) txtPrecoUnitario.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
         gbcData.gridx = 3;
@@ -372,17 +369,15 @@ public class VendaProdutoPanel extends JPanel {
         mainPanel.add(dataPanel, gbc);
 
         // Seção de Pagamento
-        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         pagamentoPanel.setBackground(backgroundColor);
-        pagamentoPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(5, 10, 5, 10)));
+        pagamentoPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
 
         JLabel lblMetodo = new JLabel("Método Pagamento:");
         lblMetodo.setFont(labelFont);
         pagamentoPanel.add(lblMetodo);
         cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
-        cbMetodoPagamento.setPreferredSize(new Dimension(150, 30));
+        cbMetodoPagamento.setPreferredSize(new Dimension(120, 25));
         cbMetodoPagamento.setFont(fieldFont);
         cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         pagamentoPanel.add(cbMetodoPagamento);
@@ -391,7 +386,7 @@ public class VendaProdutoPanel extends JPanel {
         lblParcelas.setFont(labelFont);
         pagamentoPanel.add(lblParcelas);
         spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
-        spinnerParcelas.setPreferredSize(new Dimension(100, 30));
+        spinnerParcelas.setPreferredSize(new Dimension(80, 25));
         spinnerParcelas.setFont(fieldFont);
         spinnerParcelas.setEnabled(false);
         pagamentoPanel.add(spinnerParcelas);
@@ -403,24 +398,24 @@ public class VendaProdutoPanel extends JPanel {
         mainPanel.add(pagamentoPanel, gbc);
 
         // Seção de Botões
-        JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
+        JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
         botoesPanel.setBackground(backgroundColor);
 
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
         btnLimpar.setBorder(BorderFactory.createEmptyBorder());
-        btnLimpar.setPreferredSize(new Dimension(100, 35));
+        btnLimpar.setPreferredSize(new Dimension(80, 30));
         btnLimpar.setHorizontalAlignment(SwingConstants.CENTER);
         btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLimpar.setToolTipText("Limpar todos os campos");
         botoesPanel.add(btnLimpar);
 
         JButton btnAdicionarItem = new JButton("Adicionar Item");
-        btnAdicionarItem.setBackground(primaryColor);
+        btnAdicionarItem.setBackground(thirdiaryColor);
         btnAdicionarItem.setForeground(Color.WHITE);
         btnAdicionarItem.setBorder(BorderFactory.createEmptyBorder());
-        btnAdicionarItem.setPreferredSize(new Dimension(120, 35));
+        btnAdicionarItem.setPreferredSize(new Dimension(100, 30));
         btnAdicionarItem.setHorizontalAlignment(SwingConstants.CENTER);
         btnAdicionarItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAdicionarItem.setToolTipText("Adicionar produto à venda");
@@ -430,7 +425,7 @@ public class VendaProdutoPanel extends JPanel {
         btnRealizarVenda.setBackground(primaryColor);
         btnRealizarVenda.setForeground(Color.WHITE);
         btnRealizarVenda.setBorder(BorderFactory.createEmptyBorder());
-        btnRealizarVenda.setPreferredSize(new Dimension(120, 35));
+        btnRealizarVenda.setPreferredSize(new Dimension(100, 30));
         btnRealizarVenda.setHorizontalAlignment(SwingConstants.CENTER);
         btnRealizarVenda.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRealizarVenda.setToolTipText("Finalizar a venda");
@@ -465,7 +460,7 @@ public class VendaProdutoPanel extends JPanel {
 
     // Cria o painel da tabela de itens da venda atual
     private JPanel criarPainelTabela() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(primaryColor, 1),
@@ -474,11 +469,11 @@ public class VendaProdutoPanel extends JPanel {
                         TitledBorder.TOP,
                         labelFont,
                         primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
+                new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
 
         // Configuração da tabela de itens
-        String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal"};
+        String[] colunas = {"Código Serial", "Produto", "Quantidade", "Preço Unitário", "Subtotal"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -527,7 +522,7 @@ public class VendaProdutoPanel extends JPanel {
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
-        lblValorTotal.setBorder(new EmptyBorder(5, 10, 5, 10));
+        lblValorTotal.setBorder(new EmptyBorder(5, 5, 5, 5));
         panel.add(lblValorTotal, BorderLayout.SOUTH);
 
         return panel;
@@ -688,6 +683,7 @@ public class VendaProdutoPanel extends JPanel {
             BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
             valorTotalVenda = valorTotalVenda.add(subtotal);
             modeloTabelaItens.addRow(new Object[]{
+                    p.getCodigoSerial(), // Adiciona o código serial do produto
                     p.getNome(),
                     vp.getQuantidade(),
                     String.format("R$ %.2f", vp.getPrecoUnitario()),
