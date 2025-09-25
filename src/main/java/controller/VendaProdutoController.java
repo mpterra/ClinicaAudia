@@ -35,4 +35,8 @@ public class VendaProdutoController {
     public boolean removerProdutoVenda(int vendaId, int produtoId) throws SQLException {
         return dao.deletar(vendaId, produtoId);
     }
+
+	public boolean serialExiste(String codigoSerial) {
+		return dao.serialExiste(codigoSerial);
+	}
 }

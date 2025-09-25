@@ -58,6 +58,7 @@ public class VendaProdutoPanel extends JPanel {
     private JTextField txtEmail;
     private JTextField txtNomeProduto;
     private JTextField txtEstoque;
+    private JTextField txtCodigoSerial; // Novo campo para código serial
     private JSpinner spinnerQuantidade;
     private JTextField txtPrecoUnitario;
     private JComboBox<String> cbMetodoPagamento;
@@ -332,14 +333,29 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.weightx = 1.0;
         dataPanel.add(txtEstoque, gbcData);
 
-        JLabel lblQuantidade = new JLabel("Quantidade:");
-        lblQuantidade.setFont(labelFont);
+        JLabel lblCodigoSerial = new JLabel("Código Serial:"); // Novo label para código serial
+        lblCodigoSerial.setFont(labelFont);
         gbcData.gridx = 2;
         gbcData.gridy = 3;
         gbcData.weightx = 0.0;
+        dataPanel.add(lblCodigoSerial, gbcData);
+
+        txtCodigoSerial = new JTextField(15); // Novo campo para código serial
+        txtCodigoSerial.setPreferredSize(new Dimension(150, 25));
+        txtCodigoSerial.setFont(fieldFont);
+        txtCodigoSerial.setToolTipText("Digite o código serial do produto");
+        gbcData.gridx = 3;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtCodigoSerial, gbcData);
+
+        JLabel lblQuantidade = new JLabel("Quantidade:");
+        lblQuantidade.setFont(labelFont);
+        gbcData.gridx = 2;
+        gbcData.gridy = 4;
+        gbcData.weightx = 0.0;
         dataPanel.add(lblQuantidade, gbcData);
 
-        spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+        spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 1, 1)); // Quantidade fixa em 1 para código serial único
         spinnerQuantidade.setPreferredSize(new Dimension(80, 25));
         spinnerQuantidade.setFont(fieldFont);
         gbcData.gridx = 3;
@@ -349,7 +365,7 @@ public class VendaProdutoPanel extends JPanel {
         JLabel lblPreco = new JLabel("Preço Unitário:");
         lblPreco.setFont(labelFont);
         gbcData.gridx = 2;
-        gbcData.gridy = 4;
+        gbcData.gridy = 5;
         gbcData.weightx = 0.0;
         dataPanel.add(lblPreco, gbcData);
 
@@ -590,6 +606,7 @@ public class VendaProdutoPanel extends JPanel {
             Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
             txtEstoque.setText(estoque != null ? String.valueOf(estoque.getQuantidade()) : "0");
             txtPrecoUnitario.setText(String.format("%.2f", produtoSelecionado.getPrecoVenda()).replace(".", ","));
+            txtCodigoSerial.setText(""); // Limpa o campo de serial ao selecionar novo produto
         } else {
             limparCamposProduto();
         }
@@ -600,6 +617,7 @@ public class VendaProdutoPanel extends JPanel {
         txtNomeProduto.setText("");
         txtEstoque.setText("");
         txtPrecoUnitario.setText("0,00");
+        txtCodigoSerial.setText(""); // Limpa o campo de serial
     }
 
     // Atualiza opções de parcelas com base no método de pagamento
@@ -620,6 +638,14 @@ public class VendaProdutoPanel extends JPanel {
             // Validações
             if (produtoSelecionado == null) {
                 throw new IllegalArgumentException("Selecione um produto!");
+            }
+            String codigoSerial = txtCodigoSerial.getText().trim();
+            if (codigoSerial.isEmpty()) {
+                throw new IllegalArgumentException("Digite o código serial do produto!");
+            }
+            // Verifica unicidade do código serial
+            if (vendaProdutoController.serialExiste(codigoSerial)) {
+                throw new IllegalArgumentException("Código serial já utilizado em outra venda!");
             }
             int quantidade = (Integer) spinnerQuantidade.getValue();
             BigDecimal precoUnitario;
@@ -644,6 +670,7 @@ public class VendaProdutoPanel extends JPanel {
             vendaProduto.setProdutoId(produtoSelecionado.getId());
             vendaProduto.setQuantidade(quantidade);
             vendaProduto.setPrecoUnitario(precoUnitario);
+            vendaProduto.setCogidoSerial(codigoSerial); // Define o código serial
             LocalDate dataVenda = LocalDate.now();
             vendaProduto.setDataVenda(Timestamp.valueOf(dataVenda.atStartOfDay()));
 
@@ -655,6 +682,7 @@ public class VendaProdutoPanel extends JPanel {
 
             // Limpa campos do produto
             txtBuscaProduto.setText("");
+            txtCodigoSerial.setText("");
             spinnerQuantidade.setValue(1);
             limparCamposProduto();
             produtoSelecionado = null;
@@ -683,7 +711,7 @@ public class VendaProdutoPanel extends JPanel {
             BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
             valorTotalVenda = valorTotalVenda.add(subtotal);
             modeloTabelaItens.addRow(new Object[]{
-                    p.getCodigoSerial(), // Adiciona o código serial do produto
+                    vp.getCogidoSerial(), // Exibe o código serial de venda_produto
                     p.getNome(),
                     vp.getQuantidade(),
                     String.format("R$ %.2f", vp.getPrecoUnitario()),
@@ -835,6 +863,7 @@ public class VendaProdutoPanel extends JPanel {
         txtEmail.setText("");
         txtNomeProduto.setText("");
         txtEstoque.setText("");
+        txtCodigoSerial.setText("");
         spinnerQuantidade.setValue(1);
         txtPrecoUnitario.setText("0,00");
         cbMetodoPagamento.setSelectedIndex(0);
