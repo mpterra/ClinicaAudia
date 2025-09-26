@@ -78,7 +78,7 @@ public class ProdutoDAO {
     // UPDATE
     // ============================
     public boolean atualizar(Produto produto, String usuarioLogado) throws SQLException {
-        String sql = "UPDATE produto SET tipo_produto_id = ?, nome = ?, codigo_serial = ?, descricao = ?, " +
+        String sql = "UPDATE produto SET tipo_produto_id = ?, nome = ?, codigo = ?, descricao = ?, " +
                      "usuario = ?, atualizado_em = CURRENT_TIMESTAMP, garantia_meses = ?, preco_venda = ?, preco_custo = ? WHERE id = ?";
 
         try (Connection conn = Database.getConnection();
@@ -119,7 +119,7 @@ public class ProdutoDAO {
         p.setId(rs.getInt("id"));
         p.setTipoProdutoId(rs.getInt("tipo_produto_id"));
         p.setNome(rs.getString("nome"));
-        p.setCodigoSerial(rs.getString("codigo_serial"));
+        p.setCodigoSerial(rs.getString("codigo"));
         p.setDescricao(rs.getString("descricao"));
         p.setCriadoEm(rs.getTimestamp("criado_em"));
         p.setAtualizadoEm(rs.getTimestamp("atualizado_em"));

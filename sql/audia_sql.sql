@@ -361,7 +361,7 @@ CREATE TABLE venda (
         FOREIGN KEY (orcamento_id)
         REFERENCES orcamento(id)
         ON DELETE SET NULL
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
     CONSTRAINT fk_venda_paciente
         FOREIGN KEY (paciente_id)
         REFERENCES paciente(id)
