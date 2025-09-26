@@ -1,3 +1,4 @@
+DROP DATABASE audia;
 CREATE DATABASE audia;
 USE audia;
 
@@ -282,7 +283,7 @@ CREATE TABLE pagamento_compra (
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     data_vencimento DATE NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
-    metodo_pagamento ENUM('DINHEIRO','PIX','CARTAO','BOLETO') NOT NULL,
+    metodo_pagamento ENUM('DINHEIRO','PIX','DEBITO', 'CREDITO','BOLETO') NOT NULL,
     parcela INT DEFAULT 1,
     total_parcelas INT DEFAULT 1,
     status ENUM('PAGO','PENDENTE') DEFAULT 'PENDENTE',
@@ -438,7 +439,7 @@ CREATE TABLE pagamento_atendimento (
     atendimento_id INT NOT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor DECIMAL(10,2) NOT NULL,
-    metodo_pagamento ENUM('DINHEIRO','PIX','CARTAO') NOT NULL,
+    metodo_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO') NOT NULL,
     observacoes TEXT,
     usuario VARCHAR(50),
     CONSTRAINT fk_pag_atendimento
@@ -456,7 +457,8 @@ CREATE TABLE caixa (
     data_abertura DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data_fechamento DATETIME NULL,
     saldo_inicial_dinheiro DECIMAL(10,2) NOT NULL DEFAULT 0,
-    saldo_inicial_cartao DECIMAL(10,2) NOT NULL DEFAULT 0,
+    saldo_inicial_debito DECIMAL(10,2) NOT NULL DEFAULT 0,
+    saldo_inicial_credito DECIMAL(10,2) NOT NULL DEFAULT 0,
     saldo_inicial_pix DECIMAL(10,2) NOT NULL DEFAULT 0,
     observacoes TEXT,
     usuario VARCHAR(50)
@@ -469,7 +471,7 @@ CREATE TABLE caixa_movimento (
     origem ENUM('PAGAMENTO_ATENDIMENTO','PAGAMENTO_VENDA','DESPESA','AJUSTE','OUTRO') NOT NULL,
     pagamento_atendimento_id INT NULL UNIQUE,
     pagamento_venda_id INT NULL UNIQUE,
-    forma_pagamento ENUM('DINHEIRO','PIX','CARTAO','BOLETO') NOT NULL,
+    forma_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO','BOLETO') NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
     descricao VARCHAR(255),
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -17,14 +17,15 @@ public class CaixaDAO {
 
     // Inserir novo caixa
     public boolean inserir(Caixa caixa) throws SQLException {
-        String sql = "INSERT INTO caixa (data_abertura, saldo_inicial_dinheiro, saldo_inicial_cartao, saldo_inicial_pix, observacoes, usuario) " +
+        String sql = "INSERT INTO caixa (data_abertura, saldo_inicial_dinheiro, saldo_inicial_debito, saldo_inicial_credito, saldo_inicial_pix, observacoes, usuario) " +
                      "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setTimestamp(1, Timestamp.valueOf(caixa.getDataAbertura()));
             stmt.setBigDecimal(2, caixa.getSaldoInicialDinheiro());
-            stmt.setBigDecimal(3, caixa.getSaldoInicialCartao());
+            stmt.setBigDecimal(3, caixa.getSaldoInicialDebito());
+            stmt.setBigDecimal(4, caixa.getSaldoInicialCredito());
             stmt.setBigDecimal(4, caixa.getSaldoInicialPix());
             stmt.setString(5, caixa.getObservacoes());
             stmt.setString(6, caixa.getUsuario());
@@ -52,13 +53,14 @@ public class CaixaDAO {
             throw new SQLException("Não é possível atualizar um caixa já fechado.");
         }
 
-        String sql = "UPDATE caixa SET saldo_inicial_dinheiro = ?, saldo_inicial_cartao = ?, saldo_inicial_pix = ?, observacoes = ?, usuario = ? " +
+        String sql = "UPDATE caixa SET saldo_inicial_dinheiro = ?, saldo_inicial_debito = ?, saldo_inicial_credito = ?, saldo_inicial_pix = ?, observacoes = ?, usuario = ? " +
                      "WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setBigDecimal(1, caixa.getSaldoInicialDinheiro());
-            stmt.setBigDecimal(2, caixa.getSaldoInicialCartao());
+            stmt.setBigDecimal(2, caixa.getSaldoInicialDebito());
+            stmt.setBigDecimal(3, caixa.getSaldoInicialCredito());
             stmt.setBigDecimal(3, caixa.getSaldoInicialPix());
             stmt.setString(4, caixa.getObservacoes());
             stmt.setString(5, caixa.getUsuario());
@@ -160,7 +162,8 @@ public class CaixaDAO {
         if (tsFechamento != null) caixa.setDataFechamento(tsFechamento.toLocalDateTime());
 
         caixa.setSaldoInicialDinheiro(rs.getBigDecimal("saldo_inicial_dinheiro"));
-        caixa.setSaldoInicialCartao(rs.getBigDecimal("saldo_inicial_cartao"));
+        caixa.setSaldoInicialDebito(rs.getBigDecimal("saldo_inicial_debito"));
+        caixa.setSaldoInicialCredito(rs.getBigDecimal("saldo_inicial_credito"));
         caixa.setSaldoInicialPix(rs.getBigDecimal("saldo_inicial_pix"));
         caixa.setObservacoes(rs.getString("observacoes"));
         caixa.setUsuario(rs.getString("usuario"));

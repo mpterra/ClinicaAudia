@@ -10,7 +10,7 @@ public class CaixaMovimento {
     // -------------------------
     public enum TipoMovimento {ENTRADA, SAIDA}
     public enum OrigemMovimento {PAGAMENTO_ATENDIMENTO, PAGAMENTO_VENDA, DESPESA, AJUSTE, OUTRO}
-    public enum FormaPagamento {DINHEIRO, PIX, CARTAO, BOLETO}
+    public enum FormaPagamento {DINHEIRO, PIX, DEBITO, CREDITO, BOLETO}
 
     // -------------------------
     // Atributos

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
-// Controller para lógica de negócio de movimentos de caixa
+// Controller para operações de movimentos de caixa
 public class CaixaMovimentoController {
 
     private final CaixaMovimentoDAO movimentoDAO;
@@ -20,13 +20,29 @@ public class CaixaMovimentoController {
         this.caixaDAO = new CaixaDAO();
     }
 
-    // -------------------------
     // Inserir novo movimento
-    // -------------------------
     public void adicionarMovimento(CaixaMovimento movimento) throws SQLException {
         if (movimento == null) throw new IllegalArgumentException("Movimento não pode ser nulo.");
         if (movimento.getCaixa() == null || movimento.getCaixa().getId() <= 0) {
             throw new IllegalArgumentException("Movimento precisa de um caixa válido.");
+        }
+        if (movimento.getFormaPagamento() == null) {
+            throw new IllegalArgumentException("Forma de pagamento não pode ser nula.");
+        }
+        if (movimento.getValor() == null || movimento.getValor().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Valor deve ser maior que zero.");
+        }
+        if (movimento.getTipo() == null) {
+            throw new IllegalArgumentException("Tipo de movimento não pode ser nulo.");
+        }
+        if (movimento.getOrigem() == null) {
+            throw new IllegalArgumentException("Origem do movimento não pode ser nula.");
+        }
+        if (movimento.getDataHora() == null) {
+            throw new IllegalArgumentException("Data e hora não podem ser nulas.");
+        }
+        if (movimento.getUsuario() == null || movimento.getUsuario().trim().isEmpty()) {
+            throw new IllegalArgumentException("Usuário não pode ser nulo ou vazio.");
         }
 
         Caixa caixa = caixaDAO.buscarPorId(movimento.getCaixa().getId());
@@ -38,18 +54,18 @@ public class CaixaMovimentoController {
         movimentoDAO.inserir(movimento);
     }
 
-    // -------------------------
-    // Consultas
-    // -------------------------
+    // Buscar movimento por ID
     public CaixaMovimento buscarPorId(int id) throws SQLException {
         if (id <= 0) return null;
         return movimentoDAO.buscarPorId(id);
     }
 
+    // Listar todos os movimentos
     public List<CaixaMovimento> listarTodos() throws SQLException {
         return movimentoDAO.listarTodos();
     }
 
+    // Listar movimentos por caixa
     public List<CaixaMovimento> listarMovimentosPorCaixa(int caixaId) throws SQLException {
         if (caixaId <= 0) throw new IllegalArgumentException("ID do caixa inválido.");
         Caixa caixa = caixaDAO.buscarPorId(caixaId);
@@ -65,9 +81,7 @@ public class CaixaMovimentoController {
         return movimentoDAO.calcularSaldosFinais(caixaId);
     }
 
-    // -------------------------
     // Deletar movimento
-    // -------------------------
     public void deletarMovimento(int id) throws SQLException {
         CaixaMovimento movimento = movimentoDAO.buscarPorId(id);
         if (movimento == null) throw new IllegalArgumentException("Movimento não encontrado.");
@@ -77,7 +91,6 @@ public class CaixaMovimentoController {
                 throw new IllegalStateException("Não é permitido deletar movimentos de caixas fechados.");
             }
         }
-
         movimentoDAO.deletar(id);
     }
 }

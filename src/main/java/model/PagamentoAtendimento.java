@@ -14,7 +14,7 @@ public class PagamentoAtendimento {
     private String usuario;
 
     public enum MetodoPagamento {
-        DINHEIRO, PIX, CARTAO
+        DINHEIRO, PIX, DEBITO, CREDITO
     }
 
     // Construtor vazio

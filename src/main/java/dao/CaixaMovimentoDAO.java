@@ -119,7 +119,8 @@ public class CaixaMovimentoDAO {
         String sql = "SELECT forma_pagamento, SUM(CASE WHEN tipo = 'ENTRADA' THEN valor ELSE -valor END) AS saldo " +
                      "FROM caixa_movimento WHERE caixa_id = ? GROUP BY forma_pagamento";
         BigDecimal saldoDinheiro = BigDecimal.ZERO;
-        BigDecimal saldoCartao = BigDecimal.ZERO;
+        BigDecimal saldoDebito = BigDecimal.ZERO;
+        BigDecimal saldoCredito = BigDecimal.ZERO;
         BigDecimal saldoPix = BigDecimal.ZERO;
 
         try (Connection conn = Database.getConnection();
@@ -134,9 +135,12 @@ public class CaixaMovimentoDAO {
                     case "DINHEIRO":
                         saldoDinheiro = saldo;
                         break;
-                    case "CARTAO":
-                        saldoCartao = saldo;
+                    case "DEBITO":
+                        saldoDebito = saldo;
                         break;
+                    case "CREDITO":
+                    	saldoCredito = saldo;
+						break;
                     case "PIX":
                         saldoPix = saldo;
                         break;
@@ -151,11 +155,12 @@ public class CaixaMovimentoDAO {
         Caixa caixa = caixaDAO.buscarPorId(caixaId);
         if (caixa != null) {
             saldoDinheiro = saldoDinheiro.add(caixa.getSaldoInicialDinheiro());
-            saldoCartao = saldoCartao.add(caixa.getSaldoInicialCartao());
+            saldoDebito = saldoDebito.add(caixa.getSaldoInicialDebito());
+            saldoCredito = saldoCredito.add(caixa.getSaldoInicialCredito());
             saldoPix = saldoPix.add(caixa.getSaldoInicialPix());
         }
 
-        return new BigDecimal[]{saldoDinheiro, saldoCartao, saldoPix};
+        return new BigDecimal[]{saldoDinheiro, saldoDebito, saldoCredito, saldoPix};
     }
 
     // -------------------------
