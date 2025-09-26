@@ -6,16 +6,18 @@ import model.PagamentoAtendimento;
 import model.PagamentoVenda;
 import util.Database;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// DAO para operações na tabela caixa_movimento
 public class CaixaMovimentoDAO {
 
     // -------------------------
     // Inserir novo movimento
     // -------------------------
-    public void inserir(CaixaMovimento movimento) throws SQLException {
+    public boolean inserir(CaixaMovimento movimento) throws SQLException {
         String sql = "INSERT INTO caixa_movimento " +
                 "(caixa_id, tipo, origem, pagamento_atendimento_id, pagamento_venda_id, forma_pagamento, valor, descricao, data_hora, usuario) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -33,12 +35,15 @@ public class CaixaMovimentoDAO {
             stmt.setTimestamp(9, Timestamp.valueOf(movimento.getDataHora()));
             stmt.setString(10, movimento.getUsuario());
 
-            stmt.executeUpdate();
-
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                movimento.setId(rs.getInt(1));
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                ResultSet rs = stmt.getGeneratedKeys();
+                if (rs.next()) {
+                    movimento.setId(rs.getInt(1));
+                }
+                return true; // Sucesso na inserção
             }
+            return false; // Falha na inserção
         }
     }
 
@@ -105,6 +110,52 @@ public class CaixaMovimentoDAO {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         }
+    }
+
+    // -------------------------
+    // Calcular saldos finais por forma de pagamento
+    // -------------------------
+    public BigDecimal[] calcularSaldosFinais(int caixaId) throws SQLException {
+        String sql = "SELECT forma_pagamento, SUM(CASE WHEN tipo = 'ENTRADA' THEN valor ELSE -valor END) AS saldo " +
+                     "FROM caixa_movimento WHERE caixa_id = ? GROUP BY forma_pagamento";
+        BigDecimal saldoDinheiro = BigDecimal.ZERO;
+        BigDecimal saldoCartao = BigDecimal.ZERO;
+        BigDecimal saldoPix = BigDecimal.ZERO;
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, caixaId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String forma = rs.getString("forma_pagamento");
+                BigDecimal saldo = rs.getBigDecimal("saldo") != null ? rs.getBigDecimal("saldo") : BigDecimal.ZERO;
+                switch (forma) {
+                    case "DINHEIRO":
+                        saldoDinheiro = saldo;
+                        break;
+                    case "CARTAO":
+                        saldoCartao = saldo;
+                        break;
+                    case "PIX":
+                        saldoPix = saldo;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        // Adicionar saldos iniciais do caixa
+        CaixaDAO caixaDAO = new CaixaDAO();
+        Caixa caixa = caixaDAO.buscarPorId(caixaId);
+        if (caixa != null) {
+            saldoDinheiro = saldoDinheiro.add(caixa.getSaldoInicialDinheiro());
+            saldoCartao = saldoCartao.add(caixa.getSaldoInicialCartao());
+            saldoPix = saldoPix.add(caixa.getSaldoInicialPix());
+        }
+
+        return new BigDecimal[]{saldoDinheiro, saldoCartao, saldoPix};
     }
 
     // -------------------------

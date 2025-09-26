@@ -275,6 +275,28 @@ CREATE TABLE compra_produto (
         REFERENCES produto(id)
 );
 
+-- Tabela para registrar pagamentos de compras (à vista ou parceladas)
+CREATE TABLE pagamento_compra (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    compra_id INT NOT NULL,
+    data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_vencimento DATE NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    metodo_pagamento ENUM('DINHEIRO','PIX','CARTAO','BOLETO') NOT NULL,
+    parcela INT DEFAULT 1,
+    total_parcelas INT DEFAULT 1,
+    status ENUM('PAGO','PENDENTE') DEFAULT 'PENDENTE',
+    observacoes TEXT,
+    usuario VARCHAR(50),
+    CONSTRAINT fk_pag_compra
+        FOREIGN KEY (compra_id)
+        REFERENCES compra(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+
 -- ========================================
 -- TRIGGER PARA ATUALIZAR PRECO_CUSTO
 -- ========================================

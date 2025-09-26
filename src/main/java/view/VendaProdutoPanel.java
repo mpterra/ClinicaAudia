@@ -782,7 +782,7 @@ public class VendaProdutoPanel extends JPanel {
             int parcelas = (Integer) spinnerParcelas.getValue();
             String metodo = (String) cbMetodoPagamento.getSelectedItem();
 
-            Caixa caixa = caixaController.buscarCaixaAberto();
+            Caixa caixa = caixaController.getCaixaAberto();
             if (caixa == null) {
                 throw new IllegalStateException("Nenhum caixa aberto encontrado!");
             }

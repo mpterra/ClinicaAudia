@@ -6,6 +6,7 @@ import model.Caixa;
 import java.sql.SQLException;
 import java.util.List;
 
+// Controller para lógica de negócio de caixas
 public class CaixaController {
 
     private final CaixaDAO caixaDAO;
@@ -18,18 +19,19 @@ public class CaixaController {
     // CRUD inteligente
     // -------------------------
 
-    public void abrirCaixa(Caixa caixa) throws SQLException {
+    // Abre um novo caixa
+    public boolean abrirCaixa(Caixa caixa) throws SQLException {
         if (caixa == null) throw new IllegalArgumentException("Caixa não pode ser nulo.");
 
         // Regra: não pode abrir novo caixa se já houver um aberto
-        Caixa aberto = caixaDAO.buscarCaixaAberto();
-        if (aberto != null) {
-            throw new IllegalStateException("Já existe um caixa aberto (ID: " + aberto.getId() + "). Feche-o antes de abrir outro.");
+        if (existeCaixaAberto()) {
+            throw new IllegalStateException("Já existe um caixa aberto. Feche-o antes de abrir outro.");
         }
 
-        caixaDAO.inserir(caixa);
+        return caixaDAO.inserir(caixa); // Retorna true se inserção bem-sucedida
     }
 
+    // Atualiza um caixa
     public void atualizarCaixa(Caixa caixa) throws SQLException {
         if (caixa == null || caixa.getId() <= 0) throw new IllegalArgumentException("Caixa inválido.");
 
@@ -43,7 +45,8 @@ public class CaixaController {
         caixaDAO.atualizar(caixa);
     }
 
-    public void fecharCaixa(Caixa caixa) throws SQLException {
+    // Fecha o caixa
+    public boolean fecharCaixa(Caixa caixa) throws SQLException {
         if (caixa == null || caixa.getId() <= 0) throw new IllegalArgumentException("Caixa inválido.");
 
         Caixa existente = caixaDAO.buscarPorId(caixa.getId());
@@ -52,9 +55,10 @@ public class CaixaController {
             throw new IllegalStateException("Caixa já está fechado.");
         }
 
-        caixaDAO.fecharCaixa(caixa);
+        return caixaDAO.fecharCaixa(caixa); // Retorna true se fechamento bem-sucedido
     }
 
+    // Deleta um caixa
     public void deletarCaixa(int id) throws SQLException {
         Caixa existente = caixaDAO.buscarPorId(id);
         if (existente == null) throw new IllegalArgumentException("Caixa não encontrado.");
@@ -68,16 +72,25 @@ public class CaixaController {
     // -------------------------
     // Consultas
     // -------------------------
+
+    // Busca caixa por ID
     public Caixa buscarPorId(int id) throws SQLException {
         if (id <= 0) return null;
         return caixaDAO.buscarPorId(id);
     }
 
+    // Lista todos os caixas
     public List<Caixa> listarTodos() throws SQLException {
         return caixaDAO.listarTodos();
     }
 
-    public Caixa buscarCaixaAberto() throws SQLException {
+    // Verifica se existe um caixa aberto
+    public boolean existeCaixaAberto() throws SQLException {
+        return caixaDAO.buscarCaixaAberto() != null;
+    }
+
+    // Obtém o caixa aberto
+    public Caixa getCaixaAberto() throws SQLException {
         return caixaDAO.buscarCaixaAberto();
     }
 }

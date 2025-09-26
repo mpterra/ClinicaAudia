@@ -5,9 +5,11 @@ import dao.CaixaMovimentoDAO;
 import model.Caixa;
 import model.CaixaMovimento;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.List;
 
+// Controller para lógica de negócio de movimentos de caixa
 public class CaixaMovimentoController {
 
     private final CaixaMovimentoDAO movimentoDAO;
@@ -48,9 +50,19 @@ public class CaixaMovimentoController {
         return movimentoDAO.listarTodos();
     }
 
-    public List<CaixaMovimento> listarPorCaixa(Caixa caixa) throws SQLException {
-        if (caixa == null || caixa.getId() <= 0) throw new IllegalArgumentException("Caixa inválido.");
+    public List<CaixaMovimento> listarMovimentosPorCaixa(int caixaId) throws SQLException {
+        if (caixaId <= 0) throw new IllegalArgumentException("ID do caixa inválido.");
+        Caixa caixa = caixaDAO.buscarPorId(caixaId);
+        if (caixa == null) throw new IllegalArgumentException("Caixa não encontrado.");
         return movimentoDAO.listarPorCaixa(caixa);
+    }
+
+    // Calcula saldos finais por forma de pagamento
+    public BigDecimal[] calcularSaldosFinais(int caixaId) throws SQLException {
+        if (caixaId <= 0) throw new IllegalArgumentException("ID do caixa inválido.");
+        Caixa caixa = caixaDAO.buscarPorId(caixaId);
+        if (caixa == null) throw new IllegalArgumentException("Caixa não encontrado.");
+        return movimentoDAO.calcularSaldosFinais(caixaId);
     }
 
     // -------------------------

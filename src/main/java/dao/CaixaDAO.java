@@ -4,10 +4,11 @@ import model.Caixa;
 import util.Database;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDateTime;
 
+// DAO para operações na tabela caixa
 public class CaixaDAO {
 
     // -------------------------
@@ -15,7 +16,7 @@ public class CaixaDAO {
     // -------------------------
 
     // Inserir novo caixa
-    public void inserir(Caixa caixa) throws SQLException {
+    public boolean inserir(Caixa caixa) throws SQLException {
         String sql = "INSERT INTO caixa (data_abertura, saldo_inicial_dinheiro, saldo_inicial_cartao, saldo_inicial_pix, observacoes, usuario) " +
                      "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = Database.getConnection();
@@ -28,17 +29,29 @@ public class CaixaDAO {
             stmt.setString(5, caixa.getObservacoes());
             stmt.setString(6, caixa.getUsuario());
 
-            stmt.executeUpdate();
-
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) {
-                caixa.setId(rs.getInt(1));
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                ResultSet rs = stmt.getGeneratedKeys();
+                if (rs.next()) {
+                    caixa.setId(rs.getInt(1));
+                }
+                return true; // Sucesso na inserção
             }
+            return false; // Falha na inserção
         }
     }
 
     // Atualizar observações e saldos iniciais
-    public void atualizar(Caixa caixa) throws SQLException {
+    public boolean atualizar(Caixa caixa) throws SQLException {
+        // Verifica se o caixa está fechado
+        Caixa existente = buscarPorId(caixa.getId());
+        if (existente == null) {
+            throw new SQLException("Caixa não encontrado.");
+        }
+        if (existente.getDataFechamento() != null) {
+            throw new SQLException("Não é possível atualizar um caixa já fechado.");
+        }
+
         String sql = "UPDATE caixa SET saldo_inicial_dinheiro = ?, saldo_inicial_cartao = ?, saldo_inicial_pix = ?, observacoes = ?, usuario = ? " +
                      "WHERE id = ?";
         try (Connection conn = Database.getConnection();
@@ -51,7 +64,7 @@ public class CaixaDAO {
             stmt.setString(5, caixa.getUsuario());
             stmt.setInt(6, caixa.getId());
 
-            stmt.executeUpdate();
+            return stmt.executeUpdate() > 0; // Retorna true se atualizado com sucesso
         }
     }
 
@@ -101,7 +114,7 @@ public class CaixaDAO {
     // -------------------------
 
     // Fechar caixa
-    public void fecharCaixa(Caixa caixa) throws SQLException {
+    public boolean fecharCaixa(Caixa caixa) throws SQLException {
         String sql = "UPDATE caixa SET data_fechamento = ? WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -113,7 +126,9 @@ public class CaixaDAO {
             int rows = stmt.executeUpdate();
             if (rows > 0) {
                 caixa.setDataFechamento(agora);
+                return true; // Sucesso no fechamento
             }
+            return false; // Falha no fechamento
         }
     }
 
