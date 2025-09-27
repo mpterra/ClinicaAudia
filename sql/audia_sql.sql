@@ -320,6 +320,31 @@ END //
 DELIMITER ;
 
 -- ========================================
+-- MÓDULO DE DESPESAS
+-- ========================================
+
+CREATE TABLE despesa (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    descricao VARCHAR(255) NOT NULL,
+    categoria ENUM(
+        'PESSOAL',          -- salários, encargos, pró-labore
+        'OPERACIONAL',      -- aluguel, luz, água, internet
+        'ADMINISTRATIVA',   -- material escritório, sistemas
+        'VARIAVEL',         -- motoboy, pequenas compras
+        'IMPOSTOS',         -- tributos, taxas
+        'OUTROS'            -- algo que não se encaixe
+    ) NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    forma_pagamento ENUM('DINHEIRO', 'DEBITO', 'CREDITO', 'PIX', 'TRANSFERENCIA', 'BOLETO') NOT NULL,
+    data_vencimento DATE NOT NULL,
+    data_pagamento DATE DEFAULT NULL,
+    status ENUM('PENDENTE', 'PAGO', 'CANCELADO') DEFAULT 'PENDENTE',
+    usuario VARCHAR(100) NOT NULL, -- quem lançou
+    dataHora TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- auditoria
+);
+
+
+-- ========================================
 -- TABELA ORCAMENTO
 -- ========================================
 CREATE TABLE orcamento (
@@ -460,6 +485,11 @@ CREATE TABLE caixa (
     saldo_inicial_debito DECIMAL(10,2) NOT NULL DEFAULT 0,
     saldo_inicial_credito DECIMAL(10,2) NOT NULL DEFAULT 0,
     saldo_inicial_pix DECIMAL(10,2) NOT NULL DEFAULT 0,
+    saldo_final_dinheiro DECIMAL(10,2) DEFAULT 0,
+    saldo_final_debito DECIMAL(10,2) DEFAULT 0,
+    saldo_final_credito DECIMAL(10,2) DEFAULT 0,
+    saldo_final_pix DECIMAL(10,2) DEFAULT 0,
+    fechado TINYINT NOT NULL DEFAULT 0,
     observacoes TEXT,
     usuario VARCHAR(50)
 );
@@ -494,3 +524,6 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
+
+SELECT * FROM caixa;
+SELECT * FROM caixa_movimento;

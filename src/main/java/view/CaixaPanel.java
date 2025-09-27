@@ -44,6 +44,8 @@ public class CaixaPanel extends JPanel {
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Color rowColorLightBlue = new Color(230, 240, 255);
     private final Color cardBackground = new Color(255, 255, 255);
+    private final Color positiveBalanceColor = new Color(34, 139, 34); // Verde para saldos positivos
+    private final Color negativeBalanceColor = new Color(220, 20, 60); // Vermelho para saldos negativos
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 17);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 13);
     private final Font tableFont = new Font("SansSerif", Font.PLAIN, 13);
@@ -89,6 +91,8 @@ public class CaixaPanel extends JPanel {
                 abrirCaixa();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro ao abrir caixa: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException | IllegalStateException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
         btnFecharCaixa.addActionListener(e -> {
@@ -96,6 +100,8 @@ public class CaixaPanel extends JPanel {
                 fecharCaixa();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro ao fechar caixa: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException | IllegalStateException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
         btnAjusteEntrada.addActionListener(e -> {
@@ -117,7 +123,7 @@ public class CaixaPanel extends JPanel {
         carregarCaixaAtual();
     }
 
-    // Filtro para formatar entrada de valores monetários como centavos
+    // Filtro para formatar entrada de valores monetários
     private class CurrencyDocumentFilter extends DocumentFilter {
         @Override
         public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
@@ -155,7 +161,7 @@ public class CaixaPanel extends JPanel {
                 BigDecimal value = new BigDecimal(cents).divide(new BigDecimal(100));
                 fb.replace(0, fb.getDocument().getLength(), decimalFormat.format(value), null);
             } catch (NumberFormatException e) {
-                // Ignorar entradas inválidas
+                fb.replace(0, fb.getDocument().getLength(), decimalFormat.format(0), null);
             }
         }
     }
@@ -170,10 +176,10 @@ public class CaixaPanel extends JPanel {
         // Painel de saldos finais
         JPanel panelSaldos = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         panelSaldos.setBackground(backgroundColor);
-        panelSaldos.add(criarCardSaldo("Saldo Dinheiro", lblSaldoFinalDinheiro = new JLabel("R$ 0,00")));
-        panelSaldos.add(criarCardSaldo("Saldo Débito", lblSaldoFinalCartaoDebito = new JLabel("R$ 0,00")));
-        panelSaldos.add(criarCardSaldo("Saldo Crédito", lblSaldoFinalCartaoCredito = new JLabel("R$ 0,00")));
-        panelSaldos.add(criarCardSaldo("Saldo PIX", lblSaldoFinalPix = new JLabel("R$ 0,00")));
+        panelSaldos.add(criarCardSaldo("Saldo Dinheiro", lblSaldoFinalDinheiro = new JLabel(decimalFormat.format(0))));
+        panelSaldos.add(criarCardSaldo("Saldo Débito", lblSaldoFinalCartaoDebito = new JLabel(decimalFormat.format(0))));
+        panelSaldos.add(criarCardSaldo("Saldo Crédito", lblSaldoFinalCartaoCredito = new JLabel(decimalFormat.format(0))));
+        panelSaldos.add(criarCardSaldo("Saldo PIX", lblSaldoFinalPix = new JLabel(decimalFormat.format(0))));
 
         // Painel de informações do caixa
         JPanel panelCaixa = new JPanel(new GridBagLayout());
@@ -226,6 +232,7 @@ public class CaixaPanel extends JPanel {
         tfSaldoInicialDinheiro = new JTextField(10);
         tfSaldoInicialDinheiro.setPreferredSize(new Dimension(100, 25));
         ((AbstractDocument) tfSaldoInicialDinheiro.getDocument()).setDocumentFilter(currencyFilter);
+        tfSaldoInicialDinheiro.setText(decimalFormat.format(0)); // Inicializa com R$ 0,00
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCaixa.add(tfSaldoInicialDinheiro, gbc);
@@ -240,6 +247,7 @@ public class CaixaPanel extends JPanel {
         tfSaldoInicialCartaoDebito = new JTextField(10);
         tfSaldoInicialCartaoDebito.setPreferredSize(new Dimension(100, 25));
         ((AbstractDocument) tfSaldoInicialCartaoDebito.getDocument()).setDocumentFilter(currencyFilter);
+        tfSaldoInicialCartaoDebito.setText(decimalFormat.format(0)); // Inicializa com R$ 0,00
         gbc.gridx = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCaixa.add(tfSaldoInicialCartaoDebito, gbc);
@@ -254,6 +262,7 @@ public class CaixaPanel extends JPanel {
         tfSaldoInicialCartaoCredito = new JTextField(10);
         tfSaldoInicialCartaoCredito.setPreferredSize(new Dimension(100, 25));
         ((AbstractDocument) tfSaldoInicialCartaoCredito.getDocument()).setDocumentFilter(currencyFilter);
+        tfSaldoInicialCartaoCredito.setText(decimalFormat.format(0)); // Inicializa com R$ 0,00
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCaixa.add(tfSaldoInicialCartaoCredito, gbc);
@@ -268,6 +277,7 @@ public class CaixaPanel extends JPanel {
         tfSaldoInicialPix = new JTextField(10);
         tfSaldoInicialPix.setPreferredSize(new Dimension(100, 25));
         ((AbstractDocument) tfSaldoInicialPix.getDocument()).setDocumentFilter(currencyFilter);
+        tfSaldoInicialPix.setText(decimalFormat.format(0)); // Inicializa com R$ 0,00
         gbc.gridx = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCaixa.add(tfSaldoInicialPix, gbc);
@@ -334,7 +344,7 @@ public class CaixaPanel extends JPanel {
         return panelWrapper;
     }
 
-    // Cria card para saldo
+    // Cria card para saldo com cores condicionais
     private JPanel criarCardSaldo(String titulo, JLabel lblSaldo) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
         card.setBackground(cardBackground);
@@ -351,6 +361,21 @@ public class CaixaPanel extends JPanel {
         lblSaldo.setFont(labelFont);
         lblSaldo.setHorizontalAlignment(SwingConstants.CENTER);
         card.add(lblSaldo, BorderLayout.CENTER);
+
+        // Listener para atualizar a cor com base no valor do saldo
+        lblSaldo.addPropertyChangeListener("text", evt -> {
+            String text = lblSaldo.getText();
+            try {
+                BigDecimal value = parseCurrency(text);
+                if (value != null) {
+                    lblSaldo.setForeground(value.compareTo(BigDecimal.ZERO) < 0 ? negativeBalanceColor : positiveBalanceColor);
+                } else {
+                    lblSaldo.setForeground(positiveBalanceColor); // Zero ou inválido é tratado como positivo
+                }
+            } catch (Exception e) {
+                lblSaldo.setForeground(positiveBalanceColor);
+            }
+        });
 
         return card;
     }
@@ -433,8 +458,12 @@ public class CaixaPanel extends JPanel {
         return panel;
     }
 
-    // Limpa campos do formulário
+    // Limpa campos do formulário apenas se não houver caixa aberto
     private void limparCampos() {
+        if (caixaAtual != null) {
+            JOptionPane.showMessageDialog(this, "Não é possível limpar campos com caixa aberto!", "Aviso", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         tfSaldoInicialDinheiro.setText(decimalFormat.format(0));
         tfSaldoInicialCartaoDebito.setText(decimalFormat.format(0));
         tfSaldoInicialCartaoCredito.setText(decimalFormat.format(0));
@@ -442,14 +471,15 @@ public class CaixaPanel extends JPanel {
         tfDataAbertura.setValue(LocalDateTime.now().format(formatter));
         taObservacoes.setText("");
         modeloTabelaMovimentos.setRowCount(0);
-        lblSaldoFinalDinheiro.setText("R$ 0,00");
-        lblSaldoFinalCartaoDebito.setText("R$ 0,00");
-        lblSaldoFinalCartaoCredito.setText("R$ 0,00");
-        lblSaldoFinalPix.setText("R$ 0,00");
+        lblSaldoFinalDinheiro.setText(decimalFormat.format(0));
+        lblSaldoFinalCartaoDebito.setText(decimalFormat.format(0));
+        lblSaldoFinalCartaoCredito.setText(decimalFormat.format(0));
+        lblSaldoFinalPix.setText(decimalFormat.format(0));
         btnAbrirCaixa.setEnabled(true);
         btnFecharCaixa.setEnabled(false);
         btnAjusteEntrada.setEnabled(false);
         btnAjusteSaida.setEnabled(false);
+        btnLimpar.setEnabled(true);
         tfSaldoInicialDinheiro.setEditable(true);
         tfSaldoInicialCartaoDebito.setEditable(true);
         tfSaldoInicialCartaoCredito.setEditable(true);
@@ -461,7 +491,7 @@ public class CaixaPanel extends JPanel {
     // Converte texto formatado para BigDecimal
     private BigDecimal parseCurrency(String text) {
         try {
-            String cleanedText = text.replaceAll("[^0-9,]", "").replace(",", ".");
+            String cleanedText = text.replaceAll("[^0-9,-]", "").replace(",", ".");
             return new BigDecimal(cleanedText);
         } catch (NumberFormatException e) {
             return null;
@@ -508,6 +538,7 @@ public class CaixaPanel extends JPanel {
                 btnFecharCaixa.setEnabled(true);
                 btnAjusteEntrada.setEnabled(true);
                 btnAjusteSaida.setEnabled(true);
+                btnLimpar.setEnabled(false);
                 tfSaldoInicialDinheiro.setEditable(false);
                 tfSaldoInicialCartaoDebito.setEditable(false);
                 tfSaldoInicialCartaoCredito.setEditable(false);
@@ -525,18 +556,26 @@ public class CaixaPanel extends JPanel {
     }
 
     // Fecha caixa atual
-    private void fecharCaixa() throws SQLException {
+    private void fecharCaixa() throws SQLException, IllegalArgumentException, IllegalStateException {
         if (caixaAtual == null) {
             JOptionPane.showMessageDialog(this, "Nenhum caixa aberto!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        CaixaController controller = new CaixaController();
+        // Calcula saldos finais com base nos movimentos
+        CaixaMovimentoController movimentoController = new CaixaMovimentoController();
+        BigDecimal[] saldos = movimentoController.calcularSaldosFinais(caixaAtual.getId());
+        caixaAtual.setSaldoFinalDinheiro(saldos[0]);
+        caixaAtual.setSaldoFinalDebito(saldos[1]);
+        caixaAtual.setSaldoFinalCredito(saldos[2]);
+        caixaAtual.setSaldoFinalPix(saldos[3]);
         caixaAtual.setDataFechamento(LocalDateTime.now());
+
+        CaixaController controller = new CaixaController();
         if (controller.fecharCaixa(caixaAtual)) {
             JOptionPane.showMessageDialog(this, "Caixa fechado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             caixaAtual = null;
-            limparCampos();
+            carregarCaixaAtual();
         }
     }
 
@@ -562,45 +601,27 @@ public class CaixaPanel extends JPanel {
                 btnFecharCaixa.setEnabled(true);
                 btnAjusteEntrada.setEnabled(true);
                 btnAjusteSaida.setEnabled(true);
+                btnLimpar.setEnabled(false);
                 carregarMovimentos();
                 atualizarSaldosFinais();
             } else {
                 tfDataAbertura.setValue(LocalDateTime.now().format(formatter));
-                carregarSaldosUltimoCaixa();
-                btnAbrirCaixa.setEnabled(true);
-                btnFecharCaixa.setEnabled(false);
-                btnAjusteEntrada.setEnabled(false);
-                btnAjusteSaida.setEnabled(false);
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar caixa: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // Carrega saldos do último caixa fechado
-    private void carregarSaldosUltimoCaixa() {
-        try {
-            CaixaController controller = new CaixaController();
-            List<Caixa> caixas = controller.listarTodos();
-            Caixa ultimoCaixa = caixas.stream()
-                    .filter(c -> c.getDataFechamento() != null)
-                    .max((c1, c2) -> c1.getDataFechamento().compareTo(c2.getDataFechamento()))
-                    .orElse(null);
-            if (ultimoCaixa != null) {
-                CaixaMovimentoController movimentoController = new CaixaMovimentoController();
-                BigDecimal[] saldos = movimentoController.calcularSaldosFinais(ultimoCaixa.getId());
-                tfSaldoInicialDinheiro.setText(decimalFormat.format(saldos[0]));
-                tfSaldoInicialCartaoDebito.setText(decimalFormat.format(saldos[1]));
-                tfSaldoInicialCartaoCredito.setText(decimalFormat.format(saldos[2]));
-                tfSaldoInicialPix.setText(decimalFormat.format(saldos[3]));
-            } else {
                 tfSaldoInicialDinheiro.setText(decimalFormat.format(0));
                 tfSaldoInicialCartaoDebito.setText(decimalFormat.format(0));
                 tfSaldoInicialCartaoCredito.setText(decimalFormat.format(0));
                 tfSaldoInicialPix.setText(decimalFormat.format(0));
+                lblSaldoFinalDinheiro.setText(decimalFormat.format(0));
+                lblSaldoFinalCartaoDebito.setText(decimalFormat.format(0));
+                lblSaldoFinalCartaoCredito.setText(decimalFormat.format(0));
+                lblSaldoFinalPix.setText(decimalFormat.format(0));
+                btnAbrirCaixa.setEnabled(true);
+                btnFecharCaixa.setEnabled(false);
+                btnAjusteEntrada.setEnabled(false);
+                btnAjusteSaida.setEnabled(false);
+                btnLimpar.setEnabled(true);
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar saldos do último caixa: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao carregar caixa: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -632,10 +653,10 @@ public class CaixaPanel extends JPanel {
         try {
             CaixaMovimentoController controller = new CaixaMovimentoController();
             BigDecimal[] saldos = controller.calcularSaldosFinais(caixaAtual.getId());
-            lblSaldoFinalDinheiro.setText(String.format("R$ %.2f", saldos[0]));
-            lblSaldoFinalCartaoDebito.setText(String.format("R$ %.2f", saldos[1]));
-            lblSaldoFinalCartaoCredito.setText(String.format("R$ %.2f", saldos[2]));
-            lblSaldoFinalPix.setText(String.format("R$ %.2f", saldos[3]));
+            lblSaldoFinalDinheiro.setText(decimalFormat.format(saldos[0]));
+            lblSaldoFinalCartaoDebito.setText(decimalFormat.format(saldos[1]));
+            lblSaldoFinalCartaoCredito.setText(decimalFormat.format(saldos[2]));
+            lblSaldoFinalPix.setText(decimalFormat.format(saldos[3]));
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao calcular saldos: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
@@ -648,11 +669,12 @@ public class CaixaPanel extends JPanel {
             return;
         }
 
-        String[] formas = {"DINHEIRO", "CARTAO_DEBITO", "CARTAO_CREDITO", "PIX"};
+        String[] formas = {"DINHEIRO", "DEBITO", "CREDITO", "PIX"};
         JComboBox<String> cbFormaPagamento = new JComboBox<>(formas);
         JTextField tfValor = new JTextField(10);
         tfValor.setPreferredSize(new Dimension(100, 25));
         ((AbstractDocument) tfValor.getDocument()).setDocumentFilter(new CurrencyDocumentFilter());
+        tfValor.setText(decimalFormat.format(0)); // Inicializa com R$ 0,00
         JTextField tfDescricao = new JTextField(20);
         JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
         panel.add(new JLabel("Forma de Pagamento:"));
