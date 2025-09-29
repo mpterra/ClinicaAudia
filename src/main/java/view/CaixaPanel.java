@@ -74,13 +74,13 @@ public class CaixaPanel extends JPanel {
 
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.51);
+        splitPane.setResizeWeight(0.4876);
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
         add(splitPane, BorderLayout.CENTER);
 
         // Ajustar proporção inicial do JSplitPane
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.51));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.4876));
         revalidate();
         repaint();
 

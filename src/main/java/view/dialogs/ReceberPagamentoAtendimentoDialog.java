@@ -37,7 +37,7 @@ public class ReceberPagamentoAtendimentoDialog extends JDialog {
     private JComboBox<PagamentoAtendimento.MetodoPagamento> cbMetodo;
     private JTextField txtRecebido; // Para dinheiro
     private JLabel lblTroco; // Para dinheiro
-    private JTextArea txtObservacoes;
+    private JTextArea txtObservacoes; // Renomeado para observações
     private BigDecimal valorRestante;
 
     private final Color primaryColor = new Color(30, 144, 255);
@@ -82,7 +82,7 @@ public class ReceberPagamentoAtendimentoDialog extends JDialog {
         gbc.gridwidth = 2;
         formPanel.add(lblValorTotal, gbc);
 
-        // Método de pagamento (segundo campo)
+        // Método de pagamento
         JLabel lblMetodo = new JLabel("Método:");
         lblMetodo.setFont(labelFont);
         gbc.gridy = 1;
@@ -90,6 +90,7 @@ public class ReceberPagamentoAtendimentoDialog extends JDialog {
         formPanel.add(lblMetodo, gbc);
 
         cbMetodo = new JComboBox<>(PagamentoAtendimento.MetodoPagamento.values());
+        cbMetodo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Cursor de mão
         gbc.gridx = 1;
         formPanel.add(cbMetodo, gbc);
 
@@ -151,9 +152,11 @@ public class ReceberPagamentoAtendimentoDialog extends JDialog {
         btnConfirmar.setBackground(primaryColor);
         btnConfirmar.setForeground(Color.WHITE);
         btnConfirmar.setPreferredSize(new Dimension(100, 35));
+        btnConfirmar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Cursor de mão
         JButton btnCancelar = new JButton("Cancelar");
         btnCancelar.setBackground(Color.LIGHT_GRAY);
         btnCancelar.setPreferredSize(new Dimension(100, 35));
+        btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Cursor de mão
         buttonPanel.add(btnCancelar);
         buttonPanel.add(btnConfirmar);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -302,14 +305,15 @@ public class ReceberPagamentoAtendimentoDialog extends JDialog {
                 throw new IllegalArgumentException("Valor inválido.");
             }
             PagamentoAtendimento.MetodoPagamento metodo = (PagamentoAtendimento.MetodoPagamento) cbMetodo.getSelectedItem();
+            BigDecimal valorRecebido = valorPagar;
             BigDecimal troco = BigDecimal.ZERO;
             if (metodo == PagamentoAtendimento.MetodoPagamento.DINHEIRO) {
                 String recebidoStr = txtRecebido.getText().replace("R$ ", "").replace(".", "").replace(",", ".");
-                BigDecimal recebido = new BigDecimal(recebidoStr);
-                if (recebido.compareTo(valorPagar) < 0) {
+                valorRecebido = new BigDecimal(recebidoStr);
+                if (valorRecebido.compareTo(valorPagar) < 0) {
                     throw new IllegalArgumentException("Valor recebido insuficiente.");
                 }
-                troco = recebido.subtract(valorPagar);
+                troco = valorRecebido.subtract(valorPagar);
             }
 
             // Verifica caixa aberto
@@ -324,40 +328,47 @@ public class ReceberPagamentoAtendimentoDialog extends JDialog {
                 if (saldoDinheiro.compareTo(troco) < 0) {
                     throw new IllegalStateException("Saldo em dinheiro insuficiente para troco.");
                 }
-                // Registra saída para troco
-                CaixaMovimento movimentoTroco = new CaixaMovimento();
-                movimentoTroco.setCaixa(caixaAberto);
-                movimentoTroco.setTipo(CaixaMovimento.TipoMovimento.SAIDA);
-                movimentoTroco.setOrigem(CaixaMovimento.OrigemMovimento.AJUSTE);
-                movimentoTroco.setFormaPagamento(CaixaMovimento.FormaPagamento.DINHEIRO);
-                movimentoTroco.setValor(troco);
-                movimentoTroco.setDescricao("Troco para pagamento atendimento ID " + atendimento.getId());
-                movimentoTroco.setDataHora(LocalDateTime.now());
-                movimentoTroco.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                movimentoController.adicionarMovimento(movimentoTroco);
             }
+
+            String observacoes = txtObservacoes.getText();
 
             // Cria PagamentoAtendimento
             PagamentoAtendimento pagamento = new PagamentoAtendimento();
             pagamento.setAtendimento(atendimento);
             pagamento.setValor(valorPagar);
             pagamento.setMetodoPagamento(metodo);
-            pagamento.setObservacoes(txtObservacoes.getText());
+            pagamento.setObservacoes(observacoes);
             pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
             pagamentoController.salvarPagamento(pagamento);
 
             // Cria CaixaMovimento para entrada
-            CaixaMovimento movimento = new CaixaMovimento();
-            movimento.setCaixa(caixaAberto);
-            movimento.setTipo(CaixaMovimento.TipoMovimento.ENTRADA);
-            movimento.setOrigem(CaixaMovimento.OrigemMovimento.PAGAMENTO_ATENDIMENTO);
-            movimento.setPagamentoAtendimento(pagamento);
-            movimento.setFormaPagamento(mapMetodoToForma(metodo));
-            movimento.setValor(valorPagar);
-            movimento.setDescricao("Pagamento atendimento ID " + atendimento.getId());
-            movimento.setDataHora(LocalDateTime.now());
-            movimento.setUsuario(Sessao.getUsuarioLogado().getLogin());
-            movimentoController.adicionarMovimento(movimento);
+            CaixaMovimento movimentoEntrada = new CaixaMovimento();
+            movimentoEntrada.setCaixa(caixaAberto);
+            movimentoEntrada.setTipo(CaixaMovimento.TipoMovimento.ENTRADA);
+            movimentoEntrada.setOrigem(CaixaMovimento.OrigemMovimento.PAGAMENTO_ATENDIMENTO);
+            movimentoEntrada.setPagamentoAtendimento(pagamento);
+            movimentoEntrada.setFormaPagamento(mapMetodoToForma(metodo));
+            movimentoEntrada.setValor(valorRecebido);
+            movimentoEntrada.setDescricao("Pagamento atendimento ID " + atendimento.getId() +
+                    (observacoes.isEmpty() ? "" : " - " + observacoes));
+            movimentoEntrada.setDataHora(LocalDateTime.now());
+            movimentoEntrada.setUsuario(Sessao.getUsuarioLogado().getLogin());
+            movimentoController.adicionarMovimento(movimentoEntrada);
+
+            // Registra saída para troco se aplicável
+            if (troco.compareTo(BigDecimal.ZERO) > 0) {
+                CaixaMovimento movimentoTroco = new CaixaMovimento();
+                movimentoTroco.setCaixa(caixaAberto);
+                movimentoTroco.setTipo(CaixaMovimento.TipoMovimento.SAIDA);
+                movimentoTroco.setOrigem(CaixaMovimento.OrigemMovimento.AJUSTE);
+                movimentoTroco.setFormaPagamento(CaixaMovimento.FormaPagamento.DINHEIRO);
+                movimentoTroco.setValor(troco);
+                movimentoTroco.setDescricao("Troco para pagamento atendimento ID " + atendimento.getId() +
+                        (observacoes.isEmpty() ? "" : " - " + observacoes));
+                movimentoTroco.setDataHora(LocalDateTime.now());
+                movimentoTroco.setUsuario(Sessao.getUsuarioLogado().getLogin());
+                movimentoController.adicionarMovimento(movimentoTroco);
+            }
 
             // Atualiza status pagamento do atendimento
             atualizarStatusPagamento();

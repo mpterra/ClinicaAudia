@@ -544,6 +544,11 @@ CREATE TABLE caixa_movimento (
 
 -- ==============================================
 
-SELECT * FROM caixa;
-SELECT * FROM caixa_movimento;
 SELECT * FROM atendimento;
+SELECT * FROM pagamento_atendimento;
+SELECT * FROM caixa_movimento;
+SELECT * FROM caixa;
+DELETE FROM pagamento_atendimento;
+DELETE FROM caixa_movimento;
+
+UPDATE atendimento SET status_pagamento='PAGO';

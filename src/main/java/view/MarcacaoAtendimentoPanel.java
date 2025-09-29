@@ -536,7 +536,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panelBusca.add(txtBuscaProfissional);
         panel.add(panelBusca, BorderLayout.NORTH);
 
-        String[] colunas = { "Data", "Horário", "Paciente", "Profissional", "Tipo", "Situação" };
+        String[] colunas = { "Data", "Horário", "Paciente", "Profissional", "Tipo", "Situação", "Pagamento" };
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -550,7 +550,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 Color bgColor;
 
                 try {
-                    // Obtém data, horário e situação
+                    // Obtém data, horário, situação e status de pagamento
                     String dataStr = (String) getValueAt(row, 0);
                     LocalDate dataAtendimento = LocalDate.parse(dataStr, formatoData);
                     LocalTime horaAtendimento = (LocalTime) getValueAt(row, 1);
@@ -558,22 +558,44 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     LocalDateTime agora = LocalDateTime.now();
                     boolean isPast = dtAtendimento.isBefore(agora);
                     Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
+                    Atendimento.StatusPagamento statusPagamento = (Atendimento.StatusPagamento) getValueAt(row, 6);
 
-                    // Aplica cor cinza para AGENDADO passado; alterna para AGENDADO hoje/futuro; prioriza cores de outras situações
-                    if (situacao == Atendimento.Situacao.AGENDADO) {
-                        if (isPast) {
-                            bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
+                    // Define a cor da coluna Pagamento
+                    if (column == 6) {
+                        if (statusPagamento == Atendimento.StatusPagamento.PAGO) {
+                            bgColor = new Color(144, 238, 144); // Verde claro para PAGO
                         } else {
-                            // Alterna entre azul claro e branco para AGENDADO hoje/futuro
-                            bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE;
+                            // Mesma cor do atendimento para PENDENTE ou PARCIAL
+                            if (situacao == Atendimento.Situacao.AGENDADO) {
+                                if (isPast) {
+                                    bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
+                                } else {
+                                    bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE; // Alterna para AGENDADO hoje/futuro
+                                }
+                            } else {
+                                switch (situacao) {
+                                    case REALIZADO -> bgColor = new Color(144, 238, 144); // Verde claro
+                                    case FALTOU -> bgColor = new Color(255, 255, 153); // Amarelo claro
+                                    case CANCELADO -> bgColor = new Color(255, 182, 193); // Rosa claro
+                                    default -> bgColor = backgroundColor; // Fallback
+                                }
+                            }
                         }
                     } else {
-                        // Cores específicas para outros status
-                        switch (situacao) {
-                            case REALIZADO -> bgColor = new Color(144, 238, 144); // Verde claro
-                            case FALTOU -> bgColor = new Color(255, 255, 153); // Amarelo claro
-                            case CANCELADO -> bgColor = new Color(255, 182, 193); // Rosa claro
-                            default -> bgColor = backgroundColor; // Fallback
+                        // Lógica de cor para outras colunas
+                        if (situacao == Atendimento.Situacao.AGENDADO) {
+                            if (isPast) {
+                                bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
+                            } else {
+                                bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE; // Alterna para AGENDADO hoje/futuro
+                            }
+                        } else {
+                            switch (situacao) {
+                                case REALIZADO -> bgColor = new Color(144, 238, 144); // Verde claro
+                                case FALTOU -> bgColor = new Color(255, 255, 153); // Amarelo claro
+                                case CANCELADO -> bgColor = new Color(255, 182, 193); // Rosa claro
+                                default -> bgColor = backgroundColor; // Fallback
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -583,18 +605,24 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 c.setBackground(bgColor);
                 c.setForeground(Color.BLACK);
 
-                // Aplica borda preta na linha selecionada
+                // Aplica borda preta na linha selecionada e entre as colunas Situação (5) e Pagamento (6)
                 if (isRowSelected(row)) {
                     int lastColumn = getColumnCount() - 1;
                     if (column == 0) {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
                     } else if (column == lastColumn) {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
+                    } else if (column == 5) { // Coluna Situação
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
                     } else {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
                     }
                 } else {
-                    ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                    if (column == 5) { // Coluna Situação
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.BLACK));
+                    } else {
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                    }
                 }
 
                 return c;
@@ -811,7 +839,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                                 a.getPacienteNome(),
                                 a.getProfissional().getNome(),
                                 a.getTipo(),
-                                situacao
+                                situacao,
+                                a.getStatusPagamento()
                         });
                     }
                 }

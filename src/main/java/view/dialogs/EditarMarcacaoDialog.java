@@ -68,6 +68,7 @@ public class EditarMarcacaoDialog extends JDialog {
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
+    private final Font boldFont = new Font("SansSerif", Font.BOLD, 14);
 
     // Construtor do diálogo
     public EditarMarcacaoDialog(Frame parent, Atendimento atendimento) {
@@ -267,7 +268,7 @@ public class EditarMarcacaoDialog extends JDialog {
         formPanel.add(lblStatusPagamentoTitle, gbc);
 
         lblStatusPagamento = new JLabel();
-        lblStatusPagamento.setFont(labelFont);
+        lblStatusPagamento.setFont(boldFont);
         gbc.gridx = 3;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
@@ -508,6 +509,10 @@ public class EditarMarcacaoDialog extends JDialog {
 
     // Atualiza o valor do atendimento com base no profissional e tipo
     private void atualizarValor() {
+    	
+    	Color pago = new Color(0, 150, 10);
+    	Color pendente = new Color(255, 0, 0);
+    	
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
         Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
 
@@ -516,8 +521,10 @@ public class EditarMarcacaoDialog extends JDialog {
                 // Verifica se o tipo é válido para cobrança (exclui REUNIAO e PESSOAL)
                 if (tipo == Atendimento.Tipo.REUNIAO || tipo == Atendimento.Tipo.PESSOAL) {
                     atendimento.setValor(java.math.BigDecimal.ZERO);
-                    lblValor.setText("0.00");
+                    lblValor.setText("R$ 0,00");
                     lblStatusPagamento.setText(atendimento.getStatusPagamento().name());
+                    lblStatusPagamento.setFont(boldFont);
+                    lblStatusPagamento.setForeground(atendimento.getStatusPagamento() == Atendimento.StatusPagamento.PAGO ? pago : pendente);
                     btnReceberPagamento.setEnabled(false);
                     return;
                 }
@@ -526,21 +533,23 @@ public class EditarMarcacaoDialog extends JDialog {
                 ValorAtendimento va = valorAtendimentoController.buscarPorProfissionalETipo(prof.getId(), tipo);
                 if (va != null) {
                     atendimento.setValor(va.getValor());
-                    lblValor.setText(String.format("%.2f", va.getValor()));
+                    lblValor.setText("R$ " + String.format("%.2f", va.getValor()).replace(".", ","));
                 } else {
                     atendimento.setValor(java.math.BigDecimal.ZERO);
-                    lblValor.setText("0.00");
+                    lblValor.setText("R$ 0,00");
                 }
             } catch (Exception ex) {
                 atendimento.setValor(java.math.BigDecimal.ZERO);
-                lblValor.setText("0.00");
+                lblValor.setText("R$ 0,00");
             }
         } else {
             atendimento.setValor(java.math.BigDecimal.ZERO);
-            lblValor.setText("0.00");
+            lblValor.setText("R$ 0,00");
         }
 
         lblStatusPagamento.setText(atendimento.getStatusPagamento().name());
+        lblStatusPagamento.setFont(boldFont);
+        lblStatusPagamento.setForeground(atendimento.getStatusPagamento() == Atendimento.StatusPagamento.PAGO ? pago : pendente);
 
         // Habilita o botão de pagamento apenas se valor > 0 e status != PAGO
         boolean podeCobrar = atendimento.getValor().compareTo(java.math.BigDecimal.ZERO) > 0 &&
