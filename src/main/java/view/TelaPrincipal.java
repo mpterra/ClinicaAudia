@@ -125,7 +125,7 @@ public class TelaPrincipal extends JFrame {
 		}));
 
 		// MENU CADASTRO
-		JMenu menuCadastro = createMenu("Cadastro");
+		JMenu menuCadastro = createMenu("Configurações");
 		menuCadastro.add(createMenuItem("Tipos de Produto", e -> {
 			abrirCadastroTipoProduto();
 		}));
@@ -143,6 +143,9 @@ public class TelaPrincipal extends JFrame {
 		}));
 		menuCadastro.add(createMenuItem("Agenda por Profissional", e -> {
 			abrirCadastroEscalaProfissional();
+		}));
+		menuCadastro.add(createMenuItem("Valores de Consultas", e -> { 
+			abrirCadastroValorAtendimentoPanel();
 		}));
 		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
@@ -250,6 +253,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCaixaPanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new CaixaPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroValorAtendimentoPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroValorAtendimentoPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

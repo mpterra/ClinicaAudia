@@ -12,6 +12,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,11 +28,13 @@ import controller.AtendimentoController;
 import controller.EscalaProfissionalController;
 import controller.PacienteController;
 import controller.ProfissionalController;
+import controller.ValorAtendimentoController;
 import exception.CampoObrigatorioException;
 import model.Atendimento;
 import model.EscalaProfissional;
 import model.Paciente;
 import model.Profissional;
+import model.ValorAtendimento;
 import util.Sessao;
 import view.dialogs.EditarMarcacaoDialog;
 
@@ -73,6 +76,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private final PacienteController pacienteController = new PacienteController();
     private final ProfissionalController profissionalController = new ProfissionalController();
     private final EscalaProfissionalController escalaController = new EscalaProfissionalController();
+    private final ValorAtendimentoController valorAtendimentoController = new ValorAtendimentoController();
 
     public MarcacaoAtendimentoPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -555,16 +559,21 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     boolean isPast = dtAtendimento.isBefore(agora);
                     Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
 
-                    // Aplica cor cinza apenas para AGENDADO passado; prioriza cores de outras situações
-                    if (isPast && situacao == Atendimento.Situacao.AGENDADO) {
-                        bgColor = new Color(220, 220, 220);
+                    // Aplica cor cinza para AGENDADO passado; alterna para AGENDADO hoje/futuro; prioriza cores de outras situações
+                    if (situacao == Atendimento.Situacao.AGENDADO) {
+                        if (isPast) {
+                            bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
+                        } else {
+                            // Alterna entre azul claro e branco para AGENDADO hoje/futuro
+                            bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE;
+                        }
                     } else {
+                        // Cores específicas para outros status
                         switch (situacao) {
-                            case AGENDADO -> bgColor = new Color(173, 216, 230);
-                            case REALIZADO -> bgColor = new Color(144, 238, 144);
-                            case FALTOU -> bgColor = new Color(255, 255, 153);
-                            case CANCELADO -> bgColor = new Color(255, 182, 193);
-                            default -> bgColor = backgroundColor;
+                            case REALIZADO -> bgColor = new Color(144, 238, 144); // Verde claro
+                            case FALTOU -> bgColor = new Color(255, 255, 153); // Amarelo claro
+                            case CANCELADO -> bgColor = new Color(255, 182, 193); // Rosa claro
+                            default -> bgColor = backgroundColor; // Fallback
                         }
                     }
                 } catch (Exception e) {
@@ -780,7 +789,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     }
 
     // Carrega os atendimentos na tabela, filtrando conforme regras
- // Carrega os atendimentos na tabela, filtrando conforme regras
     private void carregarAtendimentos() {
         modeloTabela.setRowCount(0);
         try {
@@ -815,8 +823,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     }
 
     // Salva o atendimento, validando campos e regras
- // Salva o atendimento, validando campos e regras
- // Salva o atendimento, validando campos e regras
     private void salvarAtendimento() {
         try {
             String nomePaciente = lblNomePaciente.getText().replace("Nome: ", "").trim();
@@ -840,6 +846,13 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             if (dataSelecionada.isBefore(hoje) || (dataSelecionada.equals(hoje) && hora.isBefore(agora))) {
                 throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
             }
+
+            // Busca o valor do atendimento
+            ValorAtendimento valorAtendimento = valorAtendimentoController.buscarPorProfissionalETipo(prof.getId(), tipo);
+            if (valorAtendimento == null) {
+                throw new Exception("Nenhum valor cadastrado para o profissional e tipo de atendimento selecionados!");
+            }
+            BigDecimal valor = valorAtendimento.getValor();
 
             // Define a duração com base no tipo de atendimento
             int duration = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
@@ -871,6 +884,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             at.setSituacao(Atendimento.Situacao.AGENDADO);
             at.setUsuario(Sessao.getUsuarioLogado().getLogin());
             at.setNotas(txtObservacoes.getText());
+            at.setValor(valor); // Define o valor do atendimento
 
             // Chama o controller para salvar
             if (atendimentoController.criarAtendimento(at, Sessao.getUsuarioLogado().getLogin())) {

@@ -1,4 +1,4 @@
-DROP DATABASE audia;
+DROP DATABASE IF EXISTS audia;
 CREATE DATABASE audia;
 USE audia;
 
@@ -156,6 +156,7 @@ CREATE TABLE atendimento (
     situacao ENUM('AGENDADO','REALIZADO','FALTOU','CANCELADO') NOT NULL DEFAULT 'AGENDADO',
     notas TEXT,
     valor DECIMAL(10,2) DEFAULT 0,
+    status_pagamento ENUM('PENDENTE','PARCIAL','PAGO') DEFAULT 'PENDENTE',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
@@ -166,6 +167,24 @@ CREATE TABLE atendimento (
         FOREIGN KEY (profissional_id)
         REFERENCES profissional(id)
 );
+
+-- ========================================
+-- VALORES DE ATENDIMENTO POR TIPO
+-- ========================================
+CREATE TABLE valor_atendimento (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    profissional_id INT NOT NULL,
+    tipo ENUM('AVALIACAO','RETORNO','REGULAGEM','EXAME') NOT NULL,
+    valor DECIMAL(10,2) NOT NULL DEFAULT 0,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    usuario VARCHAR(50),
+    CONSTRAINT fk_valores_profissional
+        FOREIGN KEY (profissional_id)
+        REFERENCES profissional(id),
+    CONSTRAINT unq_profissional_tipo UNIQUE (profissional_id, tipo)
+);
+
 
 -- ========================================
 -- TABELA DOCUMENTO_ATENDIMENTO
@@ -527,3 +546,4 @@ CREATE TABLE caixa_movimento (
 
 SELECT * FROM caixa;
 SELECT * FROM caixa_movimento;
+SELECT * FROM atendimento;

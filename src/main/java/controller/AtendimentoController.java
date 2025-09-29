@@ -20,8 +20,7 @@ public class AtendimentoController {
     // CRIAR ATENDIMENTO
     // ===========================
     public boolean criarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
-        validarDuracao(at);
-        validarDisponibilidade(at, null); // null = novo atendimento
+        validar(at, null);
         return dao.salvar(at, usuarioLogado);
     }
 
@@ -29,8 +28,7 @@ public class AtendimentoController {
     // ATUALIZAR ATENDIMENTO
     // ===========================
     public boolean atualizarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
-        validarDuracao(at);
-        validarDisponibilidade(at, at.getId()); // Passa ID atual para ignorar na verificação
+        validar(at, at.getId());
         return dao.atualizar(at, usuarioLogado);
     }
 
@@ -57,25 +55,33 @@ public class AtendimentoController {
     }
 
     // ===========================
-    // VALIDAÇÕES
+    // VALIDAÇÕES INTERNAS
     // ===========================
+    private void validar(Atendimento at, Integer idAtual) throws SQLException {
+        validarDuracao(at);
+        validarProfissional(at);
+        validarDisponibilidade(at, idAtual);
+    }
+
     private void validarDuracao(Atendimento at) {
         if (at.getDuracaoMin() <= 0) {
-            throw new IllegalArgumentException("Duração deve ser maior que zero.");
+            throw new IllegalArgumentException("A duração do atendimento deve ser maior que zero.");
+        }
+    }
+
+    private void validarProfissional(Atendimento at) {
+        Profissional prof = at.getProfissional();
+        if (prof == null || prof.getId() == 0) {
+            throw new IllegalArgumentException("Profissional não selecionado ou inválido.");
         }
     }
 
     private void validarDisponibilidade(Atendimento at, Integer idAtual) throws SQLException {
-        Profissional prof = at.getProfissional();
-        if (prof == null) {
-            throw new IllegalArgumentException("Profissional não selecionado.");
-        }
-
         boolean disponivel = dao.isDisponivel(
-                prof.getId(),
+                at.getProfissional().getId(),
                 at.getDataHora(),
                 at.getDuracaoMin(),
-                idAtual // Se for atualização, passa o ID atual
+                idAtual
         );
 
         if (!disponivel) {

@@ -18,8 +18,8 @@ public class AtendimentoDAO {
     public boolean salvar(Atendimento at, String usuarioLogado) throws SQLException {
         String sql = """
             INSERT INTO atendimento 
-            (paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, usuario)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (paciente_id, profissional_id, data_hora, duracao_min, tipo, situacao, notas, valor, status_pagamento, usuario)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = Database.getConnection();
@@ -33,7 +33,8 @@ public class AtendimentoDAO {
             stmt.setString(6, at.getSituacao().name());
             stmt.setString(7, at.getNotas());
             stmt.setBigDecimal(8, at.getValor());
-            stmt.setString(9, usuarioLogado);
+            stmt.setString(9, at.getStatusPagamento().name());
+            stmt.setString(10, usuarioLogado);
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) throw new SQLException("Falha ao inserir Atendimento.");
@@ -124,7 +125,8 @@ public class AtendimentoDAO {
         String sql = """
             UPDATE atendimento SET 
                 paciente_id = ?, profissional_id = ?, data_hora = ?, duracao_min = ?, 
-                tipo = ?, situacao = ?, notas = ?, valor = ?, usuario = ?, atualizado_em = CURRENT_TIMESTAMP
+                tipo = ?, situacao = ?, notas = ?, valor = ?, status_pagamento = ?, 
+                usuario = ?, atualizado_em = CURRENT_TIMESTAMP
             WHERE id = ?
             """;
 
@@ -137,10 +139,11 @@ public class AtendimentoDAO {
             stmt.setInt(4, at.getDuracaoMin());
             stmt.setString(5, at.getTipo().name());
             stmt.setString(6, at.getSituacao().name());
-            stmt.setString(7, at.getNotas()); // Substitui completamente as notas
+            stmt.setString(7, at.getNotas());
             stmt.setBigDecimal(8, at.getValor());
-            stmt.setString(9, usuarioLogado);
-            stmt.setInt(10, at.getId());
+            stmt.setString(9, at.getStatusPagamento().name());
+            stmt.setString(10, usuarioLogado);
+            stmt.setInt(11, at.getId());
 
             return stmt.executeUpdate() > 0;
         }
@@ -170,7 +173,7 @@ public class AtendimentoDAO {
             SELECT COUNT(*) FROM atendimento
             WHERE profissional_id = ?
               AND situacao != 'CANCELADO'
-              AND (? IS NULL OR id != ?) -- ignora o próprio atendimento se for atualização
+              AND (? IS NULL OR id != ?)
               AND (
                 (? >= data_hora AND ? < DATE_ADD(data_hora, INTERVAL duracao_min MINUTE))
                 OR
@@ -191,12 +194,12 @@ public class AtendimentoDAO {
                 stmt.setNull(2, Types.INTEGER);
                 stmt.setNull(3, Types.INTEGER);
             }
-            stmt.setTimestamp(4, dataHora); // inicio do novo atendimento
-            stmt.setTimestamp(5, Timestamp.valueOf(inicio)); // inicio do novo atendimento
-            stmt.setTimestamp(6, Timestamp.valueOf(fim)); // fim do novo atendimento
-            stmt.setTimestamp(7, Timestamp.valueOf(fim)); // fim do novo atendimento
-            stmt.setTimestamp(8, dataHora); // inicio do novo atendimento
-            stmt.setTimestamp(9, Timestamp.valueOf(fim)); // fim do novo atendimento
+            stmt.setTimestamp(4, dataHora);
+            stmt.setTimestamp(5, Timestamp.valueOf(inicio));
+            stmt.setTimestamp(6, Timestamp.valueOf(fim));
+            stmt.setTimestamp(7, Timestamp.valueOf(fim));
+            stmt.setTimestamp(8, dataHora);
+            stmt.setTimestamp(9, Timestamp.valueOf(fim));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return rs.getInt(1) == 0;
@@ -219,6 +222,7 @@ public class AtendimentoDAO {
         at.setSituacao(Atendimento.Situacao.valueOf(rs.getString("situacao")));
         at.setNotas(rs.getString("notas"));
         at.setValor(rs.getBigDecimal("valor"));
+        at.setStatusPagamento(Atendimento.StatusPagamento.valueOf(rs.getString("status_pagamento")));
         at.setCriadoEm(rs.getTimestamp("criado_em"));
         at.setAtualizadoEm(rs.getTimestamp("atualizado_em"));
         at.setUsuario(rs.getString("usuario"));

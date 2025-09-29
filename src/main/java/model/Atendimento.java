@@ -7,6 +7,9 @@ import java.time.LocalTime;
 
 public class Atendimento {
 
+    // =============================
+    // Enums
+    // =============================
     public enum Tipo {
         AVALIACAO, RETORNO, REGULAGEM, EXAME, REUNIAO, PESSOAL
     }
@@ -15,6 +18,13 @@ public class Atendimento {
         AGENDADO, REALIZADO, FALTOU, CANCELADO
     }
 
+    public enum StatusPagamento {
+        PENDENTE, PARCIAL, PAGO
+    }
+
+    // =============================
+    // Campos
+    // =============================
     private int id;
     private int pacienteId;
     private int profissionalId;
@@ -24,6 +34,7 @@ public class Atendimento {
     private Situacao situacao;
     private String notas;
     private BigDecimal valor;
+    private StatusPagamento statusPagamento;
     private Timestamp criadoEm;
     private Timestamp atualizadoEm;
     private String usuario;
@@ -32,11 +43,14 @@ public class Atendimento {
     private Paciente paciente;
     private Profissional profissional;
 
-    // Construtor vazio
+    // =============================
+    // Construtor
+    // =============================
     public Atendimento() {
         this.duracaoMin = 30;
         this.situacao = Situacao.AGENDADO;
         this.valor = BigDecimal.ZERO;
+        this.statusPagamento = StatusPagamento.PENDENTE;
     }
 
     // =============================
@@ -69,6 +83,9 @@ public class Atendimento {
     public BigDecimal getValor() { return valor; }
     public void setValor(BigDecimal valor) { this.valor = valor; }
 
+    public StatusPagamento getStatusPagamento() { return statusPagamento; }
+    public void setStatusPagamento(StatusPagamento statusPagamento) { this.statusPagamento = statusPagamento; }
+
     public Timestamp getCriadoEm() { return criadoEm; }
     public void setCriadoEm(Timestamp criadoEm) { this.criadoEm = criadoEm; }
 
@@ -79,10 +96,10 @@ public class Atendimento {
     public void setUsuario(String usuario) { this.usuario = usuario; }
 
     // =============================
-    // Getters e Setters dos objetos
+    // Relacionamentos
     // =============================
     public Paciente getPaciente() { return paciente; }
-    public void setPaciente(Paciente paciente) { 
+    public void setPaciente(Paciente paciente) {
         this.paciente = paciente;
         if (paciente != null) {
             this.pacienteId = paciente.getId();
@@ -90,7 +107,7 @@ public class Atendimento {
     }
 
     public Profissional getProfissional() { return profissional; }
-    public void setProfissional(Profissional profissional) { 
+    public void setProfissional(Profissional profissional) {
         this.profissional = profissional;
         if (profissional != null) {
             this.profissionalId = profissional.getId();
@@ -102,14 +119,12 @@ public class Atendimento {
     // =============================
     /** Retorna a data como LocalDate */
     public LocalDate getData() {
-        if (dataHora != null) return dataHora.toLocalDateTime().toLocalDate();
-        return null;
+        return (dataHora != null) ? dataHora.toLocalDateTime().toLocalDate() : null;
     }
 
     /** Retorna a hora como LocalTime */
     public LocalTime getHora() {
-        if (dataHora != null) return dataHora.toLocalDateTime().toLocalTime();
-        return null;
+        return (dataHora != null) ? dataHora.toLocalDateTime().toLocalTime() : null;
     }
 
     /** Define data e hora separadamente */

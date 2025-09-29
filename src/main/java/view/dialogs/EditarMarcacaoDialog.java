@@ -19,11 +19,13 @@ import controller.AtendimentoController;
 import controller.EscalaProfissionalController;
 import controller.ProfissionalController;
 import controller.PacienteController;
+import controller.ValorAtendimentoController;
 import exception.CampoObrigatorioException;
 import model.Atendimento;
 import model.EscalaProfissional;
 import model.Paciente;
 import model.Profissional;
+import model.ValorAtendimento;
 import util.Sessao;
 
 // Classe auxiliar para intervalos de tempo
@@ -45,6 +47,7 @@ public class EditarMarcacaoDialog extends JDialog {
     private final ProfissionalController profissionalController = new ProfissionalController();
     private final EscalaProfissionalController escalaController = new EscalaProfissionalController();
     private final PacienteController pacienteController = new PacienteController();
+    private final ValorAtendimentoController valorAtendimentoController = new ValorAtendimentoController();
 
     private JLabel lblNomePaciente;
     private JLabel lblTelefone;
@@ -56,6 +59,9 @@ public class EditarMarcacaoDialog extends JDialog {
     private JComboBox<LocalTime> cbHorario;
     private JTextPane txtObservacoes;
     private JComboBox<String> cbData;
+    private JLabel lblValor;
+    private JLabel lblStatusPagamento;
+    private JButton btnReceberPagamento; // Botão para receber pagamento
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final Color primaryColor = new Color(30, 144, 255);
@@ -98,12 +104,14 @@ public class EditarMarcacaoDialog extends JDialog {
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
 
+        // Título
         JLabel lblTitulo = new JLabel("Editar Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
+        // Painel principal do formulário
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -235,11 +243,41 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbHorario, gbc);
 
+        // Linha dupla: Valor | Status Pagamento
+        JLabel lblValorTitle = new JLabel("Valor:");
+        lblValorTitle.setFont(labelFont);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.insets = new Insets(5, 15, 5, 5);
+        gbc.anchor = GridBagConstraints.EAST;
+        formPanel.add(lblValorTitle, gbc);
+
+        lblValor = new JLabel();
+        lblValor.setFont(labelFont);
+        gbc.gridx = 1;
+        gbc.insets = new Insets(5, 5, 5, 15);
+        gbc.anchor = GridBagConstraints.WEST;
+        formPanel.add(lblValor, gbc);
+
+        JLabel lblStatusPagamentoTitle = new JLabel("Status Pagamento:");
+        lblStatusPagamentoTitle.setFont(labelFont);
+        gbc.gridx = 2;
+        gbc.insets = new Insets(5, 15, 5, 5);
+        gbc.anchor = GridBagConstraints.EAST;
+        formPanel.add(lblStatusPagamentoTitle, gbc);
+
+        lblStatusPagamento = new JLabel();
+        lblStatusPagamento.setFont(labelFont);
+        gbc.gridx = 3;
+        gbc.insets = new Insets(5, 5, 5, 15);
+        gbc.anchor = GridBagConstraints.WEST;
+        formPanel.add(lblStatusPagamento, gbc);
+
         // Observações
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 1.0;
@@ -255,9 +293,16 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.fill = GridBagConstraints.BOTH;
         formPanel.add(scrollObservacoes, gbc);
 
-        // Botões
+        // Painel de botões
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         buttonPanel.setBackground(backgroundColor);
+
+        btnReceberPagamento = new JButton("Receber Pagamento");
+        btnReceberPagamento.setBackground(new Color(34, 139, 34)); // Verde para pagamento
+        btnReceberPagamento.setForeground(Color.WHITE);
+        btnReceberPagamento.setPreferredSize(new Dimension(150, 35));
+        btnReceberPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnReceberPagamento.setEnabled(false); // Inicialmente desabilitado
 
         JButton btnSalvar = new JButton("Salvar");
         btnSalvar.setBackground(primaryColor);
@@ -278,6 +323,7 @@ public class EditarMarcacaoDialog extends JDialog {
         btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         buttonPanel.add(btnCancelar);
+        buttonPanel.add(btnReceberPagamento);
         buttonPanel.add(btnExcluir);
         buttonPanel.add(btnSalvar);
 
@@ -285,13 +331,20 @@ public class EditarMarcacaoDialog extends JDialog {
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(mainPanel, BorderLayout.CENTER);
 
+        // Ações dos botões
         btnSalvar.addActionListener(e -> salvar());
         btnExcluir.addActionListener(e -> excluir());
         btnCancelar.addActionListener(e -> dispose());
-
-        cbProfissional.addActionListener(e -> atualizarHorarios());
+        btnReceberPagamento.addActionListener(e -> receberPagamento());
+        cbProfissional.addActionListener(e -> {
+            atualizarHorarios();
+            atualizarValor();
+        });
         cbData.addActionListener(e -> atualizarHorarios());
-        cbTipo.addActionListener(e -> atualizarHorarios()); // Adicionado para atualizar horários ao mudar tipo
+        cbTipo.addActionListener(e -> {
+            atualizarHorarios();
+            atualizarValor();
+        });
     }
 
     // Preenche os campos com os dados do atendimento
@@ -339,6 +392,8 @@ public class EditarMarcacaoDialog extends JDialog {
         cbData.setSelectedItem(dataStr);
 
         txtObservacoes.setText(atendimento.getNotas() != null ? "<html>" + atendimento.getNotas() + "</html>" : "<html></html>");
+
+        atualizarValor(); // Atualiza valor e status inicial
         atualizarHorarios();
     }
 
@@ -451,6 +506,65 @@ public class EditarMarcacaoDialog extends JDialog {
         }
     }
 
+    // Atualiza o valor do atendimento com base no profissional e tipo
+    private void atualizarValor() {
+        Profissional prof = (Profissional) cbProfissional.getSelectedItem();
+        Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
+
+        if (prof != null && tipo != null) {
+            try {
+                // Verifica se o tipo é válido para cobrança (exclui REUNIAO e PESSOAL)
+                if (tipo == Atendimento.Tipo.REUNIAO || tipo == Atendimento.Tipo.PESSOAL) {
+                    atendimento.setValor(java.math.BigDecimal.ZERO);
+                    lblValor.setText("0.00");
+                    lblStatusPagamento.setText(atendimento.getStatusPagamento().name());
+                    btnReceberPagamento.setEnabled(false);
+                    return;
+                }
+
+                // Usa Atendimento.Tipo diretamente, pois o controller espera esse tipo
+                ValorAtendimento va = valorAtendimentoController.buscarPorProfissionalETipo(prof.getId(), tipo);
+                if (va != null) {
+                    atendimento.setValor(va.getValor());
+                    lblValor.setText(String.format("%.2f", va.getValor()));
+                } else {
+                    atendimento.setValor(java.math.BigDecimal.ZERO);
+                    lblValor.setText("0.00");
+                }
+            } catch (Exception ex) {
+                atendimento.setValor(java.math.BigDecimal.ZERO);
+                lblValor.setText("0.00");
+            }
+        } else {
+            atendimento.setValor(java.math.BigDecimal.ZERO);
+            lblValor.setText("0.00");
+        }
+
+        lblStatusPagamento.setText(atendimento.getStatusPagamento().name());
+
+        // Habilita o botão de pagamento apenas se valor > 0 e status != PAGO
+        boolean podeCobrar = atendimento.getValor().compareTo(java.math.BigDecimal.ZERO) > 0 &&
+                atendimento.getStatusPagamento() != Atendimento.StatusPagamento.PAGO;
+        btnReceberPagamento.setEnabled(podeCobrar);
+    }
+
+    // Abre a dialog para receber pagamento
+    private void receberPagamento() {
+        try {
+            ReceberPagamentoAtendimentoDialog pagamentoDialog = new ReceberPagamentoAtendimentoDialog(this, atendimento);
+            pagamentoDialog.setVisible(true);
+            // Recarrega o atendimento para atualizar o status de pagamento
+            Atendimento updatedAtendimento = atendimentoController.buscarPorId(atendimento.getId());
+            if (updatedAtendimento != null) {
+                this.atendimento = updatedAtendimento;
+                atualizarValor(); // Atualiza labels e botão após pagamento
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Erro ao abrir diálogo de pagamento: " + ex.getMessage(), "Erro",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     // Salva as alterações no atendimento
     private void salvar() {
         try {
@@ -483,7 +597,7 @@ public class EditarMarcacaoDialog extends JDialog {
 
             atendimento.setProfissional(prof);
             atendimento.setDataHora(Timestamp.valueOf(data.atTime(hora)));
-            atendimento.setDuracaoMin(tipo == Atendimento.Tipo.AVALIACAO ? 90 : 60); // Define duração com base no tipo
+            atendimento.setDuracaoMin(tipo == Atendimento.Tipo.AVALIACAO ? 90 : 60);
             atendimento.setTipo(tipo);
             atendimento.setSituacao(situacao);
             atendimento.setNotas(txtObservacoes.getText().replaceAll("<html>|</html>", ""));

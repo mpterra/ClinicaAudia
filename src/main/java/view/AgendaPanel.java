@@ -159,27 +159,21 @@ public class AgendaPanel extends JPanel {
                     Object statusObj = getValueAt(row, 4); // Status na coluna 4
                     String status = statusObj != null ? statusObj.toString().toUpperCase() : "";
 
-                    if (dataLinha.isBefore(hoje)) {
-                        // Atendimentos passados com status AGENDADO ficam cinza
-                        if (status.equals("AGENDADO")) {
-                            bgColor = new Color(220, 220, 220); // Cinza para passado agendado
+                    if (status.equals("AGENDADO")) {
+                        // Para AGENDADO, verifica se é passado ou futuro/hoje
+                        if (dataLinha.isBefore(hoje)) {
+                            bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
                         } else {
-                            // Outros status mantêm suas cores específicas
-                            switch (status) {
-                                case "REALIZADO" -> bgColor = new Color(144, 238, 144); // Verde claro
-                                case "FALTOU" -> bgColor = new Color(255, 255, 153); // Amarelo claro
-                                case "CANCELADO" -> bgColor = new Color(255, 182, 193); // Rosa claro
-                                default -> bgColor = new Color(220, 220, 220); // Cinza padrão para outros casos
-                            }
+                            // Alterna entre azul claro e branco para AGENDADO futuro/hoje
+                            bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE;
                         }
                     } else {
-                        // Atendimentos futuros ou de hoje
+                        // Outros status mantêm suas cores específicas
                         switch (status) {
-                            case "AGENDADO" -> bgColor = new Color(173, 216, 230); // Azul claro
                             case "REALIZADO" -> bgColor = new Color(144, 238, 144); // Verde claro
                             case "FALTOU" -> bgColor = new Color(255, 255, 153); // Amarelo claro
                             case "CANCELADO" -> bgColor = new Color(255, 182, 193); // Rosa claro
-                            default -> bgColor = dataLinha.equals(hoje) ? new Color(0, 200, 0) : new Color(173, 216, 230);
+                            default -> bgColor = Color.WHITE; // Fallback
                         }
                     }
                 } catch (Exception e) {

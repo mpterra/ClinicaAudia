@@ -60,4 +60,8 @@ public class ProfissionalController {
     public List<Profissional> listarTodos() throws SQLException {
         return dao.listarTodos();
     }
+
+	public List<Profissional> listarTodosOrdenadoPorIdDesc() {
+		return dao.listarTodosOrdenadoPorIdDesc();
+	}
 }
