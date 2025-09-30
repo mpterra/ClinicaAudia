@@ -144,6 +144,26 @@ CREATE TABLE escala_profissional (
 );
 
 -- ========================================
+-- TABELA EMPRESA_PARCEIRA
+-- ========================================
+CREATE TABLE empresa_parceira (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(120) NOT NULL,
+    cnpj CHAR(18) UNIQUE,
+    telefone VARCHAR(30),
+    email VARCHAR(120),
+    id_endereco INT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    usuario VARCHAR(50),
+    CONSTRAINT fk_empresa_endereco
+        FOREIGN KEY (id_endereco)
+        REFERENCES endereco(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+-- ========================================
 -- TABELA ATENDIMENTO
 -- ========================================
 CREATE TABLE atendimento (
@@ -154,6 +174,7 @@ CREATE TABLE atendimento (
     duracao_min INT NOT NULL DEFAULT 30,
     tipo ENUM('AVALIACAO','RETORNO','REGULAGEM','EXAME','REUNIAO','PESSOAL') NOT NULL,
     situacao ENUM('AGENDADO','REALIZADO','FALTOU','CANCELADO') NOT NULL DEFAULT 'AGENDADO',
+    empresa_parceira_id INT NULL,
     notas TEXT,
     valor DECIMAL(10,2) DEFAULT 0,
     status_pagamento ENUM('PENDENTE','PARCIAL','PAGO') DEFAULT 'PENDENTE',
@@ -165,7 +186,12 @@ CREATE TABLE atendimento (
         REFERENCES paciente(id),
     CONSTRAINT fk_at_profissional
         FOREIGN KEY (profissional_id)
-        REFERENCES profissional(id)
+        REFERENCES profissional(id),
+    CONSTRAINT fk_at_empresa
+        FOREIGN KEY (empresa_parceira_id)
+        REFERENCES empresa_parceira(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 );
 
 -- ========================================
@@ -183,6 +209,32 @@ CREATE TABLE valor_atendimento (
         FOREIGN KEY (profissional_id)
         REFERENCES profissional(id),
     CONSTRAINT unq_profissional_tipo UNIQUE (profissional_id, tipo)
+);
+
+-- ========================================
+-- TABELA VALOR_ATENDIMENTO_EMPRESA
+-- ========================================
+-- Armazena valores de atendimento específicos por empresa parceira
+CREATE TABLE valor_atendimento_empresa (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    profissional_id INT NOT NULL,         -- ID do profissional
+    empresa_parceira_id INT NOT NULL,     -- ID da empresa parceira
+    tipo ENUM('AVALIACAO','RETORNO','REGULAGEM','EXAME') NOT NULL, -- Tipo de atendimento
+    valor DECIMAL(10,2) NOT NULL DEFAULT 0, -- Valor do atendimento
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Data de criação
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- Data de atualização
+    usuario VARCHAR(50),                  -- Usuário que realizou o cadastro
+    CONSTRAINT fk_val_at_emp_profissional
+        FOREIGN KEY (profissional_id)
+        REFERENCES profissional(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_val_at_emp_empresa
+        FOREIGN KEY (empresa_parceira_id)
+        REFERENCES empresa_parceira(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT unq_prof_empresa_tipo UNIQUE (profissional_id, empresa_parceira_id, tipo) -- Unicidade por profissional, empresa e tipo
 );
 
 
@@ -543,12 +595,3 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
-
-SELECT * FROM atendimento;
-SELECT * FROM pagamento_atendimento;
-SELECT * FROM caixa_movimento;
-SELECT * FROM caixa;
-DELETE FROM pagamento_atendimento;
-DELETE FROM caixa_movimento;
-
-UPDATE atendimento SET status_pagamento='PAGO';
