@@ -151,6 +151,9 @@ public class TelaPrincipal extends JFrame {
 		menuCadastro.add(createMenuItem("Empresas Parceiras", e -> { 
 			abrirCadastroEmpresaParceiraPanel();
 		}));
+		menuCadastro.add(createMenuItem("Valores por Empresa", e -> { 
+			abrirCadastroValorAtendimentoEmpresaPanel();
+		}));
 		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Usuários", e -> abrirCadastroUsuario()));
 
@@ -271,6 +274,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroEmpresaParceiraPanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroEmpresaParceiraPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCadastroValorAtendimentoEmpresaPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroValorAtendimentoEmpresaPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
