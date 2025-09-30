@@ -10,15 +10,12 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableRowSorter;
 import javax.swing.text.MaskFormatter;
-
 import controller.PacienteController;
 import exception.CampoObrigatorioException;
 import model.Paciente;
 import model.Endereco;
 import util.CPFUtils;
 import util.Sessao;
-import util.ViaCepService;
-
 import java.awt.*;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -31,14 +28,15 @@ public class CadastroPacientePanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     // Componentes de entrada
-    private JTextField tfNome, tfEmail, tfRua, tfNumero, tfComplemento, tfBairro, tfCidade, tfPesquisar;
-    private JFormattedTextField tfCpf, tfTelefone, tfCep, tfDataNascimento;
-    private JComboBox<String> cbEstado, cbSexo;
+    private JTextField tfNome, tfEmail, tfPesquisar;
+    private JFormattedTextField tfCpf, tfTelefone, tfDataNascimento;
+    private JComboBox<String> cbSexo;
     private JButton btnSalvar, btnLimpar;
     private JTable tabelaPacientes;
     private DefaultTableModel modeloTabela;
     private TableRowSorter<DefaultTableModel> sorter;
     private JLabel lblErroData, lblValidaCpf;
+    private EnderecoPanel enderecoPanel; // Painel de endereço reutilizável
 
     // Estilo visual
     private final Color primaryColor = new Color(30, 144, 255); // Azul
@@ -87,8 +85,8 @@ public class CadastroPacientePanel extends JPanel {
             } catch (CampoObrigatorioException e1) {
                 JOptionPane.showMessageDialog(this, e1.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             } catch (SQLException e1) {
-                JOptionPane.showMessageDialog(this, "Erro ao salvar paciente: " + e1.getMessage(), "Erro", 
-                    JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Erro ao salvar paciente: " + e1.getMessage(), "Erro",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -284,137 +282,8 @@ public class CadastroPacientePanel extends JPanel {
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
 
-        // Painel Endereço
-        JPanel panelEndereco = new JPanel(new GridBagLayout());
-        panelEndereco.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(
-                        BorderFactory.createLineBorder(primaryColor, 1, true),
-                        "Endereço",
-                        TitledBorder.LEFT,
-                        TitledBorder.TOP,
-                        labelFont,
-                        primaryColor),
-                new EmptyBorder(5, 5, 5, 5)));
-        panelEndereco.setBackground(backgroundColor);
-
-        GridBagConstraints gbcEnd = new GridBagConstraints();
-        gbcEnd.insets = new Insets(3, 5, 3, 5);
-        gbcEnd.anchor = GridBagConstraints.WEST;
-        gbcEnd.fill = GridBagConstraints.HORIZONTAL;
-
-        // CEP
-        gbcEnd.gridx = 0;
-        gbcEnd.gridy = 0;
-        JLabel lblCep = new JLabel("CEP:");
-        lblCep.setFont(labelFont);
-        panelEndereco.add(lblCep, gbcEnd);
-        try {
-            MaskFormatter cepMask = new MaskFormatter("#####-###");
-            cepMask.setPlaceholderCharacter('_');
-            tfCep = new JFormattedTextField(cepMask);
-            tfCep.setPreferredSize(new Dimension(100, 25));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        gbcEnd.gridx = 1;
-        panelEndereco.add(tfCep, gbcEnd);
-
-        // Rua
-        gbcEnd.gridx = 2;
-        gbcEnd.gridy = 0;
-        JLabel lblRua = new JLabel("Rua:");
-        lblRua.setFont(labelFont);
-        panelEndereco.add(lblRua, gbcEnd);
-        tfRua = new JTextField(20);
-        tfRua.setPreferredSize(new Dimension(150, 25));
-        gbcEnd.gridx = 3;
-        panelEndereco.add(tfRua, gbcEnd);
-
-        // Buscar endereço via CEP
-        tfCep.getDocument().addDocumentListener(new DocumentListener() {
-            private void buscarEndereco() {
-                String cep = tfCep.getText().replaceAll("\\D", "");
-                if (cep.length() != 8) return;
-                new SwingWorker<Endereco, Void>() {
-                    @Override
-                    protected Endereco doInBackground() throws Exception {
-                        return ViaCepService.buscarEndereco(cep);
-                    }
-                    @Override
-                    protected void done() {
-                        try {
-                            Endereco endereco = get();
-                            if (endereco != null) {
-                                tfRua.setText(endereco.getRua());
-                                tfBairro.setText(endereco.getBairro());
-                                tfCidade.setText(endereco.getCidade());
-                                cbEstado.setSelectedItem(endereco.getEstado());
-                            } else {
-                                tfRua.setText("");
-                                tfBairro.setText("");
-                                tfCidade.setText("");
-                                cbEstado.setSelectedIndex(0);
-                            }
-                        } catch (Exception ex) { ex.printStackTrace(); }
-                    }
-                }.execute();
-            }
-            public void insertUpdate(DocumentEvent e) { buscarEndereco(); }
-            public void removeUpdate(DocumentEvent e) { buscarEndereco(); }
-            public void changedUpdate(DocumentEvent e) { buscarEndereco(); }
-        });
-
-        // Número, Complemento, Bairro, Cidade, Estado
-        gbcEnd.gridy = 1;
-        gbcEnd.gridx = 0;
-        JLabel lblNumero = new JLabel("Número:");
-        lblNumero.setFont(labelFont);
-        panelEndereco.add(lblNumero, gbcEnd);
-        tfNumero = new JTextField(8);
-        tfNumero.setPreferredSize(new Dimension(100, 25));
-        gbcEnd.gridx = 1;
-        panelEndereco.add(tfNumero, gbcEnd);
-
-        gbcEnd.gridx = 2;
-        JLabel lblComplemento = new JLabel("Complemento:");
-        lblComplemento.setFont(labelFont);
-        panelEndereco.add(lblComplemento, gbcEnd);
-        tfComplemento = new JTextField(15);
-        tfComplemento.setPreferredSize(new Dimension(150, 25));
-        gbcEnd.gridx = 3;
-        panelEndereco.add(tfComplemento, gbcEnd);
-
-        gbcEnd.gridy = 2;
-        gbcEnd.gridx = 0;
-        JLabel lblBairro = new JLabel("Bairro:");
-        lblBairro.setFont(labelFont);
-        panelEndereco.add(lblBairro, gbcEnd);
-        tfBairro = new JTextField(15);
-        tfBairro.setPreferredSize(new Dimension(150, 25));
-        gbcEnd.gridx = 1;
-        panelEndereco.add(tfBairro, gbcEnd);
-
-        gbcEnd.gridx = 2;
-        JLabel lblCidade = new JLabel("Cidade:");
-        lblCidade.setFont(labelFont);
-        panelEndereco.add(lblCidade, gbcEnd);
-        tfCidade = new JTextField(15);
-        tfCidade.setPreferredSize(new Dimension(150, 25));
-        gbcEnd.gridx = 3;
-        panelEndereco.add(tfCidade, gbcEnd);
-
-        gbcEnd.gridy = 3;
-        gbcEnd.gridx = 0;
-        JLabel lblEstado = new JLabel("Estado:");
-        lblEstado.setFont(labelFont);
-        panelEndereco.add(lblEstado, gbcEnd);
-        String[] estados = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", 
-                           "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"};
-        cbEstado = new JComboBox<>(estados);
-        cbEstado.setPreferredSize(new Dimension(100, 25));
-        cbEstado.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        gbcEnd.gridx = 1;
-        panelEndereco.add(cbEstado, gbcEnd);
+        // Painel de endereço
+        enderecoPanel = new EnderecoPanel(primaryColor);
 
         // Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
@@ -434,7 +303,7 @@ public class CadastroPacientePanel extends JPanel {
 
         panelWrapper.add(panelPaciente);
         panelWrapper.add(Box.createVerticalStrut(5));
-        panelWrapper.add(panelEndereco);
+        panelWrapper.add(enderecoPanel);
         panelWrapper.add(Box.createVerticalStrut(5));
         panelWrapper.add(panelBotoes);
 
@@ -491,7 +360,7 @@ public class CadastroPacientePanel extends JPanel {
         DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
+                    boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
                     c.setBackground(row % 2 == 0 ? rowColorLightBlue : Color.WHITE);
@@ -531,13 +400,7 @@ public class CadastroPacientePanel extends JPanel {
         tfDataNascimento.setText("");
         lblErroData.setText(" ");
         cbSexo.setSelectedIndex(0);
-        tfRua.setText("");
-        tfNumero.setText("");
-        tfComplemento.setText("");
-        tfBairro.setText("");
-        tfCidade.setText("");
-        cbEstado.setSelectedIndex(0);
-        tfCep.setText("");
+        enderecoPanel.limparCampos();
     }
 
     // Salva o paciente no banco
@@ -574,14 +437,7 @@ public class CadastroPacientePanel extends JPanel {
         }
 
         // Endereço
-        Endereco endereco = new Endereco();
-        endereco.setRua(tfRua.getText().trim());
-        endereco.setNumero(tfNumero.getText().trim());
-        endereco.setComplemento(tfComplemento.getText().trim());
-        endereco.setBairro(tfBairro.getText().trim());
-        endereco.setCidade(tfCidade.getText().trim());
-        endereco.setEstado((String) cbEstado.getSelectedItem());
-        endereco.setCep(tfCep.getText().trim());
+        Endereco endereco = enderecoPanel.getEndereco();
 
         // Verifica se o endereço é válido
         boolean enderecoValido = !endereco.getRua().isBlank() && !endereco.getCidade().isBlank() && !endereco.getCep().isBlank();

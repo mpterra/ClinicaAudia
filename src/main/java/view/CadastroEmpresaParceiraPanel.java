@@ -17,46 +17,44 @@ import model.EmpresaParceira;
 import model.Endereco;
 import util.CNPJUtils;
 import util.Sessao;
-import util.ViaCepService;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+// Painel para cadastro e listagem de empresas parceiras
 public class CadastroEmpresaParceiraPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(CadastroEmpresaParceiraPanel.class.getName());
 
     // Componentes de entrada
-    private JTextField tfNome, tfEmail, tfRua, tfNumero, tfComplemento, tfBairro, tfCidade, tfPesquisar;
-    private JFormattedTextField tfCnpj, tfTelefone, tfCep;
-    private JComboBox<String> cbEstado;
+    private JTextField tfNome, tfEmail, tfPesquisar;
+    private JFormattedTextField tfCnpj, tfTelefone;
     private JButton btnSalvar, btnLimpar;
     private JTable tabelaEmpresas;
     private DefaultTableModel modeloTabela;
     private TableRowSorter<DefaultTableModel> sorter;
     private JLabel lblValidaCnpj;
+    private EnderecoPanel enderecoPanel; // Painel de endereço reutilizável
 
     // Estilo visual
     private final Color primaryColor = new Color(138, 43, 226); // Roxo
     private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
     private final Color rowColorLightLilac = new Color(230, 230, 250); // Lilás claro para linhas pares
-    private final Font titleFont = new Font("SansSerif", Font.BOLD, 18); // Título principal
-    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14); // Labels, TitledBorder, tabela
+    private final Font titleFont = new Font("SansSerif", Font.BOLD, 17);
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 13);
+    private final Font tableFont = new Font("SansSerif", Font.PLAIN, 13);
 
     // Construtor
     public CadastroEmpresaParceiraPanel() {
         setLayout(new BorderLayout(10, 10));
-        setBorder(new EmptyBorder(5, 15, 15, 15));
+        setBorder(new EmptyBorder(5, 10, 10, 10));
         setBackground(backgroundColor);
 
         // Título do painel
         JLabel lblTitulo = new JLabel("Cadastro de Empresa Parceira", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
-        lblTitulo.setBorder(new EmptyBorder(10, 0, 10, 0));
+        lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
         // Painéis de cadastro e tabela
@@ -65,15 +63,14 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
 
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.49); // Proporção 49-51
+        splitPane.setResizeWeight(0.48);
         splitPane.setDividerSize(7);
-        splitPane.setContinuousLayout(true); // Transição suave ao redimensionar
         splitPane.setBackground(backgroundColor);
 
         add(splitPane, BorderLayout.CENTER);
 
-        // Garantir proporção 49-51 do JSplitPane
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.49));
+        // Garantir que o JSplitPane inicie com proporção correta
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.48));
         revalidate();
         repaint();
 
@@ -84,8 +81,11 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
                 salvarEmpresa();
             } catch (CampoObrigatorioException e1) {
                 JOptionPane.showMessageDialog(this, e1.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            } catch (java.sql.SQLIntegrityConstraintViolationException e1) {
+                JOptionPane.showMessageDialog(this, "Erro: já existe uma empresa cadastrada com este CNPJ!",
+                        "CNPJ duplicado", JOptionPane.ERROR_MESSAGE);
             } catch (SQLException e1) {
-                LOGGER.log(Level.SEVERE, "Erro ao salvar empresa: " + e1.getMessage(), e1);
+                e1.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Erro ao salvar empresa: " + e1.getMessage(), "Erro",
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -94,10 +94,8 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         // Carregar dados iniciais
         try {
             carregarEmpresas();
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Erro ao carregar empresas: " + e.getMessage(), e);
-            JOptionPane.showMessageDialog(this, "Erro ao carregar empresas: " + e.getMessage(), "Erro",
-                    JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e1) {
+            e1.printStackTrace();
         }
     }
 
@@ -106,7 +104,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         JPanel panelWrapper = new JPanel();
         panelWrapper.setLayout(new BoxLayout(panelWrapper, BoxLayout.Y_AXIS));
         panelWrapper.setBackground(backgroundColor);
-        panelWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
+        panelWrapper.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         // Painel de informações da empresa
         JPanel panelEmpresa = new JPanel(new GridBagLayout());
@@ -118,11 +116,11 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
                         TitledBorder.TOP,
                         labelFont,
                         primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
+                new EmptyBorder(5, 5, 5, 5)));
         panelEmpresa.setBackground(backgroundColor);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 10, 5, 10);
+        gbc.insets = new Insets(3, 5, 3, 5);
         gbc.anchor = GridBagConstraints.WEST;
 
         // Nome
@@ -132,7 +130,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         lblNome.setFont(labelFont);
         panelEmpresa.add(lblNome, gbc);
         tfNome = new JTextField(20);
-        tfNome.setPreferredSize(new Dimension(300, 30));
+        tfNome.setPreferredSize(new Dimension(300, 25));
         gbc.gridx = 1;
         gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -150,9 +148,9 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
             MaskFormatter cnpjMask = new MaskFormatter("##.###.###/####-##");
             cnpjMask.setPlaceholderCharacter('_');
             tfCnpj = new JFormattedTextField(cnpjMask);
-            tfCnpj.setPreferredSize(new Dimension(150, 30));
+            tfCnpj.setPreferredSize(new Dimension(150, 25));
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Erro ao criar máscara de CNPJ: " + e.getMessage(), e);
+            e.printStackTrace();
         }
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -161,7 +159,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
 
         // Label de validação de CNPJ
         lblValidaCnpj = new JLabel(" ");
-        lblValidaCnpj.setFont(new Font("SansSerif", Font.BOLD, 14));
+        lblValidaCnpj.setFont(new Font("SansSerif", Font.BOLD, 10));
         lblValidaCnpj.setForeground(Color.RED);
         gbc.gridx = 1;
         gbc.gridy = 2;
@@ -198,9 +196,9 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
             MaskFormatter telefoneMask = new MaskFormatter("(##) #####-####");
             telefoneMask.setPlaceholderCharacter('_');
             tfTelefone = new JFormattedTextField(telefoneMask);
-            tfTelefone.setPreferredSize(new Dimension(150, 30));
+            tfTelefone.setPreferredSize(new Dimension(150, 25));
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Erro ao criar máscara de telefone: " + e.getMessage(), e);
+            e.printStackTrace();
         }
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -214,7 +212,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         lblEmail.setFont(labelFont);
         panelEmpresa.add(lblEmail, gbc);
         tfEmail = new JTextField(20);
-        tfEmail.setPreferredSize(new Dimension(300, 30));
+        tfEmail.setPreferredSize(new Dimension(300, 25));
         gbc.gridx = 1;
         gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -222,159 +220,28 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
 
-        // Painel Endereço
-        JPanel panelEndereco = new JPanel(new GridBagLayout());
-        panelEndereco.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(
-                        BorderFactory.createLineBorder(primaryColor, 1, true),
-                        "Endereço",
-                        TitledBorder.LEFT,
-                        TitledBorder.TOP,
-                        labelFont,
-                        primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
-        panelEndereco.setBackground(backgroundColor);
-
-        GridBagConstraints gbcEnd = new GridBagConstraints();
-        gbcEnd.insets = new Insets(5, 10, 5, 10);
-        gbcEnd.anchor = GridBagConstraints.WEST;
-        gbcEnd.fill = GridBagConstraints.HORIZONTAL;
-
-        // CEP
-        gbcEnd.gridx = 0;
-        gbcEnd.gridy = 0;
-        JLabel lblCep = new JLabel("CEP:");
-        lblCep.setFont(labelFont);
-        panelEndereco.add(lblCep, gbcEnd);
-        try {
-            MaskFormatter cepMask = new MaskFormatter("#####-###");
-            cepMask.setPlaceholderCharacter('_');
-            tfCep = new JFormattedTextField(cepMask);
-            tfCep.setPreferredSize(new Dimension(100, 30));
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Erro ao criar máscara de CEP: " + e.getMessage(), e);
-        }
-        gbcEnd.gridx = 1;
-        panelEndereco.add(tfCep, gbcEnd);
-
-        // Buscar endereço via CEP
-        tfCep.getDocument().addDocumentListener(new DocumentListener() {
-            private void buscarEndereco() {
-                String cep = tfCep.getText().replaceAll("\\D", "");
-                if (cep.length() != 8) return;
-                new SwingWorker<Endereco, Void>() {
-                    @Override
-                    protected Endereco doInBackground() throws Exception {
-                        return ViaCepService.buscarEndereco(cep);
-                    }
-                    @Override
-                    protected void done() {
-                        try {
-                            Endereco endereco = get();
-                            if (endereco != null) {
-                                tfRua.setText(endereco.getRua());
-                                tfBairro.setText(endereco.getBairro());
-                                tfCidade.setText(endereco.getCidade());
-                                cbEstado.setSelectedItem(endereco.getEstado());
-                            } else {
-                                tfRua.setText("");
-                                tfBairro.setText("");
-                                tfCidade.setText("");
-                                cbEstado.setSelectedIndex(0);
-                            }
-                        } catch (Exception ex) {
-                            LOGGER.log(Level.SEVERE, "Erro ao buscar endereço via CEP: " + ex.getMessage(), ex);
-                        }
-                    }
-                }.execute();
-            }
-            public void insertUpdate(DocumentEvent e) { buscarEndereco(); }
-            public void removeUpdate(DocumentEvent e) { buscarEndereco(); }
-            public void changedUpdate(DocumentEvent e) { buscarEndereco(); }
-        });
-
-        // Rua
-        gbcEnd.gridx = 2;
-        gbcEnd.gridy = 0;
-        JLabel lblRua = new JLabel("Rua:");
-        lblRua.setFont(labelFont);
-        panelEndereco.add(lblRua, gbcEnd);
-        tfRua = new JTextField(20);
-        tfRua.setPreferredSize(new Dimension(150, 30));
-        gbcEnd.gridx = 3;
-        panelEndereco.add(tfRua, gbcEnd);
-
-        // Número, Complemento, Bairro, Cidade, Estado
-        gbcEnd.gridy = 1;
-        gbcEnd.gridx = 0;
-        JLabel lblNumero = new JLabel("Número:");
-        lblNumero.setFont(labelFont);
-        panelEndereco.add(lblNumero, gbcEnd);
-        tfNumero = new JTextField(8);
-        tfNumero.setPreferredSize(new Dimension(100, 30));
-        gbcEnd.gridx = 1;
-        panelEndereco.add(tfNumero, gbcEnd);
-
-        gbcEnd.gridx = 2;
-        JLabel lblComplemento = new JLabel("Complemento:");
-        lblComplemento.setFont(labelFont);
-        panelEndereco.add(lblComplemento, gbcEnd);
-        tfComplemento = new JTextField(15);
-        tfComplemento.setPreferredSize(new Dimension(150, 30));
-        gbcEnd.gridx = 3;
-        panelEndereco.add(tfComplemento, gbcEnd);
-
-        gbcEnd.gridy = 2;
-        gbcEnd.gridx = 0;
-        JLabel lblBairro = new JLabel("Bairro:");
-        lblBairro.setFont(labelFont);
-        panelEndereco.add(lblBairro, gbcEnd);
-        tfBairro = new JTextField(15);
-        tfBairro.setPreferredSize(new Dimension(150, 30));
-        gbcEnd.gridx = 1;
-        panelEndereco.add(tfBairro, gbcEnd);
-
-        gbcEnd.gridx = 2;
-        JLabel lblCidade = new JLabel("Cidade:");
-        lblCidade.setFont(labelFont);
-        panelEndereco.add(lblCidade, gbcEnd);
-        tfCidade = new JTextField(15);
-        tfCidade.setPreferredSize(new Dimension(150, 30));
-        gbcEnd.gridx = 3;
-        panelEndereco.add(tfCidade, gbcEnd);
-
-        gbcEnd.gridy = 3;
-        gbcEnd.gridx = 0;
-        JLabel lblEstado = new JLabel("Estado:");
-        lblEstado.setFont(labelFont);
-        panelEndereco.add(lblEstado, gbcEnd);
-        String[] estados = {"AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
-                "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"};
-        cbEstado = new JComboBox<>(estados);
-        cbEstado.setPreferredSize(new Dimension(100, 30));
-        cbEstado.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        gbcEnd.gridx = 1;
-        panelEndereco.add(cbEstado, gbcEnd);
+        // Painel de endereço
+        enderecoPanel = new EnderecoPanel(primaryColor);
 
         // Botões
-        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         panelBotoes.setBackground(backgroundColor);
         btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
-        btnLimpar.setPreferredSize(new Dimension(100, 35));
+        btnLimpar.setPreferredSize(new Dimension(80, 30));
         btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnSalvar = new JButton("Salvar");
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
-        btnSalvar.setPreferredSize(new Dimension(100, 35));
+        btnSalvar.setPreferredSize(new Dimension(80, 30));
         btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         panelBotoes.add(btnLimpar);
         panelBotoes.add(btnSalvar);
 
         panelWrapper.add(panelEmpresa);
         panelWrapper.add(Box.createVerticalStrut(5));
-        panelWrapper.add(panelEndereco);
+        panelWrapper.add(enderecoPanel);
         panelWrapper.add(Box.createVerticalStrut(5));
         panelWrapper.add(panelBotoes);
 
@@ -383,7 +250,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
 
     // Cria o painel da tabela com pesquisa
     private JPanel criarTabelaEmpresasComPesquisa() {
-        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
                         BorderFactory.createLineBorder(primaryColor, 1, true),
@@ -392,16 +259,16 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
                         TitledBorder.TOP,
                         labelFont,
                         primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
+                new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
 
         // Pesquisa
-        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
         panelBusca.setBackground(backgroundColor);
         JLabel lblPesquisar = new JLabel("Pesquisar Empresa:");
         lblPesquisar.setFont(labelFont);
         tfPesquisar = new JTextField(15);
-        tfPesquisar.setPreferredSize(new Dimension(200, 30));
+        tfPesquisar.setPreferredSize(new Dimension(150, 25));
         panelBusca.add(lblPesquisar);
         panelBusca.add(tfPesquisar);
 
@@ -422,10 +289,10 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tabelaEmpresas = new JTable(modeloTabela);
-        tabelaEmpresas.setRowHeight(25);
+        tabelaEmpresas.setRowHeight(20);
         tabelaEmpresas.setShowGrid(false);
         tabelaEmpresas.setIntercellSpacing(new Dimension(0, 0));
-        tabelaEmpresas.setFont(labelFont);
+        tabelaEmpresas.setFont(tableFont);
 
         // Renderizador para alternar cores das linhas
         DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
@@ -445,7 +312,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         }
 
         JTableHeader header = tabelaEmpresas.getTableHeader();
-        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+        header.setFont(new Font("SansSerif", Font.BOLD, 12));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
 
@@ -467,13 +334,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         tfCnpj.setText("");
         tfTelefone.setText("");
         tfEmail.setText("");
-        tfCep.setText("");
-        tfRua.setText("");
-        tfNumero.setText("");
-        tfComplemento.setText("");
-        tfBairro.setText("");
-        tfCidade.setText("");
-        cbEstado.setSelectedIndex(0);
+        enderecoPanel.limparCampos();
         lblValidaCnpj.setText(" ");
     }
 
@@ -487,14 +348,7 @@ public class CadastroEmpresaParceiraPanel extends JPanel {
         if (nome.isEmpty()) throw new CampoObrigatorioException("Nome obrigatório");
         if (!CNPJUtils.isCNPJValido(cnpj.replaceAll("\\D", ""))) throw new CampoObrigatorioException("CNPJ inválido");
 
-        Endereco endereco = new Endereco();
-        endereco.setRua(tfRua.getText().trim());
-        endereco.setNumero(tfNumero.getText().trim());
-        endereco.setComplemento(tfComplemento.getText().trim());
-        endereco.setBairro(tfBairro.getText().trim());
-        endereco.setCidade(tfCidade.getText().trim());
-        endereco.setEstado((String) cbEstado.getSelectedItem());
-        endereco.setCep(tfCep.getText().trim());
+        Endereco endereco = enderecoPanel.getEndereco();
 
         EnderecoController enderecoController = new EnderecoController();
         enderecoController.adicionarEndereco(endereco);
