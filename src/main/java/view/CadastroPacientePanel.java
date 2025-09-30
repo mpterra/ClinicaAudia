@@ -66,14 +66,14 @@ public class CadastroPacientePanel extends JPanel {
 
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
-        splitPane.setResizeWeight(0.48);
+        splitPane.setResizeWeight(0.50);
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
 
         add(splitPane, BorderLayout.CENTER);
 
         // Garantir que o JSplitPane inicie com proporção correta
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.48));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.50));
         revalidate();
         repaint();
 
