@@ -2,8 +2,6 @@ package controller;
 
 import dao.AtendimentoDAO;
 import model.Atendimento;
-import model.Profissional;
-
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -70,15 +68,14 @@ public class AtendimentoController {
     }
 
     private void validarProfissional(Atendimento at) {
-        Profissional prof = at.getProfissional();
-        if (prof == null || prof.getId() == 0) {
+        if (at.getProfissionalId() == 0) {
             throw new IllegalArgumentException("Profissional não selecionado ou inválido.");
         }
     }
 
     private void validarDisponibilidade(Atendimento at, Integer idAtual) throws SQLException {
         boolean disponivel = dao.isDisponivel(
-                at.getProfissional().getId(),
+                at.getProfissionalId(),
                 at.getDataHora(),
                 at.getDuracaoMin(),
                 idAtual
