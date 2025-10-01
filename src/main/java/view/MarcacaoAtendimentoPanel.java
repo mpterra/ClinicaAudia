@@ -103,10 +103,11 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         // Abas
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setBackground(backgroundColor);
+        tabbedPane.setForeground(primaryColor);
         tabbedPane.setFont(tabFont); // Define fonte maior e negrito para abas
         tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Cursor de mão para abas
-        tabbedPane.addTab("Agendamento", criarPainelFormulario());
-        tabbedPane.addTab("Atendimentos", criarPainelTabela());
+        tabbedPane.addTab("Marcar Atendimento", criarPainelFormulario());
+        tabbedPane.addTab("Lista de Atendimentos", criarPainelTabela());
         add(tabbedPane, BorderLayout.CENTER);
         // Inicializa data selecionada e carrega dados
         dataSelecionada = LocalDate.now();
@@ -121,10 +122,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
      */
     private JPanel criarPainelFormulario() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true),
-                        "Agendar Consulta", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
         JPanel mainGrid = new JPanel(new GridBagLayout());
         mainGrid.setBackground(backgroundColor);
@@ -488,10 +485,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
      */
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1, true), "Próximos Atendimentos",
-                        TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
-                new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
         JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelBusca.setBackground(backgroundColor);
