@@ -2,10 +2,14 @@ package controller;
 
 import dao.AtendimentoDAO;
 import model.Atendimento;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Controller para gerenciar atendimentos.
+ */
 public class AtendimentoController {
 
     private final AtendimentoDAO dao;
@@ -19,6 +23,10 @@ public class AtendimentoController {
     // ===========================
     public boolean criarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
         validar(at, null);
+        // Força definição do statusPagamento baseado no valor ANTES de salvar
+        forcarStatusPagamento(at);
+        // Debug: imprime para verificar
+        System.out.println("DEBUG - Criando atendimento: Valor = " + at.getValor() + ", StatusPagamento = " + at.getStatusPagamento());
         return dao.salvar(at, usuarioLogado);
     }
 
@@ -27,6 +35,10 @@ public class AtendimentoController {
     // ===========================
     public boolean atualizarAtendimento(Atendimento at, String usuarioLogado) throws SQLException {
         validar(at, at.getId());
+        // Força definição do statusPagamento baseado no valor ANTES de salvar
+        forcarStatusPagamento(at);
+        // Debug: imprime para verificar
+        System.out.println("DEBUG - Atualizando atendimento: Valor = " + at.getValor() + ", StatusPagamento = " + at.getStatusPagamento());
         return dao.atualizar(at, usuarioLogado);
     }
 
@@ -59,6 +71,7 @@ public class AtendimentoController {
         validarDuracao(at);
         validarProfissional(at);
         validarDisponibilidade(at, idAtual);
+        // Removida validação de status aqui para evitar sobrescrita; agora é forçada antes de salvar
     }
 
     private void validarDuracao(Atendimento at) {
@@ -84,5 +97,40 @@ public class AtendimentoController {
         if (!disponivel) {
             throw new IllegalArgumentException("Horário indisponível para o profissional.");
         }
+    }
+
+    /**
+     * Força a definição do statusPagamento baseado no valor do atendimento.
+     * Aplicado imediatamente antes de salvar/atualizar.
+     */
+    private void forcarStatusPagamento(Atendimento at) {
+        if (at.getValor() == null || at.getValor().compareTo(BigDecimal.ZERO) == 0) {
+            at.setStatusPagamento(Atendimento.StatusPagamento.ISENTO);
+        } else {
+            if (at.getStatusPagamento() == Atendimento.StatusPagamento.ISENTO) {
+                at.setStatusPagamento(Atendimento.StatusPagamento.PENDENTE);
+            }
+        }
+    }
+
+    /**
+     * Corrige status de pagamentos existentes no banco (para dados históricos).
+     * Execute isso uma vez para corrigir atendimentos como ID 7.
+     */
+    public void corrigirStatusPagamentosExistentes() throws SQLException {
+        System.out.println("DEBUG - Iniciando correção de status de pagamentos...");
+        List<Atendimento> atendimentos = listarTodos();
+        int corrigidos = 0;
+        for (Atendimento at : atendimentos) {
+            boolean precisaCorrigir = (at.getValor() == null || at.getValor().compareTo(BigDecimal.ZERO) == 0) 
+                    && at.getStatusPagamento() != Atendimento.StatusPagamento.ISENTO;
+            if (precisaCorrigir) {
+                at.setStatusPagamento(Atendimento.StatusPagamento.ISENTO);
+                atualizarAtendimento(at, "system");
+                corrigidos++;
+                System.out.println("DEBUG - Corrigido atendimento ID " + at.getId() + ": Valor = " + at.getValor() + ", Status = ISENTO");
+            }
+        }
+        System.out.println("DEBUG - Correção concluída. " + corrigidos + " atendimentos corrigidos.");
     }
 }

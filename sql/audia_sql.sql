@@ -595,5 +595,3 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
-
-SELECT * FROM atendimento;

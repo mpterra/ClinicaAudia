@@ -37,8 +37,8 @@ public class AgendamentoService {
      * @throws Exception se houver erro de validação ou salvamento.
      */
     public boolean criarAgendamento(AgendamentoRequest request) throws Exception {
-        validacaoService.validarCamposObrigatorios(request);
-        validacaoService.validarDataFutura(request.getDataHora());
+        ValidacaoGeralService.validarCamposObrigatorios(request);
+        ValidacaoGeralService.validarDataFutura(request.getDataHora());
 
         Profissional prof = request.getProfissional();
         Atendimento.Tipo tipo = request.getTipo();
@@ -69,12 +69,62 @@ public class AgendamentoService {
         at.setNotas(request.getObservacoes());
         at.setValor(valor);
 
+        // Define statusPagamento como ISENTO se valor for zero
+        at.setStatusPagamento(valor.equals(BigDecimal.ZERO) ? Atendimento.StatusPagamento.ISENTO : Atendimento.StatusPagamento.PENDENTE);
+
         return atendimentoController.criarAtendimento(at, request.getUsuarioLogin());
     }
 
-    // Método para atualização (para uso no dialog de edição, se necessário)
-    public void atualizarAgendamento(Atendimento atendimento, AgendamentoRequest request) throws SQLException {
-        // Implementação similar à criação, ajustando para update
-        // ... (adapte conforme necessário)
+    /**
+     * Atualiza um agendamento existente após validações e cálculos.
+     * @param atendimento Atendimento a ser atualizado.
+     * @param request DTO com dados do agendamento.
+     * @throws SQLException se houver erro no banco.
+     * @throws CampoObrigatorioException se houver erro de validação.
+     */
+    public void atualizarAgendamento(Atendimento atendimento, AgendamentoRequest request) throws SQLException, CampoObrigatorioException {
+        ValidacaoGeralService.validarCamposObrigatorios(request);
+        ValidacaoGeralService.validarDataFutura(request.getDataHora());
+
+        Profissional prof = request.getProfissional();
+        Atendimento.Tipo tipo = request.getTipo();
+        EmpresaParceira empresa = request.getEmpresaParceira();
+
+        // Verifica conflitos de horário (excluindo o próprio atendimento)
+        List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
+                .filter(a -> a.getProfissional().getId() == prof.getId()
+                        && a.getDataHora().toLocalDateTime().toLocalDate().equals(request.getDataHora().toLocalDate())
+                        && a.getSituacao() != Atendimento.Situacao.CANCELADO
+                        && a.getId() != atendimento.getId())
+                .toList();
+        int duracao = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
+        try {
+            horarioValidator.validarConflito(request.getDataHora(), duracao, atendimentos);
+        } catch (Exception e) {
+            throw new SQLException("Erro na validação de horário: " + e.getMessage());
+        }
+
+        // Recalcula valor
+        BigDecimal valor = null;
+        try {
+            valor = valorCalculator.calcularValor(prof, tipo, empresa);
+        } catch (Exception e) {
+            throw new SQLException("Erro ao calcular valor: " + e.getMessage());
+        }
+
+        // Atualiza os campos
+        atendimento.setPaciente(request.getPaciente());
+        atendimento.setProfissional(prof);
+        atendimento.setEmpresaParceira(empresa);
+        atendimento.setDataHora(java.sql.Timestamp.valueOf(request.getDataHora()));
+        atendimento.setDuracaoMin(duracao);
+        atendimento.setTipo(tipo);
+        atendimento.setNotas(request.getObservacoes());
+        atendimento.setValor(valor);
+
+        // Define statusPagamento como ISENTO se valor for zero
+        atendimento.setStatusPagamento(valor.equals(BigDecimal.ZERO) ? Atendimento.StatusPagamento.ISENTO : Atendimento.StatusPagamento.PENDENTE);
+
+        atendimentoController.atualizarAtendimento(atendimento, request.getUsuarioLogin());
     }
 }

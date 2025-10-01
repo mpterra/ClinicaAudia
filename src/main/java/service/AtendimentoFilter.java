@@ -1,9 +1,9 @@
-// Pacote: src/main/java/service/AtendimentoFilter.java
 package service;
 
 import controller.AtendimentoController;
 import model.Atendimento;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -48,6 +48,10 @@ public class AtendimentoFilter {
                     (profissional == null || profNome.toLowerCase().contains(profissional.toLowerCase()))) {
 
                     String empresaNome = a.getEmpresaParceira() != null ? a.getEmpresaParceira().getNome() : "Nenhuma";
+                    
+                    // Ajuste para exibição: se valor for zero, exibe ISENTO independentemente do status salvo
+                    Atendimento.StatusPagamento statusExibicao = a.getValor().equals(BigDecimal.ZERO) ? Atendimento.StatusPagamento.ISENTO : a.getStatusPagamento();
+
                     rows.add(new Object[] {
                             dataAtendimento.format(formatoData),
                             a.getDataHora().toLocalDateTime().toLocalTime(),
@@ -56,7 +60,7 @@ public class AtendimentoFilter {
                             empresaNome,
                             a.getTipo(),
                             situacao,
-                            a.getStatusPagamento()
+                            statusExibicao
                     });
                 }
             }
