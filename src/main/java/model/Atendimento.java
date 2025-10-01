@@ -28,7 +28,7 @@ public class Atendimento {
     private int id;
     private int pacienteId;
     private int profissionalId;
-    private int empresaParceiraId;
+    private Integer empresaParceiraId; // Alterado de int para Integer para suportar null
     private Timestamp dataHora;
     private int duracaoMin;
     private Tipo tipo;
@@ -67,8 +67,8 @@ public class Atendimento {
     public int getProfissionalId() { return profissionalId; }
     public void setProfissionalId(int profissionalId) { this.profissionalId = profissionalId; }
 
-    public int getEmpresaParceiraId() { return empresaParceiraId; }
-    public void setEmpresaParceiraId(int empresaParceiraId) { this.empresaParceiraId = empresaParceiraId; }
+    public Integer getEmpresaParceiraId() { return empresaParceiraId; } // Alterado para Integer
+    public void setEmpresaParceiraId(Integer empresaParceiraId) { this.empresaParceiraId = empresaParceiraId; } // Alterado para Integer
 
     public Timestamp getDataHora() { return dataHora; }
     public void setDataHora(Timestamp dataHora) { this.dataHora = dataHora; }
@@ -122,11 +122,7 @@ public class Atendimento {
     public EmpresaParceira getEmpresaParceira() { return empresaParceira; }
     public void setEmpresaParceira(EmpresaParceira empresaParceira) {
         this.empresaParceira = empresaParceira;
-        if (empresaParceira != null) {
-            this.empresaParceiraId = empresaParceira.getId();
-        } else {
-            this.empresaParceiraId = 0; // Ou mantenha como 0 para NULL
-        }
+        this.empresaParceiraId = (empresaParceira != null) ? empresaParceira.getId() : null; // Define null corretamente
     }
 
     // =============================

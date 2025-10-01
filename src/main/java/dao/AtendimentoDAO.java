@@ -28,7 +28,11 @@ public class AtendimentoDAO {
 
             stmt.setInt(1, at.getPacienteId());
             stmt.setInt(2, at.getProfissionalId());
-            stmt.setInt(3, at.getEmpresaParceiraId());
+            if (at.getEmpresaParceiraId() != null) {
+                stmt.setInt(3, at.getEmpresaParceiraId());
+            } else {
+                stmt.setNull(3, Types.INTEGER); // Define NULL para empresa_parceira_id
+            }
             stmt.setTimestamp(4, at.getDataHora());
             stmt.setInt(5, at.getDuracaoMin());
             stmt.setString(6, at.getTipo().name());
@@ -86,14 +90,15 @@ public class AtendimentoDAO {
             JOIN paciente p ON a.paciente_id = p.id
             JOIN profissional pr ON a.profissional_id = pr.id
             LEFT JOIN empresa_parceira ep ON a.empresa_parceira_id = ep.id
-            ORDER BY a.data_hora
             """;
 
         try (Connection conn = Database.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
 
-            while (rs.next()) lista.add(mapRow(rs));
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
         }
         return lista;
     }
@@ -110,7 +115,6 @@ public class AtendimentoDAO {
             JOIN profissional pr ON a.profissional_id = pr.id
             LEFT JOIN empresa_parceira ep ON a.empresa_parceira_id = ep.id
             WHERE a.data_hora BETWEEN ? AND ?
-            ORDER BY a.data_hora
             """;
 
         try (Connection conn = Database.getConnection();
@@ -118,9 +122,10 @@ public class AtendimentoDAO {
 
             stmt.setTimestamp(1, Timestamp.valueOf(inicio));
             stmt.setTimestamp(2, Timestamp.valueOf(fim));
-
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
             }
         }
         return lista;
@@ -131,10 +136,11 @@ public class AtendimentoDAO {
     // ============================
     public boolean atualizar(Atendimento at, String usuarioLogado) throws SQLException {
         String sql = """
-            UPDATE atendimento SET 
-                paciente_id = ?, profissional_id = ?, empresa_parceira_id = ?, data_hora = ?, duracao_min = ?, 
-                tipo = ?, situacao = ?, notas = ?, valor = ?, status_pagamento = ?, 
-                usuario = ?, atualizado_em = CURRENT_TIMESTAMP
+            UPDATE atendimento 
+            SET paciente_id = ?, profissional_id = ?, empresa_parceira_id = ?, 
+                data_hora = ?, duracao_min = ?, tipo = ?, situacao = ?, 
+                notas = ?, valor = ?, status_pagamento = ?, usuario = ?, 
+                atualizado_em = CURRENT_TIMESTAMP
             WHERE id = ?
             """;
 
@@ -143,7 +149,11 @@ public class AtendimentoDAO {
 
             stmt.setInt(1, at.getPacienteId());
             stmt.setInt(2, at.getProfissionalId());
-            stmt.setInt(3, at.getEmpresaParceiraId());
+            if (at.getEmpresaParceiraId() != null) {
+                stmt.setInt(3, at.getEmpresaParceiraId());
+            } else {
+                stmt.setNull(3, Types.INTEGER); // Define NULL para empresa_parceira_id
+            }
             stmt.setTimestamp(4, at.getDataHora());
             stmt.setInt(5, at.getDuracaoMin());
             stmt.setString(6, at.getTipo().name());
@@ -165,21 +175,21 @@ public class AtendimentoDAO {
         String sql = "DELETE FROM atendimento WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }
     }
 
     // ============================
-    // VERIFICAR DISPONIBILIDADE
+    // VALIDAR DISPONIBILIDADE
     // ============================
     public boolean isDisponivel(int profissionalId, Timestamp dataHora, int duracaoMin, Integer idAtual) throws SQLException {
         LocalDateTime inicio = dataHora.toLocalDateTime();
         LocalDateTime fim = inicio.plusMinutes(duracaoMin);
 
         String sql = """
-            SELECT COUNT(*) FROM atendimento
+            SELECT COUNT(*) 
+            FROM atendimento 
             WHERE profissional_id = ?
               AND situacao != 'CANCELADO'
               AND (? IS NULL OR id != ?)
@@ -225,7 +235,9 @@ public class AtendimentoDAO {
         at.setId(rs.getInt("id"));
         at.setPacienteId(rs.getInt("paciente_id"));
         at.setProfissionalId(rs.getInt("profissional_id"));
-        at.setEmpresaParceiraId(rs.getInt("empresa_parceira_id"));
+        Integer empresaId = rs.getInt("empresa_parceira_id");
+        if (rs.wasNull()) empresaId = null; // Trata NULL corretamente
+        at.setEmpresaParceiraId(empresaId);
         at.setDataHora(rs.getTimestamp("data_hora"));
         at.setDuracaoMin(rs.getInt("duracao_min"));
         at.setTipo(Atendimento.Tipo.valueOf(rs.getString("tipo")));
@@ -250,8 +262,7 @@ public class AtendimentoDAO {
         at.setProfissional(pr);
 
         // Mapear Empresa Parceira (opcional)
-        int empresaId = rs.getInt("empresa_parceira_id");
-        if (!rs.wasNull()) {
+        if (empresaId != null) {
             EmpresaParceira ep = new EmpresaParceira();
             ep.setId(empresaId);
             ep.setNome(rs.getString("empresaNome"));

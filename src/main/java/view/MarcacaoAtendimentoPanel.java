@@ -1,5 +1,23 @@
 package view;
 
+import controller.AtendimentoController;
+import controller.EmpresaParceiraController;
+import controller.EscalaProfissionalController;
+import controller.PacienteController;
+import controller.ProfissionalController;
+import controller.ValorAtendimentoController;
+import controller.ValorAtendimentoEmpresaController;
+import exception.CampoObrigatorioException;
+import model.Atendimento;
+import model.EmpresaParceira;
+import model.EscalaProfissional;
+import model.Paciente;
+import model.Profissional;
+import model.ValorAtendimento;
+import model.ValorAtendimentoEmpresa;
+import util.Sessao;
+import view.dialogs.EditarMarcacaoDialog;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -24,20 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import controller.AtendimentoController;
-import controller.EscalaProfissionalController;
-import controller.PacienteController;
-import controller.ProfissionalController;
-import controller.ValorAtendimentoController;
-import exception.CampoObrigatorioException;
-import model.Atendimento;
-import model.EscalaProfissional;
-import model.Paciente;
-import model.Profissional;
-import model.ValorAtendimento;
-import util.Sessao;
-import view.dialogs.EditarMarcacaoDialog;
-
 public class MarcacaoAtendimentoPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -51,6 +55,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JComboBox<Profissional> cbProfissional;
     private JComboBox<Atendimento.Tipo> cbTipo;
     private JComboBox<LocalTime> cbHorario;
+    private JComboBox<EmpresaParceira> cbEmpresaParceira;
     private JTable tabelaAtendimentos;
     private DefaultTableModel modeloTabela;
     private TableRowSorter<DefaultTableModel> sorter;
@@ -61,7 +66,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JComboBox<Integer> cbAno;
 
     private JTextField txtBuscaProfissional;
-    
+
     private DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final String[] meses = { "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto",
@@ -77,6 +82,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private final ProfissionalController profissionalController = new ProfissionalController();
     private final EscalaProfissionalController escalaController = new EscalaProfissionalController();
     private final ValorAtendimentoController valorAtendimentoController = new ValorAtendimentoController();
+    private final EmpresaParceiraController empresaParceiraController = new EmpresaParceiraController();
+    private final ValorAtendimentoEmpresaController valorAtendimentoEmpresaController = new ValorAtendimentoEmpresaController();
 
     public MarcacaoAtendimentoPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -202,7 +209,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         txtObservacoes.setLineWrap(true);
         txtObservacoes.setWrapStyleWord(true);
         JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
-        scrollObservacoes.setMinimumSize(new Dimension(300, 150));
+        scrollObservacoes.setMinimumSize(new Dimension(300, 100));
         observacaoPanel.add(scrollObservacoes, BorderLayout.CENTER);
 
         gbcS.gridx = 1;
@@ -230,7 +237,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblProf, gbcSel);
         cbProfissional = new JComboBox<>();
-        cbProfissional.setPreferredSize(new Dimension(200, 30));
+        cbProfissional.setPreferredSize(new Dimension(180, 30));
         cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcSel.gridx = 1;
         gbcSel.weightx = 1.0;
@@ -242,7 +249,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblTipo, gbcSel);
         cbTipo = new JComboBox<>(Atendimento.Tipo.values());
-        cbTipo.setPreferredSize(new Dimension(200, 30));
+        cbTipo.setPreferredSize(new Dimension(180, 30));
         cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcSel.gridx = 3;
         gbcSel.weightx = 1.0;
@@ -254,12 +261,25 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblHorario, gbcSel);
         cbHorario = new JComboBox<>();
-        cbHorario.setPreferredSize(new Dimension(200, 30));
+        cbHorario.setPreferredSize(new Dimension(180, 30));
         cbHorario.setEnabled(false);
         cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcSel.gridx = 5;
         gbcSel.weightx = 1.0;
         selecaoPanel.add(cbHorario, gbcSel);
+
+        JLabel lblEmpresa = new JLabel("Parceria:");
+        lblEmpresa.setFont(labelFont);
+        gbcSel.gridx = 6;
+        gbcSel.weightx = 0.0;
+        selecaoPanel.add(lblEmpresa, gbcSel);
+        cbEmpresaParceira = new JComboBox<>();
+        cbEmpresaParceira.setPreferredSize(new Dimension(180, 30));
+        cbEmpresaParceira.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cbEmpresaParceira.addItem(null); // Opção "Nenhuma"
+        gbcSel.gridx = 7;
+        gbcSel.weightx = 1.0;
+        selecaoPanel.add(cbEmpresaParceira, gbcSel);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -453,8 +473,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         for (int dia = 1; dia <= diasNoMes; dia++) {
             LocalDate d = ym.atDay(dia);
             JButton btn = new JButton(String.valueOf(dia));
-            btn.setPreferredSize(new Dimension(40, 50));
-            btn.setFont(labelFont);
+            btn.setPreferredSize(new Dimension(35, 35));
+            btn.setFont(new Font("SansSerif", Font.PLAIN, 12));
             btn.setBorder(BorderFactory.createEmptyBorder());
             btn.setFocusPainted(false);
             btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -536,7 +556,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panelBusca.add(txtBuscaProfissional);
         panel.add(panelBusca, BorderLayout.NORTH);
 
-        String[] colunas = { "Data", "Horário", "Paciente", "Profissional", "Tipo", "Situação", "Pagamento" };
+        String[] colunas = { "Data", "Horário", "Paciente", "Profissional", "Parceria", "Tipo", "Situação", "Pagamento" };
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -550,75 +570,70 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 Color bgColor;
 
                 try {
-                    // Obtém data, horário, situação e status de pagamento
                     String dataStr = (String) getValueAt(row, 0);
                     LocalDate dataAtendimento = LocalDate.parse(dataStr, formatoData);
                     LocalTime horaAtendimento = (LocalTime) getValueAt(row, 1);
                     LocalDateTime dtAtendimento = dataAtendimento.atTime(horaAtendimento);
                     LocalDateTime agora = LocalDateTime.now();
                     boolean isPast = dtAtendimento.isBefore(agora);
-                    Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 5);
-                    Atendimento.StatusPagamento statusPagamento = (Atendimento.StatusPagamento) getValueAt(row, 6);
+                    Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 6);
+                    Atendimento.StatusPagamento statusPagamento = (Atendimento.StatusPagamento) getValueAt(row, 7);
 
-                    // Define a cor da coluna Pagamento
-                    if (column == 6) {
+                    if (column == 7) {
                         if (statusPagamento == Atendimento.StatusPagamento.PAGO) {
-                            bgColor = new Color(144, 238, 144); // Verde claro para PAGO
+                            bgColor = new Color(144, 238, 144);
                         } else {
-                            // Mesma cor do atendimento para PENDENTE ou PARCIAL
                             if (situacao == Atendimento.Situacao.AGENDADO) {
                                 if (isPast) {
-                                    bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
+                                    bgColor = new Color(220, 220, 220);
                                 } else {
-                                    bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE; // Alterna para AGENDADO hoje/futuro
+                                    bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE;
                                 }
                             } else {
                                 switch (situacao) {
-                                    case REALIZADO -> bgColor = new Color(144, 238, 144); // Verde claro
-                                    case FALTOU -> bgColor = new Color(255, 255, 153); // Amarelo claro
-                                    case CANCELADO -> bgColor = new Color(255, 182, 193); // Rosa claro
-                                    default -> bgColor = backgroundColor; // Fallback
+                                    case REALIZADO -> bgColor = new Color(144, 238, 144);
+                                    case FALTOU -> bgColor = new Color(255, 255, 153);
+                                    case CANCELADO -> bgColor = new Color(255, 182, 193);
+                                    default -> bgColor = backgroundColor;
                                 }
                             }
                         }
                     } else {
-                        // Lógica de cor para outras colunas
                         if (situacao == Atendimento.Situacao.AGENDADO) {
                             if (isPast) {
-                                bgColor = new Color(220, 220, 220); // Cinza para AGENDADO passado
+                                bgColor = new Color(220, 220, 220);
                             } else {
-                                bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE; // Alterna para AGENDADO hoje/futuro
+                                bgColor = (row % 2 == 0) ? Color.decode("#AED6F1") : Color.WHITE;
                             }
                         } else {
                             switch (situacao) {
-                                case REALIZADO -> bgColor = new Color(144, 238, 144); // Verde claro
-                                case FALTOU -> bgColor = new Color(255, 255, 153); // Amarelo claro
-                                case CANCELADO -> bgColor = new Color(255, 182, 193); // Rosa claro
-                                default -> bgColor = backgroundColor; // Fallback
+                                case REALIZADO -> bgColor = new Color(144, 238, 144);
+                                case FALTOU -> bgColor = new Color(255, 255, 153);
+                                case CANCELADO -> bgColor = new Color(255, 182, 193);
+                                default -> bgColor = backgroundColor;
                             }
                         }
                     }
                 } catch (Exception e) {
-                    bgColor = backgroundColor; // Fallback
+                    bgColor = backgroundColor;
                 }
 
                 c.setBackground(bgColor);
                 c.setForeground(Color.BLACK);
 
-                // Aplica borda preta na linha selecionada e entre as colunas Situação (5) e Pagamento (6)
                 if (isRowSelected(row)) {
                     int lastColumn = getColumnCount() - 1;
                     if (column == 0) {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
                     } else if (column == lastColumn) {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
-                    } else if (column == 5) { // Coluna Situação
+                    } else if (column == 6) {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
                     } else {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
                     }
                 } else {
-                    if (column == 5) { // Coluna Situação
+                    if (column == 6) {
                         ((JComponent) c).setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.BLACK));
                     } else {
                         ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
@@ -629,7 +644,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             }
         };
 
-        // Configurações da tabela
         tabelaAtendimentos.setShowGrid(false);
         tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0));
         tabelaAtendimentos.addMouseListener(new MouseAdapter() {
@@ -721,9 +735,10 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         sorter.setRowFilter(RowFilter.andFilter(List.of(filterPaciente, filterProf)));
     }
 
-    // Carrega dados iniciais como profissionais
+    // Carrega dados iniciais como profissionais e empresas parceiras
     private void carregarDadosIniciais() {
         try {
+            // Carrega profissionais
             cbProfissional.removeAllItems();
             List<Profissional> profissionais = profissionalController.listarTodos().stream()
                     .filter(Profissional::isAtivo)
@@ -732,8 +747,20 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             if (!profissionais.isEmpty()) {
                 cbProfissional.setSelectedIndex(0);
             }
+
+            // Carrega empresas parceiras
+            cbEmpresaParceira.removeAllItems();
+            cbEmpresaParceira.addItem(null); // Opção "Nenhuma"
+            List<EmpresaParceira> empresas = empresaParceiraController.listarTodos();
+            for (EmpresaParceira emp : empresas) {
+                if (emp.getId() > 0) { // Garante que apenas empresas com ID válido sejam adicionadas
+                    cbEmpresaParceira.addItem(emp);
+                }
+            }
+            cbEmpresaParceira.setSelectedIndex(0); // Define "Nenhuma" como padrão
+
             atualizarPaciente();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage(), "Erro",
                     JOptionPane.ERROR_MESSAGE);
         }
@@ -758,7 +785,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     e -> e.getProfissionalId() == prof.getId() && e.getDiaSemana() == diaSemana && e.isDisponivel())
                     .collect(Collectors.toList());
 
-            // Intervalos ocupados (excluindo cancelados), usando duracaoMin armazenada
             List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getProfissional().getId() == prof.getId()
                             && a.getDataHora().toLocalDateTime().toLocalDate().equals(dataSelecionada)
@@ -772,7 +798,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 ocupados.add(new Intervalo(inicio, fim));
             }
 
-            // Gera horários possíveis sem sobreposição
             for (EscalaProfissional e : escalas) {
                 LocalTime hora = e.getHoraInicio().toLocalTime();
                 LocalTime fimEscala = e.getHoraFim().toLocalTime();
@@ -827,17 +852,16 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 LocalDate dataAtendimento = a.getDataHora().toLocalDateTime().toLocalDate();
                 Atendimento.Situacao situacao = a.getSituacao();
 
-                // Regra 1: Atendimentos de hoje ou futuros (exceto CANCELADO)
-                // Regra 2: Atendimentos passados apenas se AGENDADO
-                // Regra 3: Exclui qualquer atendimento CANCELADO
                 if (situacao != Atendimento.Situacao.CANCELADO) {
-                    if (!dataAtendimento.isBefore(hoje) || // Hoje ou futuro
-                        (dataAtendimento.isBefore(hoje) && situacao == Atendimento.Situacao.AGENDADO)) { // Passado e AGENDADO
+                    if (!dataAtendimento.isBefore(hoje) || 
+                        (dataAtendimento.isBefore(hoje) && situacao == Atendimento.Situacao.AGENDADO)) {
+                        String empresaNome = a.getEmpresaParceira() != null ? a.getEmpresaParceira().getNome() : "Nenhuma";
                         modeloTabela.addRow(new Object[] {
                                 dataAtendimento.format(formatoData),
                                 a.getDataHora().toLocalDateTime().toLocalTime(),
                                 a.getPacienteNome(),
                                 a.getProfissional().getNome(),
+                                empresaNome,
                                 a.getTipo(),
                                 situacao,
                                 a.getStatusPagamento()
@@ -866,6 +890,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             Profissional prof = (Profissional) cbProfissional.getSelectedItem();
             LocalTime hora = (LocalTime) cbHorario.getSelectedItem();
             Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
+            EmpresaParceira empresa = (EmpresaParceira) cbEmpresaParceira.getSelectedItem();
 
             if (prof == null || hora == null || dataSelecionada == null || tipo == null)
                 throw new CampoObrigatorioException("Preencha todos os campos!");
@@ -876,12 +901,30 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 throw new CampoObrigatorioException("Não é possível agendar consultas em datas ou horários passados!");
             }
 
-            // Busca o valor do atendimento
-            ValorAtendimento valorAtendimento = valorAtendimentoController.buscarPorProfissionalETipo(prof.getId(), tipo);
-            if (valorAtendimento == null) {
-                throw new Exception("Nenhum valor cadastrado para o profissional e tipo de atendimento selecionados!");
+            // Valida a empresa parceira
+            if (empresa != null && empresa.getId() <= 0) {
+                throw new CampoObrigatorioException("Empresa parceira selecionada é inválida!");
             }
-            BigDecimal valor = valorAtendimento.getValor();
+
+            // Busca o valor do atendimento
+            BigDecimal valor = null;
+            if (empresa != null) {
+                List<ValorAtendimentoEmpresa> valoresEmpresa = valorAtendimentoEmpresaController.buscarPorProfissionalEEmpresa(prof.getId(), empresa.getId());
+                ValorAtendimentoEmpresa valorEmpresa = valoresEmpresa.stream()
+                        .filter(v -> v.getTipo().name().equals(tipo.name()))
+                        .findFirst()
+                        .orElse(null);
+                if (valorEmpresa != null) {
+                    valor = valorEmpresa.getValor();
+                }
+            }
+            if (valor == null) {
+                ValorAtendimento valorAtendimento = valorAtendimentoController.buscarPorProfissionalETipo(prof.getId(), tipo);
+                if (valorAtendimento == null) {
+                    throw new Exception("Nenhum valor cadastrado para o profissional e tipo de atendimento selecionados!");
+                }
+                valor = valorAtendimento.getValor();
+            }
 
             // Define a duração com base no tipo de atendimento
             int duration = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
@@ -907,13 +950,14 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             Atendimento at = new Atendimento();
             at.setPaciente(p);
             at.setProfissional(prof);
+            at.setEmpresaParceira(empresa); // Pode ser null
             at.setDataHora(java.sql.Timestamp.valueOf(inicioProposto));
             at.setDuracaoMin(duration);
             at.setTipo(tipo);
             at.setSituacao(Atendimento.Situacao.AGENDADO);
             at.setUsuario(Sessao.getUsuarioLogado().getLogin());
             at.setNotas(txtObservacoes.getText());
-            at.setValor(valor); // Define o valor do atendimento
+            at.setValor(valor);
 
             // Chama o controller para salvar
             if (atendimentoController.criarAtendimento(at, Sessao.getUsuarioLogado().getLogin())) {
@@ -938,6 +982,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         cbTipo.setSelectedIndex(0);
         cbHorario.removeAllItems();
         txtObservacoes.setText("");
+        cbEmpresaParceira.setSelectedIndex(0);
         atualizarPaciente();
         if (cbProfissional.getItemCount() > 0) {
             cbProfissional.setSelectedIndex(0);

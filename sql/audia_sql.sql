@@ -174,7 +174,7 @@ CREATE TABLE atendimento (
     duracao_min INT NOT NULL DEFAULT 30,
     tipo ENUM('AVALIACAO','RETORNO','REGULAGEM','EXAME','REUNIAO','PESSOAL') NOT NULL,
     situacao ENUM('AGENDADO','REALIZADO','FALTOU','CANCELADO') NOT NULL DEFAULT 'AGENDADO',
-    empresa_parceira_id INT NULL,
+    empresa_parceira_id INT DEFAULT NULL,
     notas TEXT,
     valor DECIMAL(10,2) DEFAULT 0,
     status_pagamento ENUM('PENDENTE','PARCIAL','PAGO') DEFAULT 'PENDENTE',
@@ -190,8 +190,6 @@ CREATE TABLE atendimento (
     CONSTRAINT fk_at_empresa
         FOREIGN KEY (empresa_parceira_id)
         REFERENCES empresa_parceira(id)
-        ON DELETE SET NULL
-        ON UPDATE CASCADE
 );
 
 -- ========================================
