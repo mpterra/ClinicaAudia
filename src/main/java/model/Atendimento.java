@@ -19,7 +19,7 @@ public class Atendimento {
     }
 
     public enum StatusPagamento {
-        PENDENTE, PARCIAL, PAGO
+        PENDENTE, PARCIAL, PAGO, ISENTO
     }
 
     // =============================
