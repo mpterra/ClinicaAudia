@@ -190,6 +190,8 @@ CREATE TABLE atendimento (
     CONSTRAINT fk_at_empresa
         FOREIGN KEY (empresa_parceira_id)
         REFERENCES empresa_parceira(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 );
 
 -- ========================================
