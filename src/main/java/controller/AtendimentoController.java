@@ -37,8 +37,6 @@ public class AtendimentoController {
         validar(at, at.getId());
         // Força definição do statusPagamento baseado no valor ANTES de salvar
         forcarStatusPagamento(at);
-        // Debug: imprime para verificar
-        System.out.println("DEBUG - Atualizando atendimento: Valor = " + at.getValor() + ", StatusPagamento = " + at.getStatusPagamento());
         return dao.atualizar(at, usuarioLogado);
     }
 

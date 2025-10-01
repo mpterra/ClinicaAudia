@@ -20,7 +20,6 @@ import service.ValidacaoGeralService;
 import service.ValorAtendimentoCalculator;
 import util.Sessao;
 import view.dialogs.EditarMarcacaoDialog;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -43,17 +42,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Painel para marcação de atendimentos, responsável apenas pela interface gráfica.
+ * Painel para marcação de atendimentos, com abas para agendamento e tabela.
  */
 public class MarcacaoAtendimentoPanel extends JPanel {
-
     private static final long serialVersionUID = 1L;
-
     private JTextField txtBuscaPaciente;
     private JLabel lblNomePaciente;
     private JLabel lblTelefone;
     private JLabel lblIdade;
     private JLabel lblEmail;
+    private JLabel lblEndereco;
     private JTextArea txtObservacoes;
     private JComboBox<Profissional> cbProfissional;
     private JComboBox<Atendimento.Tipo> cbTipo;
@@ -67,7 +65,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private JComboBox<String> cbMes;
     private JComboBox<Integer> cbAno;
     private JTextField txtBuscaProfissional;
-
     private final DateTimeFormatter formatoData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final String[] meses = { "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto",
             "Setembro", "Outubro", "Novembro", "Dezembro" };
@@ -75,7 +72,7 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
-
+    private final Font tabFont = new Font("SansSerif", Font.BOLD, 16); // Fonte maior para abas
     // Injeção de dependências: controllers e serviços
     private final AtendimentoController atendimentoController = new AtendimentoController();
     private final PacienteController pacienteController = new PacienteController();
@@ -84,7 +81,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private final ValorAtendimentoController valorAtendimentoController = new ValorAtendimentoController();
     private final EmpresaParceiraController empresaParceiraController = new EmpresaParceiraController();
     private final ValorAtendimentoEmpresaController valorAtendimentoEmpresaController = new ValorAtendimentoEmpresaController();
-
     private final PacienteSearcher pacienteSearcher = new PacienteSearcher(pacienteController);
     private final HorarioDisponivelValidator horarioValidator = new HorarioDisponivelValidator(escalaController, atendimentoController);
     private final ValorAtendimentoCalculator valorCalculator = new ValorAtendimentoCalculator(valorAtendimentoController, valorAtendimentoEmpresaController);
@@ -92,31 +88,26 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private final AtendimentoFilter atendimentoFilter = new AtendimentoFilter(atendimentoController);
 
     /**
-     * Construtor do painel, inicializa a interface gráfica.
+     * Construtor do painel, inicializa a interface gráfica com abas.
      */
     public MarcacaoAtendimentoPanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(5, 15, 15, 15));
         setBackground(backgroundColor);
-
         // Título do painel
         JLabel lblTitulo = new JLabel("Marcação de Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
-
-        // Painéis de formulário e tabela
-        JPanel painelFormulario = criarPainelFormulario();
-        JPanel painelTabela = criarPainelTabela();
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
-        splitPane.setResizeWeight(0.495);
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.495));
-        splitPane.setDividerSize(7);
-        splitPane.setBackground(backgroundColor);
-        add(splitPane, BorderLayout.CENTER);
-
+        // Abas
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setBackground(backgroundColor);
+        tabbedPane.setFont(tabFont); // Define fonte maior e negrito para abas
+        tabbedPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Cursor de mão para abas
+        tabbedPane.addTab("Agendamento", criarPainelFormulario());
+        tabbedPane.addTab("Atendimentos", criarPainelTabela());
+        add(tabbedPane, BorderLayout.CENTER);
         // Inicializa data selecionada e carrega dados
         dataSelecionada = LocalDate.now();
         atualizarCalendario();
@@ -135,7 +126,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         "Agendar Consulta", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
-
         JPanel mainGrid = new JPanel(new GridBagLayout());
         mainGrid.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -143,7 +133,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
-
         // Row 1: Busca Paciente
         JLabel lblBuscaPaciente = new JLabel("Buscar Paciente:");
         lblBuscaPaciente.setFont(labelFont);
@@ -157,85 +146,49 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbc.gridwidth = 2;
         gbc.weightx = 1.0;
         mainGrid.add(txtBuscaPaciente, gbc);
-
-        // Row 2: Dados Paciente e Observações
-        JPanel dataSection = new JPanel(new GridBagLayout());
-        dataSection.setBackground(backgroundColor);
-        GridBagConstraints gbcS = new GridBagConstraints();
-        gbcS.insets = new Insets(10, 10, 10, 10);
-        gbcS.fill = GridBagConstraints.BOTH;
-        gbcS.weightx = 0.5;
-        gbcS.weighty = 1.0;
-
-        // Seção Esquerda: Dados do Paciente
+        // Row 2: Dados Paciente
         JPanel pacientePanel = new JPanel(new GridBagLayout());
-        pacientePanel.setBorder(new EmptyBorder(0, 0, 0, 5));
         pacientePanel.setBackground(backgroundColor);
         GridBagConstraints gbcP = new GridBagConstraints();
         gbcP.insets = new Insets(5, 0, 5, 0);
         gbcP.anchor = GridBagConstraints.WEST;
         gbcP.fill = GridBagConstraints.HORIZONTAL;
-
         lblNomePaciente = new JLabel("Nome:");
         lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
-        lblNomePaciente.setPreferredSize(new Dimension(300, 20));
+        lblNomePaciente.setPreferredSize(new Dimension(400, 20));
         lblNomePaciente.setHorizontalAlignment(SwingConstants.LEFT);
         gbcP.gridx = 0;
         gbcP.gridy = 0;
         pacientePanel.add(lblNomePaciente, gbcP);
-
         lblTelefone = new JLabel("Telefone:");
         lblTelefone.setFont(labelFont);
-        lblTelefone.setPreferredSize(new Dimension(300, 20));
+        lblTelefone.setPreferredSize(new Dimension(400, 20));
         lblTelefone.setHorizontalAlignment(SwingConstants.LEFT);
         gbcP.gridy = 1;
         pacientePanel.add(lblTelefone, gbcP);
-
         lblIdade = new JLabel("Idade:");
         lblIdade.setFont(labelFont);
-        lblIdade.setPreferredSize(new Dimension(300, 20));
+        lblIdade.setPreferredSize(new Dimension(400, 20));
         lblIdade.setHorizontalAlignment(SwingConstants.LEFT);
         gbcP.gridy = 2;
         pacientePanel.add(lblIdade, gbcP);
-
         lblEmail = new JLabel("Email:");
         lblEmail.setFont(labelFont);
-        lblEmail.setPreferredSize(new Dimension(300, 20));
+        lblEmail.setPreferredSize(new Dimension(400, 20));
         lblEmail.setHorizontalAlignment(SwingConstants.LEFT);
         gbcP.gridy = 3;
         pacientePanel.add(lblEmail, gbcP);
-
-        gbcS.gridx = 0;
-        gbcS.gridy = 0;
-        dataSection.add(pacientePanel, gbcS);
-
-        // Seção Direita: Observações
-        JPanel observacaoPanel = new JPanel(new BorderLayout());
-        observacaoPanel.setBorder(new EmptyBorder(0, 5, 0, 0));
-        observacaoPanel.setBackground(backgroundColor);
-
-        JLabel lblObservacoes = new JLabel("Observações:");
-        lblObservacoes.setFont(labelFont);
-        lblObservacoes.setBorder(new EmptyBorder(0, 0, 5, 0));
-        observacaoPanel.add(lblObservacoes, BorderLayout.NORTH);
-
-        txtObservacoes = new JTextArea(6, 20);
-        txtObservacoes.setLineWrap(true);
-        txtObservacoes.setWrapStyleWord(true);
-        JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
-        scrollObservacoes.setMinimumSize(new Dimension(300, 100));
-        observacaoPanel.add(scrollObservacoes, BorderLayout.CENTER);
-
-        gbcS.gridx = 1;
-        gbcS.gridy = 0;
-        dataSection.add(observacaoPanel, gbcS);
-
+        lblEndereco = new JLabel("Endereço:");
+        lblEndereco.setFont(labelFont);
+        lblEndereco.setPreferredSize(new Dimension(400, 20));
+        lblEndereco.setHorizontalAlignment(SwingConstants.LEFT);
+        gbcP.gridy = 4;
+        pacientePanel.add(lblEndereco, gbcP);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 3;
         gbc.weighty = 0.3;
-        mainGrid.add(dataSection, gbc);
-
+        mainGrid.add(pacientePanel, gbc);
         // Row 3: Seleções
         JPanel selecaoPanel = new JPanel(new GridBagLayout());
         selecaoPanel.setBackground(backgroundColor);
@@ -243,7 +196,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbcSel.insets = new Insets(5, 5, 5, 5);
         gbcSel.fill = GridBagConstraints.HORIZONTAL;
         gbcSel.weightx = 1.0;
-
         JLabel lblProf = new JLabel("Profissional:");
         lblProf.setFont(labelFont);
         gbcSel.gridx = 0;
@@ -251,67 +203,85 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblProf, gbcSel);
         cbProfissional = new JComboBox<>();
-        cbProfissional.setPreferredSize(new Dimension(180, 30));
+        cbProfissional.setPreferredSize(new Dimension(250, 30));
         cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcSel.gridx = 1;
         gbcSel.weightx = 1.0;
         selecaoPanel.add(cbProfissional, gbcSel);
-
         JLabel lblTipo = new JLabel("Tipo:");
         lblTipo.setFont(labelFont);
         gbcSel.gridx = 2;
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblTipo, gbcSel);
         cbTipo = new JComboBox<>(Atendimento.Tipo.values());
-        cbTipo.setPreferredSize(new Dimension(180, 30));
+        cbTipo.setPreferredSize(new Dimension(250, 30));
         cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcSel.gridx = 3;
         gbcSel.weightx = 1.0;
         selecaoPanel.add(cbTipo, gbcSel);
-
         JLabel lblHorario = new JLabel("Horário:");
         lblHorario.setFont(labelFont);
         gbcSel.gridx = 4;
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblHorario, gbcSel);
         cbHorario = new JComboBox<>();
-        cbHorario.setPreferredSize(new Dimension(180, 30));
+        cbHorario.setPreferredSize(new Dimension(250, 30));
         cbHorario.setEnabled(false);
         cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcSel.gridx = 5;
         gbcSel.weightx = 1.0;
         selecaoPanel.add(cbHorario, gbcSel);
-
         JLabel lblEmpresa = new JLabel("Parceria:");
         lblEmpresa.setFont(labelFont);
         gbcSel.gridx = 6;
         gbcSel.weightx = 0.0;
         selecaoPanel.add(lblEmpresa, gbcSel);
         cbEmpresaParceira = new JComboBox<>();
-        cbEmpresaParceira.setPreferredSize(new Dimension(180, 30));
+        cbEmpresaParceira.setPreferredSize(new Dimension(250, 30));
         cbEmpresaParceira.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbEmpresaParceira.addItem(null); // Opção "Nenhuma"
+        cbEmpresaParceira.addItem(null);
         gbcSel.gridx = 7;
         gbcSel.weightx = 1.0;
         selecaoPanel.add(cbEmpresaParceira, gbcSel);
-
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 3;
         gbc.weighty = 0.0;
         mainGrid.add(selecaoPanel, gbc);
-
-        // Row 4: Calendário
-        JPanel panelDataHora = new JPanel(new BorderLayout(10, 10));
-        panelDataHora.setBackground(backgroundColor);
-        panelDataHora.add(criarMiniCalendario(), BorderLayout.CENTER);
-
+        // Row 4: Calendário e Observações
+        JPanel panelDataObservacao = new JPanel(new GridBagLayout());
+        panelDataObservacao.setBackground(backgroundColor);
+        GridBagConstraints gbcDO = new GridBagConstraints();
+        gbcDO.insets = new Insets(10, 10, 10, 10);
+        gbcDO.fill = GridBagConstraints.BOTH;
+        gbcDO.weightx = 0.5;
+        gbcDO.weighty = 1.0;
+        // Calendário
+        JPanel panelDataHora = criarMiniCalendario();
+        gbcDO.gridx = 0;
+        gbcDO.gridy = 0;
+        panelDataObservacao.add(panelDataHora, gbcDO);
+        // Observações
+        JPanel observacaoPanel = new JPanel(new BorderLayout());
+        observacaoPanel.setBackground(backgroundColor);
+        JLabel lblObservacoes = new JLabel("Observações:");
+        lblObservacoes.setFont(labelFont);
+        lblObservacoes.setBorder(new EmptyBorder(0, 0, 5, 0));
+        observacaoPanel.add(lblObservacoes, BorderLayout.NORTH);
+        txtObservacoes = new JTextArea(6, 20);
+        txtObservacoes.setLineWrap(true);
+        txtObservacoes.setWrapStyleWord(true);
+        JScrollPane scrollObservacoes = new JScrollPane(txtObservacoes);
+        scrollObservacoes.setMinimumSize(new Dimension(400, 100));
+        observacaoPanel.add(scrollObservacoes, BorderLayout.CENTER);
+        gbcDO.gridx = 1;
+        gbcDO.gridy = 0;
+        panelDataObservacao.add(observacaoPanel, gbcDO);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 3;
         gbc.weighty = 0.5;
-        mainGrid.add(panelDataHora, gbc);
-
+        mainGrid.add(panelDataObservacao, gbc);
         // Row 5: Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panelBotoes.setBackground(backgroundColor);
@@ -327,14 +297,12 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         panelBotoes.add(btnLimpar);
         panelBotoes.add(btnSalvar);
-
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.gridwidth = 3;
         gbc.weighty = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         mainGrid.add(panelBotoes, gbc);
-
         // Listeners
         btnSalvar.addActionListener(e -> salvarAtendimento());
         btnLimpar.addActionListener(e -> {
@@ -369,7 +337,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 }
             }
         });
-
         panel.add(mainGrid, BorderLayout.CENTER);
         return panel;
     }
@@ -386,7 +353,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         painelDias.setBackground(backgroundColor);
         JPanel topo = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         topo.setBackground(backgroundColor);
-
         cbMes = new JComboBox<>(meses);
         cbMes.setPreferredSize(new Dimension(120, 30));
         cbMes.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -398,7 +364,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             cbAno.addItem(i);
         cbMes.setSelectedIndex(LocalDate.now().getMonthValue() - 1);
         cbAno.setSelectedItem(anoAtual);
-
         JButton btnPrev = new JButton("<");
         btnPrev.setPreferredSize(new Dimension(40, 30));
         btnPrev.setBackground(Color.WHITE);
@@ -407,7 +372,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         btnNext.setPreferredSize(new Dimension(40, 30));
         btnNext.setBackground(Color.WHITE);
         btnNext.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
         btnPrev.addActionListener(e -> {
             dataSelecionada = dataSelecionada.minusMonths(1);
             cbMes.setSelectedIndex(dataSelecionada.getMonthValue() - 1);
@@ -422,7 +386,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         });
         cbMes.addActionListener(e -> atualizarCalendario());
         cbAno.addActionListener(e -> atualizarCalendario());
-
         topo.add(btnPrev);
         topo.add(cbMes);
         topo.add(cbAno);
@@ -440,7 +403,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         int mes = cbMes.getSelectedIndex() + 1;
         int ano = (Integer) cbAno.getSelectedItem();
         YearMonth ym = YearMonth.of(ano, mes);
-
         String[] diasSemana = { "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb" };
         for (String d : diasSemana) {
             JLabel lbl = new JLabel(d, SwingConstants.CENTER);
@@ -448,12 +410,10 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             lbl.setForeground(Color.GRAY);
             painelDias.add(lbl);
         }
-
         LocalDate primeira = ym.atDay(1);
         int diaSemanaInicio = primeira.getDayOfWeek().getValue() % 7;
         for (int i = 0; i < diaSemanaInicio; i++)
             painelDias.add(new JLabel(""));
-
         int diasNoMes = ym.lengthOfMonth();
         LocalDate hoje = LocalDate.now();
         for (int dia = 1; dia <= diasNoMes; dia++) {
@@ -463,56 +423,59 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             btn.setFont(new Font("SansSerif", Font.PLAIN, 12));
             btn.setBorder(BorderFactory.createEmptyBorder());
             btn.setFocusPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            if (d.equals(dataSelecionada)) {
-                btn.setBackground(new Color(255, 204, 153));
-                btn.setForeground(Color.BLACK);
-                btn.setBorder(BorderFactory.createLineBorder(primaryColor, 2));
-            } else if (d.isBefore(hoje)) {
-                btn.setBackground(new Color(220, 220, 220));
-                btn.setForeground(Color.BLACK);
-            } else if (d.equals(hoje)) {
-                btn.setBackground(new Color(144, 238, 144));
+            boolean isDomingo = d.getDayOfWeek().getValue() == 7;
+            if (isDomingo) {
+                btn.setEnabled(false); // Desativa botões de domingo
+                btn.setBackground(Color.LIGHT_GRAY);
                 btn.setForeground(Color.BLACK);
             } else {
-                btn.setBackground(new Color(173, 216, 230));
-                btn.setForeground(Color.BLACK);
+                btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                if (d.equals(dataSelecionada)) {
+                    btn.setBackground(new Color(255, 204, 153));
+                    btn.setForeground(Color.BLACK);
+                    btn.setBorder(BorderFactory.createLineBorder(primaryColor, 2));
+                } else if (d.isBefore(hoje)) {
+                    btn.setBackground(new Color(220, 220, 220));
+                    btn.setForeground(Color.BLACK);
+                } else if (d.equals(hoje)) {
+                    btn.setBackground(new Color(144, 238, 144));
+                    btn.setForeground(Color.BLACK);
+                } else {
+                    btn.setBackground(new Color(173, 216, 230));
+                    btn.setForeground(Color.BLACK);
+                }
+                btn.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+                        if (!d.equals(dataSelecionada)) {
+                            btn.setBackground(primaryColor);
+                            btn.setForeground(Color.WHITE);
+                        }
+                    }
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        if (d.equals(dataSelecionada)) {
+                            btn.setBackground(new Color(255, 204, 153));
+                            btn.setForeground(Color.BLACK);
+                            btn.setBorder(BorderFactory.createLineBorder(primaryColor, 2));
+                        } else if (d.isBefore(hoje)) {
+                            btn.setBackground(new Color(220, 220, 220));
+                            btn.setForeground(Color.BLACK);
+                        } else if (d.equals(hoje)) {
+                            btn.setBackground(new Color(144, 238, 144));
+                            btn.setForeground(Color.BLACK);
+                        } else {
+                            btn.setBackground(new Color(173, 216, 230));
+                            btn.setForeground(Color.BLACK);
+                        }
+                    }
+                });
+                btn.addActionListener(e -> {
+                    dataSelecionada = d;
+                    atualizarHorarios();
+                    atualizarCalendario();
+                });
             }
-
-            btn.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    if (!d.equals(dataSelecionada)) {
-                        btn.setBackground(primaryColor);
-                        btn.setForeground(Color.WHITE);
-                    }
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    if (d.equals(dataSelecionada)) {
-                        btn.setBackground(new Color(255, 204, 153));
-                        btn.setForeground(Color.BLACK);
-                        btn.setBorder(BorderFactory.createLineBorder(primaryColor, 2));
-                    } else if (d.isBefore(hoje)) {
-                        btn.setBackground(new Color(220, 220, 220));
-                        btn.setForeground(Color.BLACK);
-                    } else if (d.equals(hoje)) {
-                        btn.setBackground(new Color(144, 238, 144));
-                        btn.setForeground(Color.BLACK);
-                    } else {
-                        btn.setBackground(new Color(173, 216, 230));
-                        btn.setForeground(Color.BLACK);
-                    }
-                }
-            });
-
-            btn.addActionListener(e -> {
-                dataSelecionada = d;
-                atualizarHorarios();
-                atualizarCalendario();
-            });
             painelDias.add(btn);
         }
         painelDias.revalidate();
@@ -530,7 +493,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
-
         JPanel panelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelBusca.setBackground(backgroundColor);
         JLabel lblBuscaPacienteTabela = new JLabel("Buscar Paciente:");
@@ -544,7 +506,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
         panelBusca.add(lblBuscaProf);
         panelBusca.add(txtBuscaProfissional);
         panel.add(panelBusca, BorderLayout.NORTH);
-
         String[] colunas = { "Data", "Horário", "Paciente", "Profissional", "Parceria", "Tipo", "Situação", "Pagamento" };
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
@@ -557,7 +518,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
                 Color bgColor;
-
                 try {
                     String dataStr = (String) getValueAt(row, 0);
                     LocalDate dataAtendimento = LocalDate.parse(dataStr, formatoData);
@@ -567,7 +527,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     boolean isPast = dtAtendimento.isBefore(agora);
                     Atendimento.Situacao situacao = (Atendimento.Situacao) getValueAt(row, 6);
                     Atendimento.StatusPagamento statusPagamento = (Atendimento.StatusPagamento) getValueAt(row, 7);
-
                     if (column == 7) {
                         if (statusPagamento == Atendimento.StatusPagamento.PAGO) {
                             bgColor = new Color(144, 238, 144);
@@ -606,10 +565,8 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 } catch (Exception e) {
                     bgColor = backgroundColor;
                 }
-
                 c.setBackground(bgColor);
                 c.setForeground(Color.BLACK);
-
                 if (isRowSelected(row)) {
                     int lastColumn = getColumnCount() - 1;
                     if (column == 0) {
@@ -628,11 +585,9 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                         ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                     }
                 }
-
                 return c;
             }
         };
-
         tabelaAtendimentos.setShowGrid(false);
         tabelaAtendimentos.setIntercellSpacing(new Dimension(0, 0));
         tabelaAtendimentos.addMouseListener(new MouseAdapter() {
@@ -662,30 +617,32 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 }
             }
         });
-
         tabelaAtendimentos.setFillsViewportHeight(true);
         tabelaAtendimentos.setRowHeight(25);
         tabelaAtendimentos.setFont(labelFont);
         tabelaAtendimentos.setBackground(backgroundColor);
-
         JTableHeader header = tabelaAtendimentos.getTableHeader();
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
-
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < tabelaAtendimentos.getColumnCount(); i++) {
             tabelaAtendimentos.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-
+        tabelaAtendimentos.getColumnModel().getColumn(0).setPreferredWidth(100);
+        tabelaAtendimentos.getColumnModel().getColumn(1).setPreferredWidth(80);
+        tabelaAtendimentos.getColumnModel().getColumn(2).setPreferredWidth(200);
+        tabelaAtendimentos.getColumnModel().getColumn(3).setPreferredWidth(200);
+        tabelaAtendimentos.getColumnModel().getColumn(4).setPreferredWidth(150);
+        tabelaAtendimentos.getColumnModel().getColumn(5).setPreferredWidth(100);
+        tabelaAtendimentos.getColumnModel().getColumn(6).setPreferredWidth(100);
+        tabelaAtendimentos.getColumnModel().getColumn(7).setPreferredWidth(100);
         sorter = new TableRowSorter<>(modeloTabela);
         tabelaAtendimentos.setRowSorter(sorter);
-
         JScrollPane scroll = new JScrollPane(tabelaAtendimentos);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-
         txtBuscaPacienteTabela.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProfissional.getText());
@@ -697,7 +654,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProfissional.getText());
             }
         });
-
         txtBuscaProfissional.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProfissional.getText());
@@ -709,7 +665,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                 filtrar(txtBuscaPacienteTabela.getText(), txtBuscaProfissional.getText());
             }
         });
-
         return panel;
     }
 
@@ -718,7 +673,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
      */
     private void carregarDadosIniciais() {
         try {
-            // Carrega profissionais
             cbProfissional.removeAllItems();
             List<Profissional> profissionais = profissionalController.listarTodos().stream()
                     .filter(Profissional::isAtivo)
@@ -727,16 +681,13 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             if (!profissionais.isEmpty()) {
                 cbProfissional.setSelectedIndex(0);
             }
-
-            // Carrega empresas parceiras
             cbEmpresaParceira.removeAllItems();
-            cbEmpresaParceira.addItem(null); // Opção "Nenhuma"
+            cbEmpresaParceira.addItem(null);
             List<EmpresaParceira> empresas = empresaParceiraController.listarTodos();
             empresas.stream()
                     .filter(emp -> emp.getId() > 0)
                     .forEach(cbEmpresaParceira::addItem);
-            cbEmpresaParceira.setSelectedIndex(0); // Define "Nenhuma" como padrão
-
+            cbEmpresaParceira.setSelectedIndex(0);
             atualizarPaciente();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -749,18 +700,20 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private void atualizarPaciente() throws SQLException {
         String busca = txtBuscaPaciente.getText().toLowerCase();
         Paciente paciente = pacienteSearcher.buscarPacientePorNome(busca);
-
         if (paciente != null) {
             lblNomePaciente.setText("Nome: " + paciente.getNome());
             lblTelefone.setText("Telefone: " + (paciente.getTelefone() != null ? paciente.getTelefone() : "N/A"));
             long idade = pacienteSearcher.calcularIdade(paciente);
             lblIdade.setText("Idade: " + idade);
             lblEmail.setText("Email: " + (paciente.getEmail() != null ? paciente.getEmail() : "N/A"));
+            String endereco = paciente.getEndereco() != null ? paciente.getEnderecoCompleto() : "N/A";
+            lblEndereco.setText("Endereço: " + endereco);
         } else {
             lblNomePaciente.setText("Nome:");
             lblTelefone.setText("Telefone:");
             lblIdade.setText("Idade:");
             lblEmail.setText("Email:");
+            lblEndereco.setText("Endereço:");
         }
     }
 
@@ -770,13 +723,11 @@ public class MarcacaoAtendimentoPanel extends JPanel {
     private void atualizarHorarios() {
         cbHorario.removeAllItems();
         cbHorario.setEnabled(false);
-
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
         Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
         if (prof == null || dataSelecionada == null || tipo == null) {
             return;
         }
-
         try {
             List<LocalTime> horarios = horarioValidator.listarHorariosDisponiveis(prof, dataSelecionada, tipo);
             horarios.forEach(cbHorario::addItem);
@@ -824,13 +775,11 @@ public class MarcacaoAtendimentoPanel extends JPanel {
             if (paciente == null) {
                 throw new Exception("Paciente não encontrado!");
             }
-
             Profissional prof = (Profissional) cbProfissional.getSelectedItem();
             LocalTime hora = (LocalTime) cbHorario.getSelectedItem();
             Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
             EmpresaParceira empresa = (EmpresaParceira) cbEmpresaParceira.getSelectedItem();
             LocalDateTime dataHora = dataSelecionada.atTime(hora);
-
             AgendamentoRequest request = new AgendamentoRequest(
                     paciente,
                     prof,
@@ -840,7 +789,6 @@ public class MarcacaoAtendimentoPanel extends JPanel {
                     txtObservacoes.getText(),
                     Sessao.getUsuarioLogado().getLogin()
             );
-
             if (agendamentoService.criarAgendamento(request)) {
                 JOptionPane.showMessageDialog(this, "Atendimento salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 carregarAtendimentos();
