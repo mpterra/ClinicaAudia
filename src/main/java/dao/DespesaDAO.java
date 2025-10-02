@@ -8,7 +8,6 @@ import util.Database;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,27 +26,20 @@ public class DespesaDAO {
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, despesa.getDescricao());
-            stmt.setString(2, despesa.getCategoria().name());
-            stmt.setBigDecimal(3, despesa.getValor());
-            stmt.setString(4, despesa.getFormaPagamento().name());
-            stmt.setDate(5, Date.valueOf(despesa.getDataVencimento()));
-            if (despesa.getDataPagamento() != null) {
-                stmt.setDate(6, Date.valueOf(despesa.getDataPagamento()));
-            } else {
-                stmt.setNull(6, Types.DATE);
-            }
-            stmt.setString(7, despesa.getStatus().name());
-            stmt.setString(8, usuarioLogado);
+            preencherStatement(stmt, despesa, usuarioLogado, false);
 
             int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) throw new SQLException("Falha ao inserir Despesa.");
+            if (affectedRows == 0) {
+                throw new SQLException("Falha ao inserir despesa.");
+            }
 
             try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) despesa.setId(rs.getInt(1));
+                if (rs.next()) {
+                    despesa.setId(rs.getInt(1));
+                }
             }
+            return true;
         }
-        return true;
     }
 
     // ============================
@@ -60,7 +52,9 @@ public class DespesaDAO {
 
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) return mapRow(rs);
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
             }
         }
         return null;
@@ -81,28 +75,43 @@ public class DespesaDAO {
             LocalDate fim
     ) throws SQLException {
 
-        List<Despesa> lista = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM despesa WHERE 1=1");
+        List<Object> params = new ArrayList<>();
 
-        if (categoria != null) sql.append(" AND categoria = ?");
-        if (status != null) sql.append(" AND status = ?");
-        if (formaPagamento != null) sql.append(" AND forma_pagamento = ?");
-        if (inicio != null) sql.append(" AND data_vencimento >= ?");
-        if (fim != null) sql.append(" AND data_vencimento <= ?");
+        if (categoria != null) {
+            sql.append(" AND categoria = ?");
+            params.add(categoria.name());
+        }
+        if (status != null) {
+            sql.append(" AND status = ?");
+            params.add(status.name());
+        }
+        if (formaPagamento != null) {
+            sql.append(" AND forma_pagamento = ?");
+            params.add(formaPagamento.name());
+        }
+        if (inicio != null) {
+            sql.append(" AND data_vencimento >= ?");
+            params.add(Date.valueOf(inicio));
+        }
+        if (fim != null) {
+            sql.append(" AND data_vencimento <= ?");
+            params.add(Date.valueOf(fim));
+        }
         sql.append(" ORDER BY data_vencimento");
 
+        List<Despesa> lista = new ArrayList<>();
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            int index = 1;
-            if (categoria != null) stmt.setString(index++, categoria.name());
-            if (status != null) stmt.setString(index++, status.name());
-            if (formaPagamento != null) stmt.setString(index++, formaPagamento.name());
-            if (inicio != null) stmt.setDate(index++, Date.valueOf(inicio));
-            if (fim != null) stmt.setDate(index++, Date.valueOf(fim));
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
 
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
             }
         }
         return lista;
@@ -122,20 +131,7 @@ public class DespesaDAO {
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, despesa.getDescricao());
-            stmt.setString(2, despesa.getCategoria().name());
-            stmt.setBigDecimal(3, despesa.getValor());
-            stmt.setString(4, despesa.getFormaPagamento().name());
-            stmt.setDate(5, Date.valueOf(despesa.getDataVencimento()));
-            if (despesa.getDataPagamento() != null) {
-                stmt.setDate(6, Date.valueOf(despesa.getDataPagamento()));
-            } else {
-                stmt.setNull(6, Types.DATE);
-            }
-            stmt.setString(7, despesa.getStatus().name());
-            stmt.setString(8, usuarioLogado);
-            stmt.setInt(9, despesa.getId());
-
+            preencherStatement(stmt, despesa, usuarioLogado, true);
             return stmt.executeUpdate() > 0;
         }
     }
@@ -164,12 +160,43 @@ public class DespesaDAO {
         d.setValor(rs.getBigDecimal("valor"));
         d.setFormaPagamento(FormaPagamento.valueOf(rs.getString("forma_pagamento")));
         d.setDataVencimento(rs.getDate("data_vencimento").toLocalDate());
+
         Date dataPagamento = rs.getDate("data_pagamento");
-        if (dataPagamento != null) d.setDataPagamento(dataPagamento.toLocalDate());
+        if (dataPagamento != null) {
+            d.setDataPagamento(dataPagamento.toLocalDate());
+        }
+
         d.setStatus(Status.valueOf(rs.getString("status")));
         d.setUsuario(rs.getString("usuario"));
+
         Timestamp ts = rs.getTimestamp("dataHora");
-        if (ts != null) d.setDataHora(ts.toLocalDateTime());
+        if (ts != null) {
+            d.setDataHora(ts.toLocalDateTime());
+        }
         return d;
+    }
+
+    // ============================
+    // AUXILIAR: preencher statement
+    // ============================
+    private void preencherStatement(PreparedStatement stmt, Despesa despesa, String usuarioLogado, boolean isUpdate) throws SQLException {
+        stmt.setString(1, despesa.getDescricao());
+        stmt.setString(2, despesa.getCategoria().name());
+        stmt.setBigDecimal(3, despesa.getValor());
+        stmt.setString(4, despesa.getFormaPagamento().name());
+        stmt.setDate(5, Date.valueOf(despesa.getDataVencimento()));
+
+        if (despesa.getDataPagamento() != null) {
+            stmt.setDate(6, Date.valueOf(despesa.getDataPagamento()));
+        } else {
+            stmt.setNull(6, Types.DATE);
+        }
+
+        stmt.setString(7, despesa.getStatus().name());
+        stmt.setString(8, usuarioLogado);
+
+        if (isUpdate) {
+            stmt.setInt(9, despesa.getId());
+        }
     }
 }

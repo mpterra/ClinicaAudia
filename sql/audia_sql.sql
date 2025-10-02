@@ -431,7 +431,7 @@ CREATE TABLE despesa (
         'OUTROS'            -- algo que não se encaixe
     ) NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
-    forma_pagamento ENUM('DINHEIRO', 'DEBITO', 'CREDITO', 'PIX', 'TRANSFERENCIA', 'BOLETO') NOT NULL,
+    forma_pagamento ENUM('DINHEIRO', 'DEBITO', 'CREDITO', 'PIX', 'BOLETO') NOT NULL,
     data_vencimento DATE NOT NULL,
     data_pagamento DATE DEFAULT NULL,
     status ENUM('PENDENTE', 'PAGO', 'CANCELADO') DEFAULT 'PENDENTE',

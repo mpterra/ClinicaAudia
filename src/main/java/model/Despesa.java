@@ -6,130 +6,148 @@ import java.time.LocalDateTime;
 
 public class Despesa {
 
-	// ENUMs correspondentes à tabela
-	public enum Categoria {
-		PESSOAL, OPERACIONAL, ADMINISTRATIVA, VARIAVEL, IMPOSTOS, OUTROS
-	}
+    // =========================
+    // ENUMs correspondentes à tabela
+    // =========================
+    public enum Categoria {
+        PESSOAL,        // salários, encargos, pró-labore
+        OPERACIONAL,    // aluguel, luz, água, internet
+        ADMINISTRATIVA, // material escritório, sistemas
+        VARIAVEL,       // motoboy, pequenas compras
+        IMPOSTOS,       // tributos, taxas
+        OUTROS          // algo que não se encaixe
+    }
 
-	public enum FormaPagamento {
-		DINHEIRO, DEBITO, CREDITO, PIX, TRANSFERENCIA, BOLETO
-	}
+    public enum FormaPagamento {
+        DINHEIRO, 
+        DEBITO, 
+        CREDITO, 
+        PIX, 
+        BOLETO
+    }
 
-	public enum Status {
-		PENDENTE, PAGO, CANCELADO
-	}
+    public enum Status {
+        PENDENTE, 
+        PAGO, 
+        CANCELADO
+    }
 
-	// Atributos
-	private int id;
-	private String descricao;
-	private Categoria categoria;
-	private BigDecimal valor;
-	private FormaPagamento formaPagamento;
-	private LocalDate dataVencimento;
-	private LocalDate dataPagamento;
-	private Status status;
-	private String usuario; // quem lançou
-	private LocalDateTime dataHora; // registro de auditoria
+    // =========================
+    // Atributos
+    // =========================
+    private int id;
+    private String descricao;
+    private Categoria categoria;
+    private BigDecimal valor;
+    private FormaPagamento formaPagamento;
+    private LocalDate dataVencimento;
+    private LocalDate dataPagamento; // pode ser null
+    private Status status = Status.PENDENTE; // default conforme tabela
+    private String usuario; // quem lançou
+    private LocalDateTime dataHora; // registro de auditoria (CURRENT_TIMESTAMP)
 
-	// Construtor vazio
-	public Despesa() {
-	}
+    // =========================
+    // Construtores
+    // =========================
+    public Despesa() {
+    }
 
-	// Construtor completo
-	public Despesa(int id, String descricao, Categoria categoria, BigDecimal valor, FormaPagamento formaPagamento,
-			LocalDate dataVencimento, LocalDate dataPagamento, Status status, String usuario, LocalDateTime dataHora) {
-		this.id = id;
-		this.descricao = descricao;
-		this.categoria = categoria;
-		this.valor = valor;
-		this.formaPagamento = formaPagamento;
-		this.dataVencimento = dataVencimento;
-		this.dataPagamento = dataPagamento;
-		this.status = status;
-		this.usuario = usuario;
-		this.dataHora = dataHora;
-	}
+    public Despesa(int id, String descricao, Categoria categoria, BigDecimal valor, 
+                   FormaPagamento formaPagamento, LocalDate dataVencimento, 
+                   LocalDate dataPagamento, Status status, String usuario, 
+                   LocalDateTime dataHora) {
+        this.id = id;
+        this.descricao = descricao;
+        this.categoria = categoria;
+        this.valor = valor;
+        this.formaPagamento = formaPagamento;
+        this.dataVencimento = dataVencimento;
+        this.dataPagamento = dataPagamento;
+        this.status = status;
+        this.usuario = usuario;
+        this.dataHora = dataHora;
+    }
 
-	// =======================
-	// Getters e Setters
-	// =======================
-	public int getId() {
-		return id;
-	}
+    // =========================
+    // Getters e Setters
+    // =========================
+    public int getId() {
+        return id;
+    }
 
-	public void setId(int id) {
-		this.id = id;
-	}
+    public void setId(int id) {
+        this.id = id;
+    }
 
-	public String getDescricao() {
-		return descricao;
-	}
+    public String getDescricao() {
+        return descricao;
+    }
 
-	public void setDescricao(String descricao) {
-		this.descricao = descricao;
-	}
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
 
-	public Categoria getCategoria() {
-		return categoria;
-	}
+    public Categoria getCategoria() {
+        return categoria;
+    }
 
-	public void setCategoria(Categoria categoria) {
-		this.categoria = categoria;
-	}
+    public void setCategoria(Categoria categoria) {
+        this.categoria = categoria;
+    }
 
-	public BigDecimal getValor() {
-		return valor;
-	}
+    public BigDecimal getValor() {
+        return valor;
+    }
 
-	public void setValor(BigDecimal valor) {
-		this.valor = valor;
-	}
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
+    }
 
-	public FormaPagamento getFormaPagamento() {
-		return formaPagamento;
-	}
+    public FormaPagamento getFormaPagamento() {
+        return formaPagamento;
+    }
 
-	public void setFormaPagamento(FormaPagamento formaPagamento) {
-		this.formaPagamento = formaPagamento;
-	}
+    public void setFormaPagamento(FormaPagamento formaPagamento) {
+        this.formaPagamento = formaPagamento;
+    }
 
-	public LocalDate getDataVencimento() {
-		return dataVencimento;
-	}
+    public LocalDate getDataVencimento() {
+        return dataVencimento;
+    }
 
-	public void setDataVencimento(LocalDate dataVencimento) {
-		this.dataVencimento = dataVencimento;
-	}
+    public void setDataVencimento(LocalDate dataVencimento) {
+        this.dataVencimento = dataVencimento;
+    }
 
-	public LocalDate getDataPagamento() {
-		return dataPagamento;
-	}
+    public LocalDate getDataPagamento() {
+        return dataPagamento;
+    }
 
-	public void setDataPagamento(LocalDate dataPagamento) {
-		this.dataPagamento = dataPagamento;
-	}
+    public void setDataPagamento(LocalDate dataPagamento) {
+        this.dataPagamento = dataPagamento;
+    }
 
-	public Status getStatus() {
-		return status;
-	}
+    public Status getStatus() {
+        return status;
+    }
 
-	public void setStatus(Status status) {
-		this.status = status;
-	}
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 
-	public String getUsuario() {
-		return usuario;
-	}
+    public String getUsuario() {
+        return usuario;
+    }
 
-	public void setUsuario(String usuario) {
-		this.usuario = usuario;
-	}
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
+    }
 
-	public LocalDateTime getDataHora() {
-		return dataHora;
-	}
+    public LocalDateTime getDataHora() {
+        return dataHora;
+    }
 
-	public void setDataHora(LocalDateTime dataHora) {
-		this.dataHora = dataHora;
-	}
+    public void setDataHora(LocalDateTime dataHora) {
+        this.dataHora = dataHora;
+    }
 }

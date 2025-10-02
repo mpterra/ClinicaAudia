@@ -12,29 +12,20 @@ import java.util.List;
 
 public class DespesaController {
 
-    private final DespesaDAO dao;
-
-    public DespesaController() {
-        this.dao = new DespesaDAO();
-    }
+    private final DespesaDAO dao = new DespesaDAO();
 
     // ============================
     // CREATE
     // ============================
-    public boolean adicionarDespesa(Despesa despesa, String usuarioLogado) throws SQLException {
-        if (despesa.getDescricao() == null || despesa.getDescricao().isEmpty())
-            throw new IllegalArgumentException("Descrição é obrigatória.");
-
-        if (despesa.getValor() == null || despesa.getValor().doubleValue() <= 0)
-            throw new IllegalArgumentException("Valor deve ser maior que zero.");
-
+    public boolean adicionar(Despesa despesa, String usuarioLogado) throws SQLException {
+        validarDespesa(despesa, false);
         return dao.salvar(despesa, usuarioLogado);
     }
 
     // ============================
     // READ
     // ============================
-    public Despesa buscarDespesa(int id) throws SQLException {
+    public Despesa buscar(int id) throws SQLException {
         return dao.buscarPorId(id);
     }
 
@@ -55,19 +46,16 @@ public class DespesaController {
     // ============================
     // UPDATE
     // ============================
-    public boolean atualizarDespesa(Despesa despesa, String usuarioLogado) throws SQLException {
-        if (despesa.getId() <= 0)
-            throw new IllegalArgumentException("Despesa inválida.");
-
+    public boolean atualizar(Despesa despesa, String usuarioLogado) throws SQLException {
+        validarDespesa(despesa, true);
         return dao.atualizar(despesa, usuarioLogado);
     }
 
     // ============================
     // DELETE
     // ============================
-    public boolean removerDespesa(int id) throws SQLException {
-        if (id <= 0)
-            throw new IllegalArgumentException("ID inválido.");
+    public boolean remover(int id) throws SQLException {
+        if (id <= 0) throw new IllegalArgumentException("ID inválido.");
         return dao.deletar(id);
     }
 
@@ -75,20 +63,35 @@ public class DespesaController {
     // MÉTODOS AUXILIARES
     // ============================
     public boolean marcarComoPago(int id, LocalDate dataPagamento, String usuarioLogado) throws SQLException {
+        return alterarStatus(id, Status.PAGO, dataPagamento, usuarioLogado);
+    }
+
+    public boolean marcarComoPendente(int id, String usuarioLogado) throws SQLException {
+        return alterarStatus(id, Status.PENDENTE, null, usuarioLogado);
+    }
+
+    private boolean alterarStatus(int id, Status novoStatus, LocalDate dataPagamento, String usuarioLogado) throws SQLException {
         Despesa despesa = dao.buscarPorId(id);
         if (despesa == null) return false;
 
-        despesa.setStatus(Status.PAGO);
+        despesa.setStatus(novoStatus);
         despesa.setDataPagamento(dataPagamento);
         return dao.atualizar(despesa, usuarioLogado);
     }
 
-    public boolean marcarComoPendente(int id, String usuarioLogado) throws SQLException {
-        Despesa despesa = dao.buscarPorId(id);
-        if (despesa == null) return false;
+    // ============================
+    // VALIDAÇÃO
+    // ============================
+    private void validarDespesa(Despesa despesa, boolean exigeId) {
+        if (despesa == null) throw new IllegalArgumentException("Despesa não pode ser nula.");
 
-        despesa.setStatus(Status.PENDENTE);
-        despesa.setDataPagamento(null);
-        return dao.atualizar(despesa, usuarioLogado);
+        if (exigeId && despesa.getId() <= 0)
+            throw new IllegalArgumentException("Despesa inválida para atualização.");
+
+        if (despesa.getDescricao() == null || despesa.getDescricao().isBlank())
+            throw new IllegalArgumentException("Descrição é obrigatória.");
+
+        if (despesa.getValor() == null || despesa.getValor().compareTo(java.math.BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Valor deve ser maior que zero.");
     }
 }
