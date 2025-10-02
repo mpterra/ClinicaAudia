@@ -16,9 +16,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
-import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,86 +63,23 @@ public class EstoquePanel extends JPanel {
         // Inicializa caches
         carregarCachesIniciais();
 
+        // Painel superior para título e busca
+        JPanel painelSuperior = new JPanel();
+        painelSuperior.setLayout(new BoxLayout(painelSuperior, BoxLayout.Y_AXIS));
+        painelSuperior.setBackground(backgroundColor);
+
         // Título
-        JLabel lblTitulo = new JLabel("Gerenciamento de Estoque", SwingConstants.CENTER);
+        JLabel lblTitulo = new JLabel("Estoque", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
-        add(lblTitulo, BorderLayout.NORTH);
+        painelSuperior.add(lblTitulo);
 
-        // Painel de busca no topo
-        JPanel painelBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        painelBusca.setBackground(backgroundColor);
-        painelBusca.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+        // Painel de busca
+        JPanel painelBusca = criarPainelBusca();
+        painelSuperior.add(painelBusca);
 
-        JLabel lblProduto = new JLabel("Produto:");
-        lblProduto.setFont(labelFont);
-        painelBusca.add(lblProduto);
-        txtBuscaProduto = new JTextField(20);
-        txtBuscaProduto.setPreferredSize(new Dimension(200, 25));
-        txtBuscaProduto.setFont(fieldFont);
-        txtBuscaProduto.setToolTipText("Digite o nome ou código do produto");
-        painelBusca.add(txtBuscaProduto);
-
-        JLabel lblTipo = new JLabel("Tipo:");
-        lblTipo.setFont(labelFont);
-        painelBusca.add(lblTipo);
-        cmbTipoProduto = new JComboBox<>();
-        cmbTipoProduto.setPreferredSize(new Dimension(150, 25));
-        cmbTipoProduto.setFont(fieldFont);
-        cmbTipoProduto.addItem(null); // Opção "Todos"
-        cmbTipoProduto.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value == null) {
-                    setText("Todos");
-                } else if (value instanceof TipoProduto) {
-                    setText(((TipoProduto) value).getNome());
-                }
-                return this;
-            }
-        });
-        for (TipoProduto tp : cacheTipos.values()) {
-            cmbTipoProduto.addItem(tp);
-        }
-        painelBusca.add(cmbTipoProduto);
-
-        JLabel lblFornecedor = new JLabel("Fornecedor:");
-        lblFornecedor.setFont(labelFont);
-        painelBusca.add(lblFornecedor);
-        cmbFornecedor = new JComboBox<>();
-        cmbFornecedor.setPreferredSize(new Dimension(150, 25));
-        cmbFornecedor.setFont(fieldFont);
-        cmbFornecedor.addItem(null); // Opção "Todos"
-        cmbFornecedor.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (value == null) {
-                    setText("Todos");
-                } else if (value instanceof Fornecedor) {
-                    setText(((Fornecedor) value).getNome());
-                }
-                return this;
-            }
-        });
-        for (Fornecedor f : cacheFornecedores.values()) {
-            cmbFornecedor.addItem(f);
-        }
-        painelBusca.add(cmbFornecedor);
-
-        btnBuscar = new JButton("Buscar");
-        btnBuscar.setBackground(primaryColor);
-        btnBuscar.setForeground(Color.WHITE);
-        btnBuscar.setBorder(BorderFactory.createEmptyBorder());
-        btnBuscar.setPreferredSize(new Dimension(100, 30));
-        btnBuscar.setHorizontalAlignment(SwingConstants.CENTER);
-        btnBuscar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnBuscar.addActionListener(e -> carregarDados());
-        painelBusca.add(btnBuscar);
-
-        add(painelBusca, BorderLayout.NORTH);
+        add(painelSuperior, BorderLayout.NORTH);
 
         // Painel da tabela
         JPanel painelTabela = criarPainelTabela();
@@ -172,6 +107,89 @@ public class EstoquePanel extends JPanel {
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados iniciais: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    // Cria o painel de busca com título
+    private JPanel criarPainelBusca() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1),
+                        "Filtros de Busca", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
+                new EmptyBorder(5, 5, 5, 5)));
+        panel.setBackground(backgroundColor);
+
+        JPanel conteudoBusca = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        conteudoBusca.setBackground(backgroundColor);
+
+        JLabel lblProduto = new JLabel("Produto:");
+        lblProduto.setFont(labelFont);
+        conteudoBusca.add(lblProduto);
+        txtBuscaProduto = new JTextField(20);
+        txtBuscaProduto.setPreferredSize(new Dimension(200, 25));
+        txtBuscaProduto.setFont(fieldFont);
+        txtBuscaProduto.setToolTipText("Digite o nome ou código do produto");
+        conteudoBusca.add(txtBuscaProduto);
+
+        JLabel lblTipo = new JLabel("Tipo:");
+        lblTipo.setFont(labelFont);
+        conteudoBusca.add(lblTipo);
+        cmbTipoProduto = new JComboBox<>();
+        cmbTipoProduto.setPreferredSize(new Dimension(150, 25));
+        cmbTipoProduto.setFont(fieldFont);
+        cmbTipoProduto.addItem(null); // Opção "Todos"
+        cmbTipoProduto.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value == null) {
+                    setText("Todos");
+                } else if (value instanceof TipoProduto) {
+                    setText(((TipoProduto) value).getNome());
+                }
+                return this;
+            }
+        });
+        for (TipoProduto tp : cacheTipos.values()) {
+            cmbTipoProduto.addItem(tp);
+        }
+        conteudoBusca.add(cmbTipoProduto);
+
+        JLabel lblFornecedor = new JLabel("Fornecedor:");
+        lblFornecedor.setFont(labelFont);
+        conteudoBusca.add(lblFornecedor);
+        cmbFornecedor = new JComboBox<>();
+        cmbFornecedor.setPreferredSize(new Dimension(150, 25));
+        cmbFornecedor.setFont(fieldFont);
+        cmbFornecedor.addItem(null); // Opção "Todos"
+        cmbFornecedor.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value == null) {
+                    setText("Todos");
+                } else if (value instanceof Fornecedor) {
+                    setText(((Fornecedor) value).getNome());
+                }
+                return this;
+            }
+        });
+        for (Fornecedor f : cacheFornecedores.values()) {
+            cmbFornecedor.addItem(f);
+        }
+        conteudoBusca.add(cmbFornecedor);
+
+        btnBuscar = new JButton("Buscar");
+        btnBuscar.setBackground(primaryColor);
+        btnBuscar.setForeground(Color.WHITE);
+        btnBuscar.setBorder(BorderFactory.createEmptyBorder());
+        btnBuscar.setPreferredSize(new Dimension(100, 30));
+        btnBuscar.setHorizontalAlignment(SwingConstants.CENTER);
+        btnBuscar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnBuscar.addActionListener(e -> carregarDados());
+        conteudoBusca.add(btnBuscar);
+
+        panel.add(conteudoBusca, BorderLayout.CENTER);
+        return panel;
     }
 
     // Cria o painel da tabela
