@@ -101,6 +101,7 @@ public class TelaPrincipal extends JFrame {
 		}));
 		menuFinanceiro.addSeparator();
 		menuFinanceiro.add(createMenuItem("Lançar Despesa", e -> {
+			abrirLancamentoDespesaPanel();
 		}));
 		menuFinanceiro.addSeparator();
 		menuFinanceiro.add(createMenuItem("Contas a Pagar", e -> {
@@ -306,6 +307,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirEstoquePanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new EstoquePanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirLancamentoDespesaPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new LancamentoDespesaPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}
