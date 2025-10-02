@@ -114,6 +114,7 @@ public class TelaPrincipal extends JFrame {
 		// MENU ESTOQUE
 		JMenu menuEstoque = createMenu("Estoque");
 		menuEstoque.add(createMenuItem("Conferir Estoque", e -> {
+			abrirEstoquePanel();
 		}));
 		menuEstoque.add(createMenuItem("Ajustar Estoque", e -> {
 		}));
@@ -298,6 +299,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroFornecedorPanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroFornecedorPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirEstoquePanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new EstoquePanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

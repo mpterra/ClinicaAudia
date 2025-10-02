@@ -64,9 +64,8 @@ public class CompraProdutoPanel extends JPanel {
 	private JLabel lblValorTotal;
 
 	// Estilo
-	private final Color primaryColor = new Color(34, 139, 34); // Verde
-	private final Color secondaryColor = new Color(200, 255, 200); // Verde claro
-	private final Color thirdiaryColor = new Color(45, 99, 255); // Azul claro
+	private final Color primaryColor = new Color(154, 5, 38); // Vermelho escuro
+	private final Color secondaryColor = new Color(94, 5, 38); // Vermelho claro
 	private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
 	private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde muito claro
 	private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
@@ -362,7 +361,7 @@ public class CompraProdutoPanel extends JPanel {
 		botoesPanel.add(btnLimpar);
 
 		JButton btnAdicionarItem = new JButton("Adicionar Item");
-		btnAdicionarItem.setBackground(thirdiaryColor);
+		btnAdicionarItem.setBackground(primaryColor);
 		btnAdicionarItem.setForeground(Color.WHITE);
 		btnAdicionarItem.setBorder(BorderFactory.createEmptyBorder());
 		btnAdicionarItem.setPreferredSize(new Dimension(100, 30));
