@@ -137,7 +137,7 @@ public class CompraProdutoPanel extends JPanel {
 		splitPane.setDividerSize(5);
 		splitPane.setContinuousLayout(true);
 		splitPane.setBackground(backgroundColor);
-		SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.45));
+		SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.43));
 		add(splitPane, BorderLayout.CENTER);
 	}
 
