@@ -431,6 +431,7 @@ CREATE TABLE despesa (
         'OUTROS'            -- algo que não se encaixe
     ) NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
+    recorrente TINYINT NOT NULL DEFAULT 0, -- 0=Não, 1=Sim
     forma_pagamento ENUM('DINHEIRO', 'DEBITO', 'CREDITO', 'PIX', 'BOLETO') NOT NULL,
     data_vencimento DATE NOT NULL,
     data_pagamento DATE DEFAULT NULL,

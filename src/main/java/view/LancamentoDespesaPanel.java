@@ -50,6 +50,12 @@ public class LancamentoDespesaPanel extends JPanel {
     private JTable tabelaDespesas;
     private DefaultTableModel modeloTabelaDespesas;
 
+    // Componentes de filtro
+    private JFormattedTextField txtDataInicioFiltro;
+    private JFormattedTextField txtDataFimFiltro;
+    private JComboBox<Object> cmbCategoriaFiltro;
+    private JTextField txtDescricaoFiltro;
+
     // Estilo
     private final Color primaryColor = new Color(154, 5, 38); // Vermelho escuro
     private final Color secondaryColor = new Color(94, 5, 38); // Vermelho claro
@@ -68,6 +74,12 @@ public class LancamentoDespesaPanel extends JPanel {
     private List<Despesa> listaDespesas;
     private BigDecimal valorTotalDespesas;
 
+    // Variáveis de filtro
+    private LocalDate dataInicioFiltro;
+    private LocalDate dataFimFiltro;
+    private Despesa.Categoria categoriaFiltro;
+    private String descricaoFiltro;
+
     // Formato de data
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
@@ -80,12 +92,18 @@ public class LancamentoDespesaPanel extends JPanel {
         listaDespesas = new ArrayList<>();
         valorTotalDespesas = BigDecimal.ZERO;
 
+        // Inicializa filtros padrão (mês atual)
+        LocalDate now = LocalDate.now();
+        dataInicioFiltro = now.withDayOfMonth(1);
+        dataFimFiltro = now.withDayOfMonth(now.lengthOfMonth());
+        categoriaFiltro = null; // Todas
+        descricaoFiltro = "";
+
         // Inicializa componentes de pagamento
         spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
         spinnerParcelas.setPreferredSize(new Dimension(80, 25));
         spinnerParcelas.setFont(fieldFont);
         spinnerParcelas.setEnabled(false);
-
         chkRecorrente = new JCheckBox();
         chkRecorrente.setBackground(backgroundColor);
         spinnerMesesRecorrentes = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
@@ -110,7 +128,7 @@ public class LancamentoDespesaPanel extends JPanel {
         splitPane.setDividerSize(5);
         splitPane.setContinuousLayout(true);
         splitPane.setBackground(backgroundColor);
-        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.45));
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.31));
         add(splitPane, BorderLayout.CENTER);
 
         // Carrega dados iniciais
@@ -159,7 +177,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridwidth = 1;
         gbcData.weightx = 0.0;
         dataPanel.add(lblCategoria, gbcData);
-
         cmbCategoria = new JComboBox<>(Despesa.Categoria.values());
         cmbCategoria.setPreferredSize(new Dimension(150, 25));
         cmbCategoria.setFont(fieldFont);
@@ -173,7 +190,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 2;
         gbcData.weightx = 0.0;
         dataPanel.add(lblDescricao, gbcData);
-
         txtDescricao = new JTextField(20);
         txtDescricao.setPreferredSize(new Dimension(200, 25));
         txtDescricao.setFont(fieldFont);
@@ -188,7 +204,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 3;
         gbcData.weightx = 0.0;
         dataPanel.add(lblValor, gbcData);
-
         txtValor = new JTextField(10);
         txtValor.setText("R$ 0,00");
         txtValor.setPreferredSize(new Dimension(100, 25));
@@ -204,7 +219,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblDataVencimento, gbcData);
-
         try {
             MaskFormatter maskData = new MaskFormatter("##/##/####");
             txtDataVencimento = new JFormattedTextField(maskData);
@@ -225,7 +239,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 5;
         gbcData.weightx = 0.0;
         dataPanel.add(lblPago, gbcData);
-
         chkPago = new JCheckBox();
         chkPago.setBackground(backgroundColor);
         gbcData.gridx = 1;
@@ -238,7 +251,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 6;
         gbcData.weightx = 0.0;
         dataPanel.add(lblFormaPagamento, gbcData);
-
         cmbFormaPagamento = new JComboBox<>(Despesa.FormaPagamento.values());
         cmbFormaPagamento.setPreferredSize(new Dimension(150, 25));
         cmbFormaPagamento.setFont(fieldFont);
@@ -253,7 +265,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 7;
         gbcData.weightx = 0.0;
         dataPanel.add(lblParcelas, gbcData);
-
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(spinnerParcelas, gbcData);
@@ -264,7 +275,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 8;
         gbcData.weightx = 0.0;
         dataPanel.add(lblDataPagamento, gbcData);
-
         try {
             MaskFormatter maskDataPag = new MaskFormatter("##/##/####");
             txtDataPagamento = new JFormattedTextField(maskDataPag);
@@ -286,7 +296,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 9;
         gbcData.weightx = 0.0;
         dataPanel.add(lblRecorrente, gbcData);
-
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(chkRecorrente, gbcData);
@@ -297,7 +306,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 10;
         gbcData.weightx = 0.0;
         dataPanel.add(lblMesesRecorrentes, gbcData);
-
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(spinnerMesesRecorrentes, gbcData);
@@ -311,7 +319,6 @@ public class LancamentoDespesaPanel extends JPanel {
         // Seção de Botões
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
         botoesPanel.setBackground(backgroundColor);
-
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
@@ -342,7 +349,6 @@ public class LancamentoDespesaPanel extends JPanel {
         // Listeners
         btnAdicionar.addActionListener(e -> adicionarDespesa());
         btnLimpar.addActionListener(e -> limparCampos());
-
         chkPago.addActionListener(e -> atualizarCamposPagamento());
         cmbFormaPagamento.addActionListener(e -> atualizarParcelas());
         chkRecorrente.addActionListener(e -> spinnerMesesRecorrentes.setEnabled(chkRecorrente.isSelected()));
@@ -355,10 +361,73 @@ public class LancamentoDespesaPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1),
-                        "Despesas Pendentes e Pagas (Últimas 48h)", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
+                        "Despesas Pendentes e Pagas", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
 
+        // Painel de filtros acima da tabela
+        JPanel filtrosPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        filtrosPanel.setBackground(backgroundColor);
+        filtrosPanel.setBorder(new EmptyBorder(5, 0, 10, 0)); // Espaço abaixo para a tabela
+
+        JLabel lblDe = new JLabel("De:");
+        lblDe.setFont(labelFont);
+        filtrosPanel.add(lblDe);
+        try {
+            MaskFormatter maskData = new MaskFormatter("##/##/####");
+            txtDataInicioFiltro = new JFormattedTextField(maskData);
+            txtDataInicioFiltro.setPreferredSize(new Dimension(100, 25));
+            txtDataInicioFiltro.setFont(fieldFont);
+            txtDataInicioFiltro.setText(sdf.format(java.sql.Date.valueOf(dataInicioFiltro)));
+            filtrosPanel.add(txtDataInicioFiltro);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        JLabel lblAte = new JLabel("Até:");
+        lblAte.setFont(labelFont);
+        filtrosPanel.add(lblAte);
+        try {
+            MaskFormatter maskData = new MaskFormatter("##/##/####");
+            txtDataFimFiltro = new JFormattedTextField(maskData);
+            txtDataFimFiltro.setPreferredSize(new Dimension(100, 25));
+            txtDataFimFiltro.setFont(fieldFont);
+            txtDataFimFiltro.setText(sdf.format(java.sql.Date.valueOf(dataFimFiltro)));
+            filtrosPanel.add(txtDataFimFiltro);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        JLabel lblCategoriaFiltro = new JLabel("Categoria:");
+        lblCategoriaFiltro.setFont(labelFont);
+        filtrosPanel.add(lblCategoriaFiltro);
+        cmbCategoriaFiltro = new JComboBox<>();
+        cmbCategoriaFiltro.addItem("Todas");
+        for (Despesa.Categoria cat : Despesa.Categoria.values()) {
+            cmbCategoriaFiltro.addItem(cat);
+        }
+        cmbCategoriaFiltro.setPreferredSize(new Dimension(150, 25));
+        cmbCategoriaFiltro.setFont(fieldFont);
+        filtrosPanel.add(cmbCategoriaFiltro);
+
+        JLabel lblDescricaoFiltro = new JLabel("Descrição:");
+        lblDescricaoFiltro.setFont(labelFont);
+        filtrosPanel.add(lblDescricaoFiltro);
+        txtDescricaoFiltro = new JTextField(15);
+        txtDescricaoFiltro.setPreferredSize(new Dimension(150, 25));
+        txtDescricaoFiltro.setFont(fieldFont);
+        filtrosPanel.add(txtDescricaoFiltro);
+
+        JButton btnFiltrar = new JButton("Filtrar");
+        btnFiltrar.setBackground(primaryColor);
+        btnFiltrar.setForeground(Color.WHITE);
+        btnFiltrar.setPreferredSize(new Dimension(80, 25));
+        btnFiltrar.addActionListener(e -> aplicarFiltros());
+        filtrosPanel.add(btnFiltrar);
+
+        panel.add(filtrosPanel, BorderLayout.NORTH);
+
+        // Tabela
         String[] colunas = {"ID", "Descrição", "Categoria", "Valor", "Forma Pag.", "Data Venc.", "Data Pag.", "Status"};
         modeloTabelaDespesas = new DefaultTableModel(colunas, 0) {
             @Override
@@ -366,7 +435,6 @@ public class LancamentoDespesaPanel extends JPanel {
                 return false;
             }
         };
-
         tabelaDespesas = new JTable(modeloTabelaDespesas) {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
@@ -376,7 +444,6 @@ public class LancamentoDespesaPanel extends JPanel {
                 ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                 return c;
             }
-
             @Override
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -394,25 +461,22 @@ public class LancamentoDespesaPanel extends JPanel {
         tabelaDespesas.setRowHeight(25);
         tabelaDespesas.setFont(fieldFont);
         tabelaDespesas.setBackground(backgroundColor);
-
         JTableHeader header = tabelaDespesas.getTableHeader();
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
-
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < tabelaDespesas.getColumnCount(); i++) {
             tabelaDespesas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-
         JScrollPane scroll = new JScrollPane(tabelaDespesas);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
 
+        // Painel inferior
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         southPanel.setBackground(backgroundColor);
-
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
@@ -445,6 +509,20 @@ public class LancamentoDespesaPanel extends JPanel {
         return panel;
     }
 
+    // Método para aplicar os filtros informados
+    private void aplicarFiltros() {
+        try {
+            dataInicioFiltro = parseData(txtDataInicioFiltro.getText());
+            dataFimFiltro = parseData(txtDataFimFiltro.getText());
+            Object selectedCat = cmbCategoriaFiltro.getSelectedItem();
+            categoriaFiltro = (selectedCat instanceof Despesa.Categoria) ? (Despesa.Categoria) selectedCat : null;
+            descricaoFiltro = txtDescricaoFiltro.getText().trim().toLowerCase();
+            carregarDespesasFiltradas();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Erro nos filtros: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void atualizarCamposPagamento() {
         boolean pago = chkPago.isSelected();
         cmbFormaPagamento.setEnabled(pago);
@@ -458,7 +536,6 @@ public class LancamentoDespesaPanel extends JPanel {
             spinnerParcelas.setValue(1);
             return;
         }
-
         Despesa.FormaPagamento forma = (Despesa.FormaPagamento) cmbFormaPagamento.getSelectedItem();
         if (forma == Despesa.FormaPagamento.CREDITO || forma == Despesa.FormaPagamento.BOLETO) {
             spinnerParcelas.setModel(new SpinnerNumberModel(2, 2, 12, 1));
@@ -490,22 +567,17 @@ public class LancamentoDespesaPanel extends JPanel {
             if (descricao.isEmpty()) {
                 throw new IllegalArgumentException("Descrição é obrigatória.");
             }
-
             BigDecimal valorTotal = parseValor(txtValor.getText());
             if (valorTotal.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Valor deve ser maior que zero.");
             }
-
             LocalDate dataVencimento = parseData(txtDataVencimento.getText());
-
             boolean isPago = chkPago.isSelected();
             Despesa.FormaPagamento formaPagamento = (Despesa.FormaPagamento) cmbFormaPagamento.getSelectedItem();
             int numParcelas = (Integer) spinnerParcelas.getValue();
             LocalDate dataPagamento = isPago ? parseData(txtDataPagamento.getText()) : null;
-
             boolean isRecorrente = chkRecorrente.isSelected();
             int numMeses = (Integer) spinnerMesesRecorrentes.getValue();
-
             if (isRecorrente) {
                 lancarDespesasRecorrentes(valorTotal, numParcelas, dataVencimento, dataPagamento, usuarioLogado, numMeses);
             } else if (numParcelas > 1) {
@@ -513,7 +585,6 @@ public class LancamentoDespesaPanel extends JPanel {
             } else {
                 lancarDespesaUnica(valorTotal, dataVencimento, dataPagamento, usuarioLogado);
             }
-
             JOptionPane.showMessageDialog(this, "Despesa(s) adicionada(s) com sucesso!", "Sucesso",
                     JOptionPane.INFORMATION_MESSAGE);
             carregarDespesasFiltradas();
@@ -674,11 +745,12 @@ public class LancamentoDespesaPanel extends JPanel {
             List<Despesa> todas = despesaController.listarTodas();
             listaDespesas.clear();
             valorTotalDespesas = BigDecimal.ZERO;
-            LocalDateTime agora = LocalDateTime.now();
             for (Despesa d : todas) {
-                if (d.getStatus() == Despesa.Status.PENDENTE ||
-                        (d.getStatus() == Despesa.Status.PAGO && d.getDataHora() != null &&
-                                ChronoUnit.HOURS.between(d.getDataHora(), agora) <= 48)) {
+                LocalDate venc = d.getDataVencimento();
+                String descLower = d.getDescricao().toLowerCase();
+                if (venc != null && !venc.isBefore(dataInicioFiltro) && !venc.isAfter(dataFimFiltro) &&
+                        (categoriaFiltro == null || d.getCategoria() == categoriaFiltro) &&
+                        (descricaoFiltro.isEmpty() || descLower.contains(descricaoFiltro))) {
                     listaDespesas.add(d);
                     valorTotalDespesas = valorTotalDespesas.add(d.getValor());
                 }
