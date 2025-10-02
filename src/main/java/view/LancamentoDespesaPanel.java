@@ -373,14 +373,19 @@ public class LancamentoDespesaPanel extends JPanel {
                 Component c = super.prepareRenderer(renderer, row, column);
                 c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
                 c.setForeground(Color.BLACK);
-                if (isRowSelected(row)) {
-                    c.setBackground(secondaryColor);
-                    ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, column == 0 ? 1 : 0, 1,
-                            column == getColumnCount() - 1 ? 1 : 0, Color.BLACK));
-                } else {
-                    ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
-                }
+                ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                 return c;
+            }
+
+            @Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (getSelectedRow() >= 0) {
+                    Rectangle rect = getCellRect(getSelectedRow(), 0, true);
+                    rect.width = getWidth();
+                    g.setColor(Color.BLACK);
+                    g.drawRect(rect.x, rect.y, rect.width - 1, rect.height - 1);
+                }
             }
         };
         tabelaDespesas.setShowGrid(false);
