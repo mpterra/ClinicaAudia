@@ -1,6 +1,7 @@
 package model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class PagamentoVenda {
@@ -11,6 +12,7 @@ public class PagamentoVenda {
     private int id;
     private Venda venda;
     private LocalDateTime dataHora;
+    private LocalDate dataVencimento;
     private BigDecimal valor;
     private MetodoPagamento metodoPagamento;
     private int parcela;
@@ -21,22 +23,25 @@ public class PagamentoVenda {
     // -------------------------
     // Enum para método de pagamento
     // -------------------------
-    public enum MetodoPagamento {DINHEIRO, PIX, DEBITO, CREDITO, BOLETO}
+    public enum MetodoPagamento {
+        DINHEIRO, PIX, DEBITO, CREDITO, BOLETO
+    }
 
     // -------------------------
     // Construtores
     // -------------------------
-    
+
     // Construtor vazio
     public PagamentoVenda() {}
 
     // Construtor completo
-    public PagamentoVenda(int id, Venda venda, LocalDateTime dataHora, BigDecimal valor,
-                          MetodoPagamento metodoPagamento, int parcela, int totalParcelas,
-                          String observacoes, String usuario) {
+    public PagamentoVenda(int id, Venda venda, LocalDateTime dataHora, LocalDate dataVencimento,
+                          BigDecimal valor, MetodoPagamento metodoPagamento,
+                          int parcela, int totalParcelas, String observacoes, String usuario) {
         this.id = id;
         this.venda = venda;
         this.dataHora = dataHora;
+        this.dataVencimento = dataVencimento;
         this.valor = valor;
         this.metodoPagamento = metodoPagamento;
         this.parcela = parcela;
@@ -70,6 +75,14 @@ public class PagamentoVenda {
 
     public void setDataHora(LocalDateTime dataHora) {
         this.dataHora = dataHora;
+    }
+
+    public LocalDate getDataVencimento() {
+        return dataVencimento;
+    }
+
+    public void setDataVencimento(LocalDate dataVencimento) {
+        this.dataVencimento = dataVencimento;
     }
 
     public BigDecimal getValor() {
@@ -129,6 +142,7 @@ public class PagamentoVenda {
                 "id=" + id +
                 ", vendaId=" + (venda != null ? venda.getId() : "null") +
                 ", dataHora=" + dataHora +
+                ", dataVencimento=" + dataVencimento +
                 ", valor=" + valor +
                 ", metodoPagamento=" + metodoPagamento +
                 ", parcela=" + parcela +

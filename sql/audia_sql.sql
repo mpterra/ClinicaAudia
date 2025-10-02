@@ -542,6 +542,7 @@ CREATE TABLE pagamento_venda (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     venda_id INT NOT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_vencimento DATE NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
     metodo_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO','BOLETO') NOT NULL,
     parcela INT DEFAULT 1,
@@ -626,3 +627,10 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
+
+SELECT * FROM estoque;
+SELECT * FROM movimento_estoque;
+SELECT * FROM pagamento_compra;
+SELECT * FROM movimento_estoque;
+SELECT * FROM compra_produto;
+SELECT * FROM pagamento_venda;
