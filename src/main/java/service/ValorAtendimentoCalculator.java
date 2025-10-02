@@ -1,4 +1,3 @@
-// Pacote: src/main/java/service/ValorAtendimentoCalculator.java
 package service;
 
 import controller.ValorAtendimentoController;
@@ -10,7 +9,6 @@ import model.ValorAtendimento;
 import model.ValorAtendimentoEmpresa;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -36,20 +34,27 @@ public class ValorAtendimentoCalculator {
      * @throws Exception se não encontrar valor cadastrado.
      */
     public BigDecimal calcularValor(Profissional prof, Atendimento.Tipo tipo, EmpresaParceira empresa) throws Exception {
+        // Valida parâmetros obrigatórios
+        if (prof == null || tipo == null) {
+            throw new IllegalArgumentException("Profissional e tipo de atendimento são obrigatórios.");
+        }
+
         BigDecimal valor = null;
-        if (empresa != null) {
+        // Verifica se há empresa parceira e busca valor específico
+        if (empresa != null && empresa.getId() > 0) {
             List<ValorAtendimentoEmpresa> valoresEmpresa = valorAtendimentoEmpresaController.buscarPorProfissionalEEmpresa(prof.getId(), empresa.getId());
             ValorAtendimentoEmpresa valorEmpresa = valoresEmpresa.stream()
-                    .filter(v -> v.getTipo().name().equals(tipo.name()))
+                    .filter(v -> v.getTipo().name().equals(tipo.name())) // Comparação por nome do enum
                     .findFirst()
                     .orElse(null);
-            if (valorEmpresa != null) {
+            if (valorEmpresa != null && valorEmpresa.getValor() != null) {
                 valor = valorEmpresa.getValor();
             }
         }
+        // Se não encontrou valor para empresa ou empresa é nula, busca valor padrão
         if (valor == null) {
             ValorAtendimento valorAtendimento = valorAtendimentoController.buscarPorProfissionalETipo(prof.getId(), tipo);
-            if (valorAtendimento == null) {
+            if (valorAtendimento == null || valorAtendimento.getValor() == null) {
                 throw new Exception("Nenhum valor cadastrado para o profissional e tipo de atendimento selecionados!");
             }
             valor = valorAtendimento.getValor();
