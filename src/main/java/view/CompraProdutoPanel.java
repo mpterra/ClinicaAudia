@@ -8,6 +8,7 @@ import controller.EstoqueController;
 import controller.MovimentoEstoqueController;
 import controller.PagamentoCompraController;
 import controller.ProdutoController;
+import controller.FornecedorController;
 import model.Caixa;
 import model.CaixaMovimento;
 import model.Compra;
@@ -16,6 +17,7 @@ import model.Estoque;
 import model.MovimentoEstoque;
 import model.PagamentoCompra;
 import model.Produto;
+import model.Fornecedor;
 import util.Sessao;
 
 import javax.swing.*;
@@ -47,11 +49,13 @@ public class CompraProdutoPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
     // Componentes do formulário
-    private JTextField txtBuscaProduto;
+    private JTextField txtBuscaProdutoNome;
+    private JTextField txtBuscaProdutoCodigo;
     private JTextField txtNomeProduto;
     private JTextField txtEstoqueAtual;
     private JTextField txtPrecoUnitario;
-    private JTextField txtFornecedor;
+    private JComboBox<Fornecedor> cbFornecedor;
+    private JLabel lblFornecedorDados;
     private JSpinner spinnerQuantidade;
     private JComboBox<String> cbMetodoPagamento;
     private JSpinner spinnerParcelas;
@@ -78,6 +82,7 @@ public class CompraProdutoPanel extends JPanel {
     private final CaixaController caixaController = new CaixaController();
     private final CaixaMovimentoController caixaMovimentoController = new CaixaMovimentoController();
     private final PagamentoCompraController pagamentoCompraController = new PagamentoCompraController();
+    private final FornecedorController fornecedorController = new FornecedorController();
 
     // Variáveis de estado
     private Produto produtoSelecionado;
@@ -85,6 +90,7 @@ public class CompraProdutoPanel extends JPanel {
     private BigDecimal valorTotalCompra;
     private Map<Integer, Produto> cacheProdutos;
     private Map<Integer, Estoque> cacheEstoque;
+    private Map<Integer, Fornecedor> cacheFornecedores;
 
     // Formas de pagamento disponíveis
     private static final String[] FORMAS_PAGAMENTO = {"DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO"};
@@ -100,6 +106,17 @@ public class CompraProdutoPanel extends JPanel {
         valorTotalCompra = BigDecimal.ZERO;
         cacheProdutos = new HashMap<>();
         cacheEstoque = new HashMap<>();
+        cacheFornecedores = new HashMap<>();
+
+        // Inicializa componentes de pagamento
+        cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
+        cbMetodoPagamento.setPreferredSize(new Dimension(120, 25));
+        cbMetodoPagamento.setFont(fieldFont);
+        cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
+        spinnerParcelas.setPreferredSize(new Dimension(80, 25));
+        spinnerParcelas.setFont(fieldFont);
+        spinnerParcelas.setEnabled(false);
 
         // Carrega dados iniciais
         carregarCacheInicial();
@@ -134,6 +151,9 @@ public class CompraProdutoPanel extends JPanel {
             for (Estoque e : estoqueController.listarTodos()) {
                 cacheEstoque.put(e.getProdutoId(), e);
             }
+            for (Fornecedor f : fornecedorController.listarFornecedores()) {
+                cacheFornecedores.put(f.getId(), f);
+            }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar dados iniciais: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
@@ -166,15 +186,23 @@ public class CompraProdutoPanel extends JPanel {
         buscaPanel.setBackground(backgroundColor);
         buscaPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
 
-        ImageIcon produtoIcon = new ImageIcon(getClass().getResource("/images/produto.png"));
-        Image produtoImage = produtoIcon.getImage().getScaledInstance(16, 16, Image.SCALE_SMOOTH);
-        JLabel lblIconProduto = new JLabel(new ImageIcon(produtoImage));
-        txtBuscaProduto = new JTextField(20);
-        txtBuscaProduto.setPreferredSize(new Dimension(200, 25));
-        txtBuscaProduto.setFont(fieldFont);
-        txtBuscaProduto.setToolTipText("Digite o nome do produto");
-        buscaPanel.add(lblIconProduto);
-        buscaPanel.add(txtBuscaProduto);
+        JLabel lblBuscaNome = new JLabel("Produto:");
+        lblBuscaNome.setFont(labelFont);
+        buscaPanel.add(lblBuscaNome);
+        txtBuscaProdutoNome = new JTextField(15);
+        txtBuscaProdutoNome.setPreferredSize(new Dimension(150, 25));
+        txtBuscaProdutoNome.setFont(fieldFont);
+        txtBuscaProdutoNome.setToolTipText("Digite o nome do produto");
+        buscaPanel.add(txtBuscaProdutoNome);
+
+        JLabel lblBuscaCodigo = new JLabel("Código:");
+        lblBuscaCodigo.setFont(labelFont);
+        buscaPanel.add(lblBuscaCodigo);
+        txtBuscaProdutoCodigo = new JTextField(15);
+        txtBuscaProdutoCodigo.setPreferredSize(new Dimension(150, 25));
+        txtBuscaProdutoCodigo.setFont(fieldFont);
+        txtBuscaProdutoCodigo.setToolTipText("Digite o código serial do produto");
+        buscaPanel.add(txtBuscaProdutoCodigo);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -207,12 +235,39 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.weightx = 0.0;
         dataPanel.add(lblFornecedor, gbcData);
 
-        txtFornecedor = new JTextField(15);
-        txtFornecedor.setPreferredSize(new Dimension(150, 25));
-        txtFornecedor.setFont(fieldFont);
+        cbFornecedor = new JComboBox<>();
+        cbFornecedor.setPreferredSize(new Dimension(150, 25));
+        cbFornecedor.setFont(fieldFont);
+        cbFornecedor.addItem(null); // Opção para nenhum fornecedor
+        cbFornecedor.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value == null) {
+                    setText("Nenhum");
+                } else if (value instanceof Fornecedor) {
+                    setText(((Fornecedor) value).getNome());
+                }
+                return this;
+            }
+        });
+        for (Fornecedor f : cacheFornecedores.values()) {
+            cbFornecedor.addItem(f);
+        }
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
-        dataPanel.add(txtFornecedor, gbcData);
+        dataPanel.add(cbFornecedor, gbcData);
+
+        lblFornecedorDados = new JLabel();
+        lblFornecedorDados.setFont(fieldFont);
+        lblFornecedorDados.setForeground(Color.GRAY);
+        lblFornecedorDados.setVerticalAlignment(SwingConstants.TOP);
+        gbcData.gridx = 0;
+        gbcData.gridy = 2;
+        gbcData.gridwidth = 2;
+        gbcData.weighty = 1.0;
+        gbcData.fill = GridBagConstraints.BOTH; // Para permitir expansão vertical
+        dataPanel.add(lblFornecedorDados, gbcData);
 
         // Dados do Produto
         JLabel lblProdutoTitle = new JLabel("Dados do Produto");
@@ -221,6 +276,8 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridx = 2;
         gbcData.gridy = 0;
         gbcData.gridwidth = 2;
+        gbcData.weighty = 0.0;
+        gbcData.fill = GridBagConstraints.HORIZONTAL;
         dataPanel.add(lblProdutoTitle, gbcData);
 
         JLabel lblNomeProduto = new JLabel("Produto:");
@@ -292,35 +349,6 @@ public class CompraProdutoPanel extends JPanel {
         gbc.weighty = 0.4;
         mainPanel.add(dataPanel, gbc);
 
-        // Seção de Pagamento
-        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        pagamentoPanel.setBackground(backgroundColor);
-        pagamentoPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-
-        JLabel lblMetodo = new JLabel("Método Pagamento:");
-        lblMetodo.setFont(labelFont);
-        pagamentoPanel.add(lblMetodo);
-        cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
-        cbMetodoPagamento.setPreferredSize(new Dimension(120, 25));
-        cbMetodoPagamento.setFont(fieldFont);
-        cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        pagamentoPanel.add(cbMetodoPagamento);
-
-        JLabel lblParcelas = new JLabel("Parcelas:");
-        lblParcelas.setFont(labelFont);
-        pagamentoPanel.add(lblParcelas);
-        spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
-        spinnerParcelas.setPreferredSize(new Dimension(80, 25));
-        spinnerParcelas.setFont(fieldFont);
-        spinnerParcelas.setEnabled(false);
-        pagamentoPanel.add(spinnerParcelas);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2;
-        gbc.weighty = 0.0;
-        mainPanel.add(pagamentoPanel, gbc);
-
         // Seção de Botões
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
         botoesPanel.setBackground(backgroundColor);
@@ -345,18 +373,8 @@ public class CompraProdutoPanel extends JPanel {
         btnAdicionarItem.setToolTipText("Adicionar produto à compra");
         botoesPanel.add(btnAdicionarItem);
 
-        JButton btnRealizarCompra = new JButton("Realizar Compra");
-        btnRealizarCompra.setBackground(primaryColor);
-        btnRealizarCompra.setForeground(Color.WHITE);
-        btnRealizarCompra.setBorder(BorderFactory.createEmptyBorder());
-        btnRealizarCompra.setPreferredSize(new Dimension(100, 30));
-        btnRealizarCompra.setHorizontalAlignment(SwingConstants.CENTER);
-        btnRealizarCompra.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnRealizarCompra.setToolTipText("Finalizar a compra");
-        botoesPanel.add(btnRealizarCompra);
-
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.weighty = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
@@ -364,14 +382,11 @@ public class CompraProdutoPanel extends JPanel {
 
         // Listeners
         btnAdicionarItem.addActionListener(e -> adicionarItemCompra());
-        btnRealizarCompra.addActionListener(e -> realizarCompra());
         btnLimpar.addActionListener(e -> limparCampos());
-        txtBuscaProduto.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { atualizarProduto(); }
-            public void removeUpdate(DocumentEvent e) { atualizarProduto(); }
-            public void changedUpdate(DocumentEvent e) { atualizarProduto(); }
-        });
+        txtBuscaProdutoNome.getDocument().addDocumentListener(new BuscaDocumentListener());
+        txtBuscaProdutoCodigo.getDocument().addDocumentListener(new BuscaDocumentListener());
         cbMetodoPagamento.addActionListener(e -> atualizarParcelas());
+        cbFornecedor.addActionListener(e -> atualizarDadosFornecedor());
 
         panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
@@ -391,7 +406,7 @@ public class CompraProdutoPanel extends JPanel {
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
 
-        String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal"};
+        String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal", "Fornecedor"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -436,27 +451,64 @@ public class CompraProdutoPanel extends JPanel {
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
 
+        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        southPanel.setBackground(backgroundColor);
+
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
         lblValorTotal.setBorder(new EmptyBorder(5, 5, 5, 5));
-        panel.add(lblValorTotal, BorderLayout.SOUTH);
+        southPanel.add(lblValorTotal);
+
+        // Seção de Pagamento
+        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
+        pagamentoPanel.setBackground(backgroundColor);
+        pagamentoPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
+
+        JLabel lblMetodo = new JLabel("Método Pagamento:");
+        lblMetodo.setFont(labelFont);
+        pagamentoPanel.add(lblMetodo);
+        pagamentoPanel.add(cbMetodoPagamento);
+
+        JLabel lblParcelas = new JLabel("Parcelas:");
+        lblParcelas.setFont(labelFont);
+        pagamentoPanel.add(lblParcelas);
+        pagamentoPanel.add(spinnerParcelas);
+
+        southPanel.add(pagamentoPanel);
+
+        // Botão Realizar Compra
+        JButton btnRealizarCompra = new JButton("Realizar Compra");
+        btnRealizarCompra.setBackground(primaryColor);
+        btnRealizarCompra.setForeground(Color.WHITE);
+        btnRealizarCompra.setBorder(BorderFactory.createEmptyBorder());
+        btnRealizarCompra.setPreferredSize(new Dimension(100, 30));
+        btnRealizarCompra.setHorizontalAlignment(SwingConstants.CENTER);
+        btnRealizarCompra.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRealizarCompra.setToolTipText("Finalizar a compra");
+        btnRealizarCompra.addActionListener(e -> realizarCompra());
+        southPanel.add(btnRealizarCompra);
+
+        panel.add(southPanel, BorderLayout.SOUTH);
 
         return panel;
     }
 
     // Atualiza os dados do produto
     private void atualizarProduto() {
-        String busca = txtBuscaProduto.getText().trim().toLowerCase();
+        String buscaNome = txtBuscaProdutoNome.getText().trim().toLowerCase();
+        String buscaCodigo = txtBuscaProdutoCodigo.getText().trim().toLowerCase();
         produtoSelecionado = null;
 
-        if (busca.isEmpty()) {
+        if (buscaNome.isEmpty() && buscaCodigo.isEmpty()) {
             limparCamposProduto();
             return;
         }
 
         for (Produto p : cacheProdutos.values()) {
-            if (p.getNome().toLowerCase().contains(busca)) {
+            boolean matchNome = buscaNome.isEmpty() || p.getNome().toLowerCase().contains(buscaNome);
+            boolean matchCodigo = buscaCodigo.isEmpty() || (p.getCodigoSerial() != null && p.getCodigoSerial().toLowerCase().contains(buscaCodigo));
+            if (matchNome && matchCodigo) {
                 if (produtoSelecionado == null || p.getId() > produtoSelecionado.getId()) {
                     produtoSelecionado = p;
                 }
@@ -494,12 +546,27 @@ public class CompraProdutoPanel extends JPanel {
         }
     }
 
+    // Atualiza os dados do fornecedor exibidos
+    private void atualizarDadosFornecedor() {
+        Fornecedor fornecedor = (Fornecedor) cbFornecedor.getSelectedItem();
+        if (fornecedor != null) {
+            StringBuilder dados = new StringBuilder("<html>");
+            dados.append("CNPJ: ").append(fornecedor.getCnpj() != null ? fornecedor.getCnpj() : "N/A").append("<br>");
+            dados.append("Telefone: ").append(fornecedor.getTelefone() != null ? fornecedor.getTelefone() : "N/A").append("<br>");
+            dados.append("Email: ").append(fornecedor.getEmail() != null ? fornecedor.getEmail() : "N/A").append("</html>");
+            lblFornecedorDados.setText(dados.toString());
+        } else {
+            lblFornecedorDados.setText("");
+        }
+    }
+
     // Adiciona um item à compra atual
     private void adicionarItemCompra() {
         try {
             if (produtoSelecionado == null) {
                 throw new IllegalArgumentException("Selecione um produto!");
             }
+            Fornecedor fornecedor = (Fornecedor) cbFornecedor.getSelectedItem();
             int quantidade = (Integer) spinnerQuantidade.getValue();
             BigDecimal precoUnitario;
             try {
@@ -516,11 +583,13 @@ public class CompraProdutoPanel extends JPanel {
             compraProduto.setProdutoId(produtoSelecionado.getId());
             compraProduto.setQuantidade(quantidade);
             compraProduto.setPrecoUnitario(precoUnitario);
+            compraProduto.setFornecedorId(fornecedor != null ? fornecedor.getId() : null);
 
             itensCompraAtual.add(compraProduto);
             atualizarTabelaItens();
 
-            txtBuscaProduto.setText("");
+            txtBuscaProdutoNome.setText("");
+            txtBuscaProdutoCodigo.setText("");
             limparCamposProduto();
             produtoSelecionado = null;
 
@@ -545,13 +614,22 @@ public class CompraProdutoPanel extends JPanel {
                     continue;
                 }
             }
+            Fornecedor f = null;
+            if (cp.getFornecedorId() != null) {
+                f = cacheFornecedores.get(cp.getFornecedorId());
+                if (f == null) {
+                    f = fornecedorController.buscarFornecedorPorId(cp.getFornecedorId());
+					cacheFornecedores.put(f.getId(), f);
+                }
+            }
             BigDecimal subtotal = cp.getPrecoUnitario().multiply(BigDecimal.valueOf(cp.getQuantidade()));
             valorTotalCompra = valorTotalCompra.add(subtotal);
             modeloTabelaItens.addRow(new Object[]{
                     p.getNome(),
                     cp.getQuantidade(),
                     String.format("R$ %.2f", cp.getPrecoUnitario()),
-                    String.format("R$ %.2f", subtotal)
+                    String.format("R$ %.2f", subtotal),
+                    f != null ? f.getNome() : "Não informado"
             });
         }
 
@@ -564,10 +642,6 @@ public class CompraProdutoPanel extends JPanel {
             if (itensCompraAtual.isEmpty()) {
                 throw new IllegalArgumentException("Adicione pelo menos um produto à compra!");
             }
-            String fornecedor = txtFornecedor.getText().trim();
-            if (fornecedor.isEmpty()) {
-                throw new IllegalArgumentException("O campo fornecedor é obrigatório!");
-            }
             int parcelas = (Integer) spinnerParcelas.getValue();
             String metodo = (String) cbMetodoPagamento.getSelectedItem();
 
@@ -577,7 +651,6 @@ public class CompraProdutoPanel extends JPanel {
             }
 
             Compra compra = new Compra();
-            compra.setFornecedor(fornecedor);
             compra.setUsuario(Sessao.getUsuarioLogado().getLogin());
             compra.setDataCompra(Timestamp.valueOf(LocalDateTime.now()));
 
@@ -659,11 +732,13 @@ public class CompraProdutoPanel extends JPanel {
 
     // Limpa os campos do formulário
     private void limparCampos() {
-        txtBuscaProduto.setText("");
+        txtBuscaProdutoNome.setText("");
+        txtBuscaProdutoCodigo.setText("");
         txtNomeProduto.setText("");
         txtEstoqueAtual.setText("");
         txtPrecoUnitario.setText("0,00");
-        txtFornecedor.setText("");
+        cbFornecedor.setSelectedIndex(0); // Seleciona "Nenhum"
+        lblFornecedorDados.setText("");
         spinnerQuantidade.setValue(1);
         cbMetodoPagamento.setSelectedIndex(0);
         spinnerParcelas.setValue(1);
@@ -671,6 +746,16 @@ public class CompraProdutoPanel extends JPanel {
         produtoSelecionado = null;
         itensCompraAtual.clear();
         atualizarTabelaItens();
+    }
+
+    // Listener para busca de produtos
+    private class BuscaDocumentListener implements DocumentListener {
+        @Override
+        public void insertUpdate(DocumentEvent e) { atualizarProduto(); }
+        @Override
+        public void removeUpdate(DocumentEvent e) { atualizarProduto(); }
+        @Override
+        public void changedUpdate(DocumentEvent e) { atualizarProduto(); }
     }
 
     // Filtro para formatar entrada de valores monetários
