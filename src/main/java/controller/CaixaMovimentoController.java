@@ -45,6 +45,20 @@ public class CaixaMovimentoController {
             throw new IllegalArgumentException("Usuário não pode ser nulo ou vazio.");
         }
 
+        // Validação específica para origem do movimento
+        if (movimento.getOrigem() == CaixaMovimento.OrigemMovimento.PAGAMENTO_ATENDIMENTO && 
+            movimento.getPagamentoAtendimento() == null) {
+            throw new IllegalArgumentException("Pagamento de atendimento deve ser informado para origem PAGAMENTO_ATENDIMENTO.");
+        }
+        if (movimento.getOrigem() == CaixaMovimento.OrigemMovimento.PAGAMENTO_VENDA && 
+            movimento.getPagamentoVenda() == null) {
+            throw new IllegalArgumentException("Pagamento de venda deve ser informado para origem PAGAMENTO_VENDA.");
+        }
+        if (movimento.getOrigem() == CaixaMovimento.OrigemMovimento.PAGAMENTO_COMPRA && 
+            movimento.getPagamentoCompra() == null) {
+            throw new IllegalArgumentException("Pagamento de compra deve ser informado para origem PAGAMENTO_COMPRA.");
+        }
+
         Caixa caixa = caixaDAO.buscarPorId(movimento.getCaixa().getId());
         if (caixa == null) throw new IllegalArgumentException("Caixa não encontrado.");
         if (caixa.getDataFechamento() != null) {

@@ -14,13 +14,19 @@ public class CompraController {
         this.dao = new CompraDAO();
     }
 
+    // ============================
+    // CREATE
+    // ============================
     public boolean criarCompra(Compra compra, String usuarioLogado) throws SQLException {
-        if (compra.getFornecedor() == null || compra.getFornecedor().isBlank()) {
-            throw new IllegalArgumentException("Fornecedor é obrigatório.");
+        if (usuarioLogado == null || usuarioLogado.isBlank()) {
+            throw new IllegalArgumentException("Usuário é obrigatório.");
         }
         return dao.salvar(compra, usuarioLogado);
     }
 
+    // ============================
+    // READ
+    // ============================
     public Compra buscarPorId(int id) throws SQLException {
         return dao.buscarPorId(id);
     }
@@ -29,6 +35,9 @@ public class CompraController {
         return dao.listarTodos();
     }
 
+    // ============================
+    // DELETE
+    // ============================
     public boolean removerCompra(int id) throws SQLException {
         return dao.deletar(id);
     }

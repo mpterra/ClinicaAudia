@@ -13,7 +13,8 @@ public class CompraProdutoDAO {
     // CREATE
     // ============================
     public boolean salvar(CompraProduto cp) throws SQLException {
-        String sql = "INSERT INTO compra_produto (compra_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO compra_produto (compra_id, produto_id, quantidade, preco_unitario, fornecedor_id) " +
+                     "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -22,6 +23,12 @@ public class CompraProdutoDAO {
             stmt.setInt(2, cp.getProdutoId());
             stmt.setInt(3, cp.getQuantidade());
             stmt.setBigDecimal(4, cp.getPrecoUnitario());
+
+            if (cp.getFornecedorId() != null) {
+                stmt.setInt(5, cp.getFornecedorId());
+            } else {
+                stmt.setNull(5, Types.INTEGER);
+            }
 
             return stmt.executeUpdate() > 0;
         }
@@ -85,6 +92,14 @@ public class CompraProdutoDAO {
         cp.setProdutoId(rs.getInt("produto_id"));
         cp.setQuantidade(rs.getInt("quantidade"));
         cp.setPrecoUnitario(rs.getBigDecimal("preco_unitario"));
+
+        int fornecedor = rs.getInt("fornecedor_id");
+        if (!rs.wasNull()) {
+            cp.setFornecedorId(fornecedor);
+        } else {
+            cp.setFornecedorId(null);
+        }
+
         return cp;
     }
 }

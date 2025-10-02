@@ -9,7 +9,7 @@ public class CaixaMovimento {
     // Enums
     // -------------------------
     public enum TipoMovimento {ENTRADA, SAIDA}
-    public enum OrigemMovimento {PAGAMENTO_ATENDIMENTO, PAGAMENTO_VENDA, DESPESA, AJUSTE, OUTRO}
+    public enum OrigemMovimento {PAGAMENTO_ATENDIMENTO, PAGAMENTO_VENDA, DESPESA, AJUSTE, OUTRO, PAGAMENTO_COMPRA}
     public enum FormaPagamento {DINHEIRO, PIX, DEBITO, CREDITO, BOLETO}
 
     // -------------------------
@@ -21,6 +21,7 @@ public class CaixaMovimento {
     private OrigemMovimento origem;
     private PagamentoAtendimento pagamentoAtendimento; // pode ser null
     private PagamentoVenda pagamentoVenda; // pode ser null
+    private PagamentoCompra pagamentoCompra; // pode ser null
     private FormaPagamento formaPagamento;
     private BigDecimal valor;
     private String descricao;
@@ -37,14 +38,15 @@ public class CaixaMovimento {
     // Construtor completo
     public CaixaMovimento(int id, Caixa caixa, TipoMovimento tipo, OrigemMovimento origem,
                           PagamentoAtendimento pagamentoAtendimento, PagamentoVenda pagamentoVenda,
-                          FormaPagamento formaPagamento, BigDecimal valor, String descricao,
-                          LocalDateTime dataHora, String usuario) {
+                          PagamentoCompra pagamentoCompra, FormaPagamento formaPagamento,
+                          BigDecimal valor, String descricao, LocalDateTime dataHora, String usuario) {
         this.id = id;
         this.caixa = caixa;
         this.tipo = tipo;
         this.origem = origem;
         this.pagamentoAtendimento = pagamentoAtendimento;
         this.pagamentoVenda = pagamentoVenda;
+        this.pagamentoCompra = pagamentoCompra;
         this.formaPagamento = formaPagamento;
         this.valor = valor;
         this.descricao = descricao;
@@ -103,6 +105,14 @@ public class CaixaMovimento {
         this.pagamentoVenda = pagamentoVenda;
     }
 
+    public PagamentoCompra getPagamentoCompra() {
+        return pagamentoCompra;
+    }
+
+    public void setPagamentoCompra(PagamentoCompra pagamentoCompra) {
+        this.pagamentoCompra = pagamentoCompra;
+    }
+
     public FormaPagamento getFormaPagamento() {
         return formaPagamento;
     }
@@ -155,6 +165,7 @@ public class CaixaMovimento {
                 ", origem=" + origem +
                 ", pagamentoAtendimentoId=" + (pagamentoAtendimento != null ? pagamentoAtendimento.getId() : "null") +
                 ", pagamentoVendaId=" + (pagamentoVenda != null ? pagamentoVenda.getId() : "null") +
+                ", pagamentoCompraId=" + (pagamentoCompra != null ? pagamentoCompra.getId() : "null") +
                 ", formaPagamento=" + formaPagamento +
                 ", valor=" + valor +
                 ", descricao='" + descricao + '\'' +

@@ -174,10 +174,10 @@ CREATE TABLE atendimento (
     duracao_min INT NOT NULL DEFAULT 30,
     tipo ENUM('AVALIACAO','RETORNO','REGULAGEM','EXAME','REUNIAO','PESSOAL') NOT NULL,
     situacao ENUM('AGENDADO','REALIZADO','FALTOU','CANCELADO') NOT NULL DEFAULT 'AGENDADO',
-    empresa_parceira_id INT DEFAULT NULL,
+    empresa_parceira_id INT NULL,
     notas TEXT,
     valor DECIMAL(10,2) DEFAULT 0,
-    status_pagamento ENUM('PENDENTE','PARCIAL','PAGO', 'ISENTO') DEFAULT 'PENDENTE',
+    status_pagamento ENUM('PENDENTE','PARCIAL','PAGO') DEFAULT 'PENDENTE',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
@@ -257,6 +257,26 @@ CREATE TABLE documento_atendimento (
 );
 
 -- ========================================
+-- TABELA DE FORNECEDORES
+-- ========================================
+CREATE TABLE fornecedor (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(120) NOT NULL,
+    cnpj CHAR(18) UNIQUE,
+    telefone VARCHAR(30),
+    email VARCHAR(120),
+    id_endereco INT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    usuario VARCHAR(50),
+    CONSTRAINT fk_fornecedor_endereco
+        FOREIGN KEY (id_endereco)
+        REFERENCES endereco(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
+);
+
+-- ========================================
 -- TIPO DE PRODUTO
 -- ========================================
 CREATE TABLE tipo_produto (
@@ -328,7 +348,6 @@ CREATE TABLE movimento_estoque (
 -- ========================================
 CREATE TABLE compra (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    fornecedor VARCHAR(120),
     data_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     usuario VARCHAR(50)
 );
@@ -338,13 +357,19 @@ CREATE TABLE compra_produto (
     produto_id INT NOT NULL,
     quantidade INT NOT NULL,
     preco_unitario DECIMAL(10,2) NOT NULL,
+    fornecedor_id INT,
     PRIMARY KEY(compra_id, produto_id),
     CONSTRAINT fk_compra_produto
         FOREIGN KEY (compra_id)
         REFERENCES compra(id),
     CONSTRAINT fk_produto_compra
         FOREIGN KEY (produto_id)
-        REFERENCES produto(id)
+        REFERENCES produto(id),
+    CONSTRAINT fk_fornecedor_compra
+        FOREIGN KEY (fornecedor_id)
+        REFERENCES fornecedor(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE
 );
 
 -- Tabela para registrar pagamentos de compras (à vista ou parceladas)
@@ -569,9 +594,10 @@ CREATE TABLE caixa_movimento (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     caixa_id INT NULL,
     tipo ENUM('ENTRADA','SAIDA') NOT NULL,
-    origem ENUM('PAGAMENTO_ATENDIMENTO','PAGAMENTO_VENDA','DESPESA','AJUSTE','OUTRO') NOT NULL,
+    origem ENUM('PAGAMENTO_ATENDIMENTO','PAGAMENTO_VENDA','DESPESA','AJUSTE','OUTRO','PAGAMENTO_COMPRA') NOT NULL,
     pagamento_atendimento_id INT NULL UNIQUE,
     pagamento_venda_id INT NULL UNIQUE,
+    pagamento_compra_id INT NULL UNIQUE,
     forma_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO','BOLETO') NOT NULL,
     valor DECIMAL(10,2) NOT NULL,
     descricao VARCHAR(255),
@@ -591,12 +617,12 @@ CREATE TABLE caixa_movimento (
         FOREIGN KEY (pagamento_venda_id)
         REFERENCES pagamento_venda(id)
         ON DELETE SET NULL
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_cxmov_pag_compra
+        FOREIGN KEY (pagamento_compra_id)
+        REFERENCES pagamento_compra(id)
+        ON DELETE SET NULL
         ON UPDATE CASCADE
 );
 
 -- ==============================================
-
-SELECT * FROM atendimento;
-DELETE FROM atendimento;
-
-SELECT * FROM endereco;

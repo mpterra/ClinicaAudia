@@ -4,6 +4,7 @@ import model.Caixa;
 import model.CaixaMovimento;
 import model.PagamentoAtendimento;
 import model.PagamentoVenda;
+import model.PagamentoCompra;
 import util.Database;
 
 import java.math.BigDecimal;
@@ -19,8 +20,8 @@ public class CaixaMovimentoDAO {
     // -------------------------
     public boolean inserir(CaixaMovimento movimento) throws SQLException {
         String sql = "INSERT INTO caixa_movimento " +
-                "(caixa_id, tipo, origem, pagamento_atendimento_id, pagamento_venda_id, forma_pagamento, valor, descricao, data_hora, usuario) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(caixa_id, tipo, origem, pagamento_atendimento_id, pagamento_venda_id, pagamento_compra_id, forma_pagamento, valor, descricao, data_hora, usuario) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -29,11 +30,12 @@ public class CaixaMovimentoDAO {
             stmt.setString(3, movimento.getOrigem().name());
             stmt.setObject(4, movimento.getPagamentoAtendimento() != null ? movimento.getPagamentoAtendimento().getId() : null, Types.INTEGER);
             stmt.setObject(5, movimento.getPagamentoVenda() != null ? movimento.getPagamentoVenda().getId() : null, Types.INTEGER);
-            stmt.setString(6, movimento.getFormaPagamento().name());
-            stmt.setBigDecimal(7, movimento.getValor());
-            stmt.setString(8, movimento.getDescricao());
-            stmt.setTimestamp(9, Timestamp.valueOf(movimento.getDataHora()));
-            stmt.setString(10, movimento.getUsuario());
+            stmt.setObject(6, movimento.getPagamentoCompra() != null ? movimento.getPagamentoCompra().getId() : null, Types.INTEGER);
+            stmt.setString(7, movimento.getFormaPagamento().name());
+            stmt.setBigDecimal(8, movimento.getValor());
+            stmt.setString(9, movimento.getDescricao());
+            stmt.setTimestamp(10, Timestamp.valueOf(movimento.getDataHora()));
+            stmt.setString(11, movimento.getUsuario());
 
             int rowsAffected = stmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -139,8 +141,8 @@ public class CaixaMovimentoDAO {
                         saldoDebito = saldo;
                         break;
                     case "CREDITO":
-                    	saldoCredito = saldo;
-						break;
+                        saldoCredito = saldo;
+                        break;
                     case "PIX":
                         saldoPix = saldo;
                         break;
@@ -192,6 +194,13 @@ public class CaixaMovimentoDAO {
             PagamentoVenda pv = new PagamentoVenda();
             pv.setId(pagVendaId);
             movimento.setPagamentoVenda(pv);
+        }
+
+        int pagCompraId = rs.getInt("pagamento_compra_id");
+        if (!rs.wasNull()) {
+            PagamentoCompra pc = new PagamentoCompra();
+            pc.setId(pagCompraId);
+            movimento.setPagamentoCompra(pc);
         }
 
         movimento.setFormaPagamento(CaixaMovimento.FormaPagamento.valueOf(rs.getString("forma_pagamento")));

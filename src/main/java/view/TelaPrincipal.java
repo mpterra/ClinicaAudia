@@ -119,6 +119,7 @@ public class TelaPrincipal extends JFrame {
 		}));
 		menuEstoque.addSeparator();
 		menuEstoque.add(createMenuItem("Comprar Itens", e -> {
+			abrirCompraProdutoPanel();
 		}));		
 		menuEstoque.addSeparator();
 		menuEstoque.add(createMenuItem("Relatórios", e -> {
@@ -131,6 +132,9 @@ public class TelaPrincipal extends JFrame {
 		}));
 		menuCadastro.add(createMenuItem("Produtos", e -> {
 			abrirCadastroProduto();
+		}));
+		menuCadastro.add(createMenuItem("Fornecedores", e -> {
+			abrirCadastroFornecedorPanel();
 		}));
 		menuCadastro.addSeparator();
 		menuCadastro.add(createMenuItem("Profissionais", e -> {
@@ -281,6 +285,19 @@ public class TelaPrincipal extends JFrame {
 	private void abrirCadastroValorAtendimentoEmpresaPanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new CadastroValorAtendimentoEmpresaPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirCompraProdutoPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new CompraProdutoPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	private void abrirCadastroFornecedorPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new CadastroFornecedorPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

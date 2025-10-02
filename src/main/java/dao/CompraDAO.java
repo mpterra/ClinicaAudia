@@ -13,13 +13,12 @@ public class CompraDAO {
     // CREATE
     // ============================
     public boolean salvar(Compra compra, String usuarioLogado) throws SQLException {
-        String sql = "INSERT INTO compra (fornecedor, usuario) VALUES (?, ?)";
+        String sql = "INSERT INTO compra (usuario) VALUES (?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, compra.getFornecedor());
-            stmt.setString(2, usuarioLogado);
+            stmt.setString(1, usuarioLogado);
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
@@ -85,7 +84,6 @@ public class CompraDAO {
     private Compra mapRow(ResultSet rs) throws SQLException {
         Compra c = new Compra();
         c.setId(rs.getInt("id"));
-        c.setFornecedor(rs.getString("fornecedor"));
         c.setDataCompra(rs.getTimestamp("data_compra"));
         c.setUsuario(rs.getString("usuario"));
         return c;
