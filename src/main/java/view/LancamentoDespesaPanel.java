@@ -48,7 +48,7 @@ public class LancamentoDespesaPanel extends JPanel {
     private JCheckBox chkPago;
     private JTextField txtDataPagamento;
     private JLabel lblValorTotal;
-    private JTable tabelaDespesas; // Declared as class field
+    private JTable tabelaDespesas;
     private DefaultTableModel modeloTabelaDespesas;
 
     // Estilo
@@ -471,14 +471,27 @@ public class LancamentoDespesaPanel extends JPanel {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Valor inválido.");
             }
-            LocalDate dataVencimento = parseData(txtDataVencimento.getText());
+            LocalDate dataVencimento;
+            try {
+                dataVencimento = parseData(txtDataVencimento.getText());
+            } catch (ParseException e) {
+                throw new IllegalArgumentException("Data de vencimento inválida.");
+            }
             boolean isParcelado = "Parcelado".equals(cmbMetodoPagamento.getSelectedItem());
             int numParcelas = (Integer) spinnerParcelas.getValue();
 
             if (isParcelado) {
                 lancarDespesasParceladas(valorTotal, numParcelas, dataVencimento, usuarioLogado);
             } else {
-                lancarDespesaUnica(valorTotal, dataVencimento, usuarioLogado);
+                LocalDate dataPagamento = null;
+                if (chkPago.isSelected()) {
+                    try {
+                        dataPagamento = parseData(txtDataPagamento.getText());
+                    } catch (ParseException e) {
+                        throw new IllegalArgumentException("Data de pagamento inválida.");
+                    }
+                }
+                lancarDespesaUnica(valorTotal, dataVencimento, dataPagamento, usuarioLogado);
             }
 
             JOptionPane.showMessageDialog(this, "Despesa(s) adicionada(s) com sucesso!", "Sucesso",
@@ -491,26 +504,15 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    private void lancarDespesaUnica(BigDecimal valorTotal, LocalDate dataVencimento, String usuarioLogado) throws SQLException {
+    private void lancarDespesaUnica(BigDecimal valorTotal, LocalDate dataVencimento, LocalDate dataPagamento, String usuarioLogado) throws SQLException {
         Despesa d = new Despesa();
         d.setDescricao(txtDescricao.getText());
         d.setCategoria((Despesa.Categoria) cmbCategoria.getSelectedItem());
         d.setValor(valorTotal);
         d.setFormaPagamento((Despesa.FormaPagamento) cmbFormaPagamento.getSelectedItem());
         d.setDataVencimento(dataVencimento);
-
-        if (chkPago.isSelected()) {
-            try {
-				d.setDataPagamento(parseData(txtDataPagamento.getText()));
-			} catch (ParseException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            d.setStatus(Despesa.Status.PAGO);
-        } else {
-            d.setDataPagamento(null);
-            d.setStatus(Despesa.Status.PENDENTE);
-        }
+        d.setDataPagamento(dataPagamento);
+        d.setStatus(dataPagamento != null ? Despesa.Status.PAGO : Despesa.Status.PENDENTE);
 
         despesaController.adicionar(d, usuarioLogado);
 
