@@ -595,3 +595,8 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
+
+SELECT * FROM atendimento;
+DELETE FROM atendimento;
+
+SELECT * FROM endereco;

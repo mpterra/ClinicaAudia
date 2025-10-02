@@ -115,11 +115,11 @@ public class TelaPrincipal extends JFrame {
 		JMenu menuEstoque = createMenu("Estoque");
 		menuEstoque.add(createMenuItem("Conferir Estoque", e -> {
 		}));
-		menuEstoque.add(createMenuItem("Comprar Itens", e -> {
+		menuEstoque.add(createMenuItem("Ajustar Estoque", e -> {
 		}));
 		menuEstoque.addSeparator();
-		menuEstoque.add(createMenuItem("Baixa de Estoque", e -> {
-		}));
+		menuEstoque.add(createMenuItem("Comprar Itens", e -> {
+		}));		
 		menuEstoque.addSeparator();
 		menuEstoque.add(createMenuItem("Relatórios", e -> {
 		}));
