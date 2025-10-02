@@ -48,6 +48,7 @@ public class LancamentoDespesaPanel extends JPanel {
     private JCheckBox chkPago;
     private JTextField txtDataPagamento;
     private JLabel lblValorTotal;
+    private JTable tabelaDespesas; // Declared as class field
     private DefaultTableModel modeloTabelaDespesas;
 
     // Estilo
@@ -353,7 +354,7 @@ public class LancamentoDespesaPanel extends JPanel {
                 return false;
             }
         };
-        JTable tabelaDespesas = new JTable(modeloTabelaDespesas) {
+        tabelaDespesas = new JTable(modeloTabelaDespesas) {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
@@ -499,7 +500,12 @@ public class LancamentoDespesaPanel extends JPanel {
         d.setDataVencimento(dataVencimento);
 
         if (chkPago.isSelected()) {
-            d.setDataPagamento(parseData(txtDataPagamento.getText()));
+            try {
+				d.setDataPagamento(parseData(txtDataPagamento.getText()));
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             d.setStatus(Despesa.Status.PAGO);
         } else {
             d.setDataPagamento(null);
