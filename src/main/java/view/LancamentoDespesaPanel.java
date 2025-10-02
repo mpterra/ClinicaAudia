@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-// Exemplo de referência de layout: assumindo um painel com formulário no topo e tabela abaixo, similar a painéis de CRUD em Swing.
-// Usei GridBagLayout para o formulário e JScrollPane para a tabela.
-
 public class LancamentoDespesaPanel extends JPanel {
 
     // Componentes do formulário
@@ -209,13 +206,9 @@ public class LancamentoDespesaPanel extends JPanel {
             cmbCategoria.setSelectedItem(d.getCategoria());
             txtValor.setText(d.getValor().toString());
             cmbFormaPagamento.setSelectedItem(d.getFormaPagamento());
-            txtDataVencimento.setText(sdf.format(Date.from(d.getDataVencimento().atStartOfDay().atZone(java.time.ZoneId.systemDefault()).toInstant())));
+            txtDataVencimento.setText(d.getDataVencimento() != null ? sdf.format(java.sql.Date.valueOf(d.getDataVencimento())) : "");
             chkPago.setSelected(d.getStatus() == Despesa.Status.PAGO);
-            if (d.getDataPagamento() != null) {
-                txtDataPagamento.setText(sdf.format(Date.from(d.getDataPagamento().atStartOfDay().atZone(java.time.ZoneId.systemDefault()).toInstant())));
-            } else {
-                txtDataPagamento.setText("");
-            }
+            txtDataPagamento.setText(d.getDataPagamento() != null ? sdf.format(java.sql.Date.valueOf(d.getDataPagamento())) : "");
             txtDataPagamento.setEnabled(chkPago.isSelected());
         }
     }
@@ -237,10 +230,10 @@ public class LancamentoDespesaPanel extends JPanel {
             d.setCategoria((Despesa.Categoria) cmbCategoria.getSelectedItem());
             d.setValor(new BigDecimal(txtValor.getText().replace(",", ".")));
             d.setFormaPagamento((Despesa.FormaPagamento) cmbFormaPagamento.getSelectedItem());
-            d.setDataVencimento(parseData(txtDataVencimento.getText()).toLocalDate());
+            d.setDataVencimento(parseData(txtDataVencimento.getText()));
 
             if (chkPago.isSelected()) {
-                d.setDataPagamento(parseData(txtDataPagamento.getText()).toLocalDate());
+                d.setDataPagamento(parseData(txtDataPagamento.getText()));
                 d.setStatus(Despesa.Status.PAGO);
                 // Registrar movimento no caixa se for novo pagamento ou atualização para pago
                 if (!isEditar || d.getStatus() != Despesa.Status.PAGO) {
@@ -290,11 +283,11 @@ public class LancamentoDespesaPanel extends JPanel {
                 return;
             }
 
-            // Diálogo simples para data pagamento (pode melhorar com date chooser)
+            // Diálogo simples para data pagamento
             String dataStr = JOptionPane.showInputDialog(this, "Informe a data de pagamento (dd/MM/yyyy):");
             if (dataStr != null && !dataStr.isEmpty()) {
                 try {
-                    LocalDate dataPagamento = parseData(dataStr).toLocalDate();
+                    LocalDate dataPagamento = parseData(dataStr);
                     d.setDataPagamento(dataPagamento);
                     d.setStatus(Despesa.Status.PAGO);
                     despesaDAO.atualizar(d, usuarioLogado);
@@ -328,18 +321,23 @@ public class LancamentoDespesaPanel extends JPanel {
     }
 
     // Converter enum Despesa.FormaPagamento para CaixaMovimento.FormaPagamento
-    // Nota: Enums são parecidos, mas mapeie se necessário (aqui assumindo compatíveis, exceto TRANSFERENCIA e BOLETO que podem não ter equivalente direto)
     private CaixaMovimento.FormaPagamento converterFormaPagamento(Despesa.FormaPagamento forma) {
         switch (forma) {
-            case DINHEIRO: return CaixaMovimento.FormaPagamento.DINHEIRO;
-            case DEBITO: return CaixaMovimento.FormaPagamento.DEBITO;
-            case CREDITO: return CaixaMovimento.FormaPagamento.CREDITO;
-            case PIX: return CaixaMovimento.FormaPagamento.PIX;
-            case TRANSFERENCIA:
+            case DINHEIRO:
+                return CaixaMovimento.FormaPagamento.DINHEIRO;
+            case DEBITO:
+                return CaixaMovimento.FormaPagamento.DEBITO;
+            case CREDITO:
+                return CaixaMovimento.FormaPagamento.CREDITO;
+            case PIX:
+                return CaixaMovimento.FormaPagamento.PIX;
             case BOLETO:
-                // Assumindo OUTRO ou mapeie para BOLETO se adicionar no enum
-                return CaixaMovimento.FormaPagamento.BOLETO; // Como tem BOLETO no enum de CaixaMovimento
-            default: return CaixaMovimento.FormaPagamento.OUTRO; // Se adicionar
+                return CaixaMovimento.FormaPagamento.BOLETO;
+            case TRANSFERENCIA:
+                // Mapeia TRANSFERENCIA para PIX, por similaridade
+                return CaixaMovimento.FormaPagamento.PIX;
+            default:
+                throw new IllegalArgumentException("Forma de pagamento não suportada: " + forma);
         }
     }
 
@@ -361,8 +359,9 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    private Date parseData(String dataStr) throws ParseException {
-        return sdf.parse(dataStr);
+    private LocalDate parseData(String dataStr) throws ParseException {
+        Date date = sdf.parse(dataStr);
+        return date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
     }
 
     // TableModel custom
