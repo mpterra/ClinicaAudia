@@ -42,8 +42,8 @@ public class FornecedorDAO {
                 }
                 return true;
             }
+            return false;
         }
-        return false;
     }
 
     // -------------------------
@@ -61,8 +61,8 @@ public class FornecedorDAO {
             if (rs.next()) {
                 return mapResultSet(rs);
             }
+            return null;
         }
-        return null;
     }
 
     // -------------------------
@@ -79,8 +79,8 @@ public class FornecedorDAO {
             while (rs.next()) {
                 lista.add(mapResultSet(rs));
             }
+            return lista;
         }
-        return lista;
     }
 
     // -------------------------
@@ -122,6 +122,32 @@ public class FornecedorDAO {
 
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
+        }
+    }
+
+    // -------------------------
+    // Buscar fornecedor da última compra de um produto
+    // -------------------------
+    public Fornecedor buscarFornecedorUltimaCompra(int produtoId) throws SQLException {
+        String sql = "SELECT f.id, f.nome " +
+                     "FROM fornecedor f " +
+                     "JOIN compra_produto cp ON cp.fornecedor_id = f.id " +
+                     "JOIN compra c ON cp.compra_id = c.id " +
+                     "WHERE cp.produto_id = ? " +
+                     "ORDER BY c.data_compra DESC LIMIT 1";
+
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, produtoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Fornecedor f = new Fornecedor();
+                    f.setId(rs.getInt("id"));
+                    f.setNome(rs.getString("nome"));
+                    return f;
+                }
+                return null;
+            }
         }
     }
 

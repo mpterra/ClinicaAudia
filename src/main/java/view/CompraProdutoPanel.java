@@ -150,7 +150,7 @@ public class CompraProdutoPanel extends JPanel {
 			for (Estoque e : estoqueController.listarTodos()) {
 				cacheEstoque.put(e.getProdutoId(), e);
 			}
-			for (Fornecedor f : fornecedorController.listarFornecedores()) {
+			for (Fornecedor f : fornecedorController.listarTodos()) {
 				cacheFornecedores.put(f.getId(), f);
 			}
 		} catch (SQLException e) {
@@ -616,7 +616,12 @@ public class CompraProdutoPanel extends JPanel {
 			if (cp.getFornecedorId() != null) {
 				f = cacheFornecedores.get(cp.getFornecedorId());
 				if (f == null) {
-					f = fornecedorController.buscarFornecedorPorId(cp.getFornecedorId());
+					try {
+						f = fornecedorController.buscarPorId(cp.getFornecedorId());
+					} catch (SQLException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					cacheFornecedores.put(f.getId(), f);
 				}
 			}

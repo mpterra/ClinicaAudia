@@ -362,7 +362,7 @@ public class CadastroFornecedorPanel extends JPanel {
         fornecedor.setUsuario(Sessao.getUsuarioLogado().getLogin());
 
         FornecedorController controller = new FornecedorController();
-        controller.salvarFornecedor(fornecedor);
+        controller.salvar(fornecedor);
 
         JOptionPane.showMessageDialog(this, "Fornecedor salvo com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
         limparCampos();
@@ -373,7 +373,7 @@ public class CadastroFornecedorPanel extends JPanel {
     private void carregarFornecedores() throws SQLException {
         modeloTabela.setRowCount(0);
         FornecedorController controller = new FornecedorController();
-        List<Fornecedor> lista = controller.listarFornecedores();
+        List<Fornecedor> lista = controller.listarTodos();
         for (Fornecedor f : lista) {
             modeloTabela.addRow(new Object[]{f.getNome(), f.getCnpj(), f.getTelefone(), f.getEmail()});
         }

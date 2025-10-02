@@ -21,6 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Painel para exibição e filtragem de itens em estoque.
+ * Permite buscar produtos por nome/código, tipo de produto e fornecedor,
+ * exibindo informações detalhadas em uma tabela, incluindo o fornecedor da última compra.
+ */
 public class EstoquePanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -35,10 +40,10 @@ public class EstoquePanel extends JPanel {
     private JTable tabelaEstoque;
     private DefaultTableModel modeloTabela;
 
-    // Estilo (mesmo do CompraProdutoPanel)
+    // Estilo
     private final Color primaryColor = new Color(154, 5, 38); // Vermelho escuro
     private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
-    private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde muito claro para linhas pares
+    private final Color rowColorLightGreen = new Color(255, 210, 210); // Verde claro para linhas pares
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
@@ -101,7 +106,7 @@ public class EstoquePanel extends JPanel {
             for (TipoProduto tp : tipoProdutoController.listarTodos()) {
                 cacheTipos.put(tp.getId(), tp);
             }
-            for (Fornecedor f : fornecedorController.listarFornecedores()) {
+            for (Fornecedor f : fornecedorController.listarTodos()) {
                 cacheFornecedores.put(f.getId(), f);
             }
         } catch (SQLException e) {
@@ -215,9 +220,14 @@ public class EstoquePanel extends JPanel {
                 c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
                 c.setForeground(Color.BLACK);
                 if (isRowSelected(row)) {
-                    c.setBackground(primaryColor.darker());
-                    ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, column == 0 ? 1 : 0, 1,
-                            column == getColumnCount() - 1 ? 1 : 0, Color.BLACK));
+                    // Aplica borda preta fina apenas nas extremidades da linha
+                    if (column == 0) {
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 1, 1, 0, Color.BLACK));
+                    } else if (column == getColumnCount() - 1) {
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 1, Color.BLACK));
+                    } else {
+                        ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, Color.BLACK));
+                    }
                 } else {
                     ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                 }
@@ -263,19 +273,30 @@ public class EstoquePanel extends JPanel {
                 Produto p = cacheProdutos.get(e.getProdutoId());
                 if (p == null) {
                     p = produtoController.buscarPorId(e.getProdutoId());
-                    if (p != null) cacheProdutos.put(p.getId(), p);
+                    if (p != null) {
+                        cacheProdutos.put(p.getId(), p);
+                    }
                 }
                 if (p == null) continue;
 
                 TipoProduto tp = cacheTipos.get(p.getTipoProdutoId());
                 if (tp == null) {
                     tp = tipoProdutoController.buscarPorId(p.getTipoProdutoId());
-                    if (tp != null) cacheTipos.put(tp.getId(), tp);
+                    if (tp != null) {
+                        cacheTipos.put(tp.getId(), tp);
+                    }
                 }
 
+                // Buscar o fornecedor da última compra do produto
                 Fornecedor f = null;
-                // Assumindo que fornecedor é obtido do último compra_produto ou similar; aqui simplificado como null se não associado
-                // Para real, implementar lógica para buscar fornecedor associado, se necessário
+                try {
+                    f = fornecedorController.buscarFornecedorUltimaCompra(e.getProdutoId());
+                    if (f != null) {
+                        cacheFornecedores.put(f.getId(), f); // Atualiza o cache com a chave correta (ID do fornecedor)
+                    }
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(this, "Erro ao buscar fornecedor da última compra: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                }
 
                 boolean matchProduto = buscaProduto.isEmpty() ||
                         p.getNome().toLowerCase().contains(buscaProduto) ||
