@@ -19,16 +19,16 @@ public class Despesa {
     }
 
     public enum FormaPagamento {
-        DINHEIRO, 
-        DEBITO, 
-        CREDITO, 
-        PIX, 
+        DINHEIRO,
+        DEBITO,
+        CREDITO,
+        PIX,
         BOLETO
     }
 
     public enum Status {
-        PENDENTE, 
-        PAGO, 
+        PENDENTE,
+        PAGO,
         CANCELADO
     }
 
@@ -38,6 +38,7 @@ public class Despesa {
     private int id;
     private String descricao;
     private Categoria categoria;
+    private boolean recorrente; // 0 = false, 1 = true
     private BigDecimal valor;
     private FormaPagamento formaPagamento;
     private LocalDate dataVencimento;
@@ -52,13 +53,14 @@ public class Despesa {
     public Despesa() {
     }
 
-    public Despesa(int id, String descricao, Categoria categoria, BigDecimal valor, 
-                   FormaPagamento formaPagamento, LocalDate dataVencimento, 
-                   LocalDate dataPagamento, Status status, String usuario, 
+    public Despesa(int id, String descricao, Categoria categoria, boolean recorrente,
+                   BigDecimal valor, FormaPagamento formaPagamento, LocalDate dataVencimento,
+                   LocalDate dataPagamento, Status status, String usuario,
                    LocalDateTime dataHora) {
         this.id = id;
         this.descricao = descricao;
         this.categoria = categoria;
+        this.recorrente = recorrente;
         this.valor = valor;
         this.formaPagamento = formaPagamento;
         this.dataVencimento = dataVencimento;
@@ -93,6 +95,14 @@ public class Despesa {
 
     public void setCategoria(Categoria categoria) {
         this.categoria = categoria;
+    }
+
+    public boolean isRecorrente() {
+        return recorrente;
+    }
+
+    public void setRecorrente(boolean recorrente) {
+        this.recorrente = recorrente;
     }
 
     public BigDecimal getValor() {

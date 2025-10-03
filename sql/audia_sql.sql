@@ -344,6 +344,36 @@ CREATE TABLE movimento_estoque (
 );
 
 -- ========================================
+-- MODULO DE EMPRESTIMO DE PRODUTOS
+-- ========================================
+CREATE TABLE emprestimo_produto (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    produto_id INT NOT NULL,
+    paciente_id INT NOT NULL,
+    profissional_id INT NOT NULL,
+    data_emprestimo TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    data_devolucao DATETIME NULL,
+    devolvido TINYINT DEFAULT 0,
+    observacoes TEXT,
+    usuario VARCHAR(50),
+    CONSTRAINT fk_emprestimo_produto
+        FOREIGN KEY (produto_id)
+        REFERENCES produto(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_emprestimo_paciente
+        FOREIGN KEY (paciente_id)
+        REFERENCES paciente(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_emprestimo_profissional
+        FOREIGN KEY (profissional_id)
+        REFERENCES profissional(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- ========================================
 -- MÓDULO DE COMPRAS
 -- ========================================
 CREATE TABLE compra (
@@ -426,12 +456,12 @@ CREATE TABLE despesa (
         'PESSOAL',          -- salários, encargos, pró-labore
         'OPERACIONAL',      -- aluguel, luz, água, internet
         'ADMINISTRATIVA',   -- material escritório, sistemas
-        'VARIAVEL',         -- motoboy, pequenas compras
+        'VARIAVEL',         -- motoboy, pequenas comprasda
         'IMPOSTOS',         -- tributos, taxas
         'OUTROS'            -- algo que não se encaixe
     ) NOT NULL,
-    valor DECIMAL(10,2) NOT NULL,
     recorrente TINYINT NOT NULL DEFAULT 0, -- 0=Não, 1=Sim
+    valor DECIMAL(10,2) NOT NULL,
     forma_pagamento ENUM('DINHEIRO', 'DEBITO', 'CREDITO', 'PIX', 'BOLETO') NOT NULL,
     data_vencimento DATE NOT NULL,
     data_pagamento DATE DEFAULT NULL,

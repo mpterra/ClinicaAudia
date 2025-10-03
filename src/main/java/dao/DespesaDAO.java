@@ -19,8 +19,8 @@ public class DespesaDAO {
     public boolean salvar(Despesa despesa, String usuarioLogado) throws SQLException {
         String sql = """
             INSERT INTO despesa 
-            (descricao, categoria, valor, forma_pagamento, data_vencimento, data_pagamento, status, usuario)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (descricao, categoria, recorrente, valor, forma_pagamento, data_vencimento, data_pagamento, status, usuario)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = Database.getConnection();
@@ -61,7 +61,7 @@ public class DespesaDAO {
     }
 
     public List<Despesa> listarTodos() throws SQLException {
-        return listarPorFiltros(null, null, null, null, null);
+        return listarPorFiltros(null, null, null, null, null, null);
     }
 
     // ============================
@@ -71,6 +71,7 @@ public class DespesaDAO {
             Categoria categoria,
             Status status,
             FormaPagamento formaPagamento,
+            Boolean recorrente,
             LocalDate inicio,
             LocalDate fim
     ) throws SQLException {
@@ -89,6 +90,10 @@ public class DespesaDAO {
         if (formaPagamento != null) {
             sql.append(" AND forma_pagamento = ?");
             params.add(formaPagamento.name());
+        }
+        if (recorrente != null) {
+            sql.append(" AND recorrente = ?");
+            params.add(recorrente ? 1 : 0);
         }
         if (inicio != null) {
             sql.append(" AND data_vencimento >= ?");
@@ -123,7 +128,7 @@ public class DespesaDAO {
     public boolean atualizar(Despesa despesa, String usuarioLogado) throws SQLException {
         String sql = """
             UPDATE despesa SET
-                descricao = ?, categoria = ?, valor = ?, forma_pagamento = ?, 
+                descricao = ?, categoria = ?, recorrente = ?, valor = ?, forma_pagamento = ?, 
                 data_vencimento = ?, data_pagamento = ?, status = ?, usuario = ?, dataHora = CURRENT_TIMESTAMP
             WHERE id = ?
             """;
@@ -157,6 +162,7 @@ public class DespesaDAO {
         d.setId(rs.getInt("id"));
         d.setDescricao(rs.getString("descricao"));
         d.setCategoria(Categoria.valueOf(rs.getString("categoria")));
+        d.setRecorrente(rs.getInt("recorrente") == 1);
         d.setValor(rs.getBigDecimal("valor"));
         d.setFormaPagamento(FormaPagamento.valueOf(rs.getString("forma_pagamento")));
         d.setDataVencimento(rs.getDate("data_vencimento").toLocalDate());
@@ -182,21 +188,22 @@ public class DespesaDAO {
     private void preencherStatement(PreparedStatement stmt, Despesa despesa, String usuarioLogado, boolean isUpdate) throws SQLException {
         stmt.setString(1, despesa.getDescricao());
         stmt.setString(2, despesa.getCategoria().name());
-        stmt.setBigDecimal(3, despesa.getValor());
-        stmt.setString(4, despesa.getFormaPagamento().name());
-        stmt.setDate(5, Date.valueOf(despesa.getDataVencimento()));
+        stmt.setInt(3, despesa.isRecorrente() ? 1 : 0);
+        stmt.setBigDecimal(4, despesa.getValor());
+        stmt.setString(5, despesa.getFormaPagamento().name());
+        stmt.setDate(6, Date.valueOf(despesa.getDataVencimento()));
 
         if (despesa.getDataPagamento() != null) {
-            stmt.setDate(6, Date.valueOf(despesa.getDataPagamento()));
+            stmt.setDate(7, Date.valueOf(despesa.getDataPagamento()));
         } else {
-            stmt.setNull(6, Types.DATE);
+            stmt.setNull(7, Types.DATE);
         }
 
-        stmt.setString(7, despesa.getStatus().name());
-        stmt.setString(8, usuarioLogado);
+        stmt.setString(8, despesa.getStatus().name());
+        stmt.setString(9, usuarioLogado);
 
         if (isUpdate) {
-            stmt.setInt(9, despesa.getId());
+            stmt.setInt(10, despesa.getId());
         }
     }
 }

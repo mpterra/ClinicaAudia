@@ -6,6 +6,7 @@ import model.Despesa.Categoria;
 import model.Despesa.FormaPagamento;
 import model.Despesa.Status;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +27,7 @@ public class DespesaController {
     // READ
     // ============================
     public Despesa buscar(int id) throws SQLException {
+        if (id <= 0) throw new IllegalArgumentException("ID inválido.");
         return dao.buscarPorId(id);
     }
 
@@ -37,10 +39,11 @@ public class DespesaController {
             Categoria categoria,
             Status status,
             FormaPagamento formaPagamento,
+            Boolean recorrente,
             LocalDate inicio,
             LocalDate fim
     ) throws SQLException {
-        return dao.listarPorFiltros(categoria, status, formaPagamento, inicio, fim);
+        return dao.listarPorFiltros(categoria, status, formaPagamento, recorrente, inicio, fim);
     }
 
     // ============================
@@ -83,7 +86,8 @@ public class DespesaController {
     // VALIDAÇÃO
     // ============================
     private void validarDespesa(Despesa despesa, boolean exigeId) {
-        if (despesa == null) throw new IllegalArgumentException("Despesa não pode ser nula.");
+        if (despesa == null)
+            throw new IllegalArgumentException("Despesa não pode ser nula.");
 
         if (exigeId && despesa.getId() <= 0)
             throw new IllegalArgumentException("Despesa inválida para atualização.");
@@ -91,7 +95,19 @@ public class DespesaController {
         if (despesa.getDescricao() == null || despesa.getDescricao().isBlank())
             throw new IllegalArgumentException("Descrição é obrigatória.");
 
-        if (despesa.getValor() == null || despesa.getValor().compareTo(java.math.BigDecimal.ZERO) <= 0)
+        if (despesa.getCategoria() == null)
+            throw new IllegalArgumentException("Categoria é obrigatória.");
+
+        if (despesa.getFormaPagamento() == null)
+            throw new IllegalArgumentException("Forma de pagamento é obrigatória.");
+
+        if (despesa.getValor() == null || despesa.getValor().compareTo(BigDecimal.ZERO) <= 0)
             throw new IllegalArgumentException("Valor deve ser maior que zero.");
+
+        if (despesa.getDataVencimento() == null)
+            throw new IllegalArgumentException("Data de vencimento é obrigatória.");
+
+        if (despesa.getUsuario() == null || despesa.getUsuario().isBlank())
+            throw new IllegalArgumentException("Usuário é obrigatório.");
     }
 }
