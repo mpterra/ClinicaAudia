@@ -6,6 +6,7 @@ public class EmprestimoProduto {
 
     private int id;
     private int produtoId;
+    private String codigoSerial;   // Novo campo
     private int pacienteId;
     private int profissionalId;
     private LocalDateTime dataEmprestimo;
@@ -20,11 +21,12 @@ public class EmprestimoProduto {
     public EmprestimoProduto() {
     }
 
-    public EmprestimoProduto(int id, int produtoId, int pacienteId, int profissionalId,
+    public EmprestimoProduto(int id, int produtoId, String codigoSerial, int pacienteId, int profissionalId,
                              LocalDateTime dataEmprestimo, LocalDateTime dataDevolucao,
                              boolean devolvido, String observacoes, String usuario) {
         this.id = id;
         this.produtoId = produtoId;
+        this.codigoSerial = codigoSerial;
         this.pacienteId = pacienteId;
         this.profissionalId = profissionalId;
         this.dataEmprestimo = dataEmprestimo;
@@ -51,6 +53,14 @@ public class EmprestimoProduto {
 
     public void setProdutoId(int produtoId) {
         this.produtoId = produtoId;
+    }
+
+    public String getCodigoSerial() {
+        return codigoSerial;
+    }
+
+    public void setCodigoSerial(String codigoSerial) {
+        this.codigoSerial = codigoSerial;
     }
 
     public int getPacienteId() {
@@ -117,6 +127,7 @@ public class EmprestimoProduto {
         return "EmprestimoProduto{" +
                 "id=" + id +
                 ", produtoId=" + produtoId +
+                ", codigoSerial='" + codigoSerial + '\'' +
                 ", pacienteId=" + pacienteId +
                 ", profissionalId=" + profissionalId +
                 ", dataEmprestimo=" + dataEmprestimo +

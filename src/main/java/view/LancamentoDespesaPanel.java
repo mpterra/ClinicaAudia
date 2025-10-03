@@ -1,5 +1,4 @@
 package view;
-
 import controller.CaixaController;
 import controller.CaixaMovimentoController;
 import controller.DespesaController;
@@ -39,7 +38,6 @@ import java.util.List;
 
 public class LancamentoDespesaPanel extends JPanel {
     private static final long serialVersionUID = 1L;
-
     // Componentes do formulário
     private JComboBox<Despesa.Categoria> cmbCategoria;
     private JTextField txtDescricao;
@@ -54,37 +52,31 @@ public class LancamentoDespesaPanel extends JPanel {
     private JLabel lblValorTotal;
     private JTable tabelaDespesas;
     private DefaultTableModel modeloTabelaDespesas;
-
     // Componentes de filtro
     private JDateChooser dateChooserInicioFiltro;
     private JDateChooser dateChooserFimFiltro;
     private JComboBox<Object> cmbCategoriaFiltro;
     private JTextField txtDescricaoFiltro;
-
     // Estilo
-    private final Color primaryColor = new Color(154, 5, 38); // Vermelho escuro
-    private final Color secondaryColor = new Color(94, 5, 38); // Vermelho claro
-    private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
-    private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde claro
+    private final Color primaryColor = new Color(154, 5, 38);
+    private final Color secondaryColor = new Color(94, 5, 38);
+    private final Color backgroundColor = new Color(245, 245, 245);
+    private final Color rowColorLightGreen = new Color(230, 255, 230);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
-
     // Controladores
     private final DespesaController despesaController = new DespesaController();
     private final CaixaController caixaController = new CaixaController();
     private final CaixaMovimentoController movimentoController = new CaixaMovimentoController();
-
     // Variáveis de estado
     private List<Despesa> listaDespesas;
     private BigDecimal valorTotalDespesas;
-
     // Variáveis de filtro
     private LocalDate dataInicioFiltro;
     private LocalDate dataFimFiltro;
     private Despesa.Categoria categoriaFiltro;
     private String descricaoFiltro;
-
     // Formato de data
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
@@ -92,18 +84,15 @@ public class LancamentoDespesaPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(backgroundColor);
-
         // Inicializa estado
         listaDespesas = new ArrayList<>();
         valorTotalDespesas = BigDecimal.ZERO;
-
         // Inicializa filtros padrão (mês atual)
         LocalDate now = LocalDate.now();
         dataInicioFiltro = now.withDayOfMonth(1);
         dataFimFiltro = now.withDayOfMonth(now.lengthOfMonth());
-        categoriaFiltro = null; // Todas
+        categoriaFiltro = null;
         descricaoFiltro = "";
-
         // Inicializa componentes de pagamento
         spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
         spinnerParcelas.setPreferredSize(new Dimension(80, 25));
@@ -115,18 +104,15 @@ public class LancamentoDespesaPanel extends JPanel {
         spinnerMesesRecorrentes.setPreferredSize(new Dimension(80, 25));
         spinnerMesesRecorrentes.setFont(fieldFont);
         spinnerMesesRecorrentes.setEnabled(false);
-
         // Título
         JLabel lblTitulo = new JLabel("Lançamento de Despesas", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
-
         // Painéis de formulário e tabela
         JPanel painelFormulario = criarPainelFormulario();
         JPanel painelTabela = criarPainelTabela();
-
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
         splitPane.setResizeWeight(0.45);
@@ -135,12 +121,10 @@ public class LancamentoDespesaPanel extends JPanel {
         splitPane.setBackground(backgroundColor);
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.31));
         add(splitPane, BorderLayout.CENTER);
-
         // Carrega dados iniciais
         carregarDespesasFiltradas();
     }
 
-    // Cria o painel de formulário com campos de entrada
     private JPanel criarPainelFormulario() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -148,7 +132,6 @@ public class LancamentoDespesaPanel extends JPanel {
                         "Registrar Despesa", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
-
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -156,7 +139,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
-
         // Seção de Dados
         JPanel dataPanel = new JPanel(new GridBagLayout());
         dataPanel.setBackground(backgroundColor);
@@ -165,7 +147,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.insets = new Insets(2, 2, 2, 2);
         gbcData.fill = GridBagConstraints.HORIZONTAL;
         gbcData.anchor = GridBagConstraints.WEST;
-
         // Título da seção
         JLabel lblDespesaTitle = new JLabel("Dados da Despesa");
         lblDespesaTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -174,7 +155,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 0;
         gbcData.gridwidth = 2;
         dataPanel.add(lblDespesaTitle, gbcData);
-
         // Campo Categoria
         JLabel lblCategoria = new JLabel("Categoria:");
         lblCategoria.setFont(labelFont);
@@ -190,7 +170,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(cmbCategoria, gbcData);
-
         // Campo Descrição
         JLabel lblDescricao = new JLabel("Descrição:");
         lblDescricao.setFont(labelFont);
@@ -205,7 +184,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(txtDescricao, gbcData);
-
         // Campo Valor
         JLabel lblValor = new JLabel("Valor:");
         lblValor.setFont(labelFont);
@@ -221,7 +199,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(txtValor, gbcData);
-
         // Campo Data Vencimento
         JLabel lblDataVencimento = new JLabel("Data Vencimento:");
         lblDataVencimento.setFont(labelFont);
@@ -238,7 +215,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(dateChooserVencimento, gbcData);
-
         // Campo Pago
         JLabel lblPago = new JLabel("Pago?:");
         lblPago.setFont(labelFont);
@@ -251,7 +227,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(chkPago, gbcData);
-
         // Campo Forma Pagamento
         JLabel lblFormaPagamento = new JLabel("Forma Pagamento:");
         lblFormaPagamento.setFont(labelFont);
@@ -267,7 +242,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(cmbFormaPagamento, gbcData);
-
         // Campo Parcelas
         JLabel lblParcelas = new JLabel("Parcelas:");
         lblParcelas.setFont(labelFont);
@@ -278,7 +252,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(spinnerParcelas, gbcData);
-
         // Campo Data Pagamento
         JLabel lblDataPagamento = new JLabel("Data Pagamento:");
         lblDataPagamento.setFont(labelFont);
@@ -296,7 +269,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(dateChooserPagamento, gbcData);
-
         // Campo Recorrente
         JLabel lblRecorrente = new JLabel("Recorrente Mensal?:");
         lblRecorrente.setFont(labelFont);
@@ -307,7 +279,6 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(chkRecorrente, gbcData);
-
         // Campo Número de Meses Recorrentes
         JLabel lblMesesRecorrentes = new JLabel("Nº Meses:");
         lblMesesRecorrentes.setFont(labelFont);
@@ -318,13 +289,11 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(spinnerMesesRecorrentes, gbcData);
-
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.weighty = 0.4;
         mainPanel.add(dataPanel, gbc);
-
         // Seção de Botões
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
         botoesPanel.setBackground(backgroundColor);
@@ -352,19 +321,16 @@ public class LancamentoDespesaPanel extends JPanel {
         gbc.weighty = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(botoesPanel, gbc);
-
         // Listeners
         btnAdicionar.addActionListener(e -> adicionarDespesa());
         btnLimpar.addActionListener(e -> limparCampos());
         chkPago.addActionListener(e -> atualizarCamposPagamento());
         cmbFormaPagamento.addActionListener(e -> atualizarParcelas());
         chkRecorrente.addActionListener(e -> spinnerMesesRecorrentes.setEnabled(chkRecorrente.isSelected()));
-
         panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
     }
 
-    // Cria o painel da tabela com filtros
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -372,12 +338,10 @@ public class LancamentoDespesaPanel extends JPanel {
                         "Despesas Pendentes e Pagas", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
-
         // Painel de filtros
         JPanel filtrosPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         filtrosPanel.setBackground(backgroundColor);
         filtrosPanel.setBorder(new EmptyBorder(5, 0, 10, 0));
-
         JLabel lblDe = new JLabel("De:");
         lblDe.setFont(labelFont);
         filtrosPanel.add(lblDe);
@@ -390,7 +354,6 @@ public class LancamentoDespesaPanel extends JPanel {
         configurarCampoData((JTextFieldDateEditor) dateChooserInicioFiltro.getDateEditor());
         dateChooserInicioFiltro.addPropertyChangeListener("date", evt -> aplicarFiltros());
         filtrosPanel.add(dateChooserInicioFiltro);
-
         JLabel lblAte = new JLabel("Até:");
         lblAte.setFont(labelFont);
         filtrosPanel.add(lblAte);
@@ -403,7 +366,6 @@ public class LancamentoDespesaPanel extends JPanel {
         configurarCampoData((JTextFieldDateEditor) dateChooserFimFiltro.getDateEditor());
         dateChooserFimFiltro.addPropertyChangeListener("date", evt -> aplicarFiltros());
         filtrosPanel.add(dateChooserFimFiltro);
-
         JLabel lblCategoriaFiltro = new JLabel("Categoria:");
         lblCategoriaFiltro.setFont(labelFont);
         filtrosPanel.add(lblCategoriaFiltro);
@@ -421,7 +383,6 @@ public class LancamentoDespesaPanel extends JPanel {
             }
         });
         filtrosPanel.add(cmbCategoriaFiltro);
-
         JLabel lblDescricaoFiltro = new JLabel("Descrição:");
         lblDescricaoFiltro.setFont(labelFont);
         filtrosPanel.add(lblDescricaoFiltro);
@@ -438,7 +399,6 @@ public class LancamentoDespesaPanel extends JPanel {
         });
         filtrosPanel.add(txtDescricaoFiltro);
         panel.add(filtrosPanel, BorderLayout.NORTH);
-
         // Tabela
         String[] colunas = {"ID", "Descrição", "Categoria", "Recorrente", "Valor", "Forma Pag.", "Data Venc.", "Data Pag.", "Status"};
         modeloTabelaDespesas = new DefaultTableModel(colunas, 0) {
@@ -485,7 +445,6 @@ public class LancamentoDespesaPanel extends JPanel {
         JScrollPane scroll = new JScrollPane(tabelaDespesas);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-
         // Painel inferior
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         southPanel.setBackground(backgroundColor);
@@ -515,11 +474,9 @@ public class LancamentoDespesaPanel extends JPanel {
         btnDeletar.addActionListener(e -> deletar());
         southPanel.add(btnDeletar);
         panel.add(southPanel, BorderLayout.SOUTH);
-
         return panel;
     }
 
-    // Configura o botão "Hoje" no popup do JDateChooser
     private void configurarBotaoHoje(JDateChooser dateChooser) {
         dateChooser.addPropertyChangeListener("jcalendar", evt -> {
             if (evt.getNewValue() != null) {
@@ -541,7 +498,6 @@ public class LancamentoDespesaPanel extends JPanel {
         });
     }
 
-    // Configura o campo de data com autocompletar de barras durante digitação
     private void configurarCampoData(JTextFieldDateEditor editor) {
         editor.setToolTipText("Digite a data no formato dd/MM/yyyy ou selecione no calendário");
         editor.addKeyListener(new KeyAdapter() {
@@ -565,7 +521,6 @@ public class LancamentoDespesaPanel extends JPanel {
         configurarBotaoHoje((JDateChooser) editor.getParent());
     }
 
-    // Aplica filtros para carregar despesas
     private void aplicarFiltros() {
         try {
             Date inicioDate = dateChooserInicioFiltro.getDate();
@@ -577,11 +532,9 @@ public class LancamentoDespesaPanel extends JPanel {
             descricaoFiltro = txtDescricaoFiltro.getText().trim().toLowerCase();
             carregarDespesasFiltradas();
         } catch (Exception ignored) {
-            // Ignora erros silenciosamente
         }
     }
 
-    // Habilita/desabilita campos de pagamento
     private void atualizarCamposPagamento() {
         boolean pago = chkPago.isSelected();
         cmbFormaPagamento.setEnabled(pago);
@@ -598,7 +551,6 @@ public class LancamentoDespesaPanel extends JPanel {
         atualizarParcelas();
     }
 
-    // Atualiza o campo de parcelas com base na forma de pagamento
     private void atualizarParcelas() {
         if (!chkPago.isSelected()) {
             spinnerParcelas.setEnabled(false);
@@ -615,7 +567,6 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Limpa os campos do formulário
     private void limparCampos() {
         cmbCategoria.setSelectedIndex(0);
         txtDescricao.setText("");
@@ -630,7 +581,6 @@ public class LancamentoDespesaPanel extends JPanel {
         atualizarCamposPagamento();
     }
 
-    // Adiciona uma ou mais despesas (única, parcelada ou recorrente)
     private void adicionarDespesa() {
         try {
             String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
@@ -673,13 +623,11 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Converte string de valor monetário para BigDecimal
     private BigDecimal parseValor(String text) {
         String cleaned = text.replace("R$ ", "").replace(".", "").replace(",", ".");
         return new BigDecimal(cleaned);
     }
 
-    // Lança uma despesa única
     private void lancarDespesaUnica(BigDecimal valorTotal, LocalDate dataVencimento, LocalDate dataPagamento, String usuarioLogado) throws SQLException {
         Despesa d = new Despesa();
         d.setDescricao(txtDescricao.getText());
@@ -699,32 +647,24 @@ public class LancamentoDespesaPanel extends JPanel {
         atualizarTabelaDespesas();
     }
 
-    // Lança despesas parceladas
     private void lancarDespesasParceladas(BigDecimal valorTotal, int numParcelas, LocalDate dataVencimentoInicial, LocalDate dataPagamento, String usuarioLogado) throws SQLException {
-        // Calcula o valor de cada parcela
         BigDecimal valorParcela = valorTotal.divide(BigDecimal.valueOf(numParcelas), 2, RoundingMode.HALF_UP);
         String descricaoBase = txtDescricao.getText().trim();
         Despesa.Categoria categoria = (Despesa.Categoria) cmbCategoria.getSelectedItem();
         Despesa.FormaPagamento forma = (Despesa.FormaPagamento) cmbFormaPagamento.getSelectedItem();
         boolean recorrente = chkRecorrente.isSelected();
-
         for (int i = 1; i <= numParcelas; i++) {
             Despesa parcela = new Despesa();
-            // Define a descrição com número da parcela
             parcela.setDescricao("Parcela " + i + "/" + numParcelas + " - " + descricaoBase);
             parcela.setCategoria(categoria);
             parcela.setRecorrente(recorrente);
             parcela.setValor(valorParcela);
             parcela.setFormaPagamento(forma);
-            // Incrementa a data de vencimento para cada parcela
             parcela.setDataVencimento(dataVencimentoInicial.plusMonths(i - 1));
-            // Define a data de pagamento (mesma para todas as parcelas, se informada)
             parcela.setDataPagamento(dataPagamento);
             parcela.setStatus(dataPagamento != null ? Despesa.Status.PAGO : Despesa.Status.PENDENTE);
             parcela.setUsuario(usuarioLogado);
-            // Salva a parcela no banco
             despesaController.adicionar(parcela, usuarioLogado);
-            // Registra movimento de caixa para parcelas pagas
             if (parcela.getStatus() == Despesa.Status.PAGO) {
                 registrarMovimentoCaixa(parcela, usuarioLogado);
             }
@@ -733,7 +673,6 @@ public class LancamentoDespesaPanel extends JPanel {
         atualizarTabelaDespesas();
     }
 
-    // Lança despesas recorrentes
     private void lancarDespesasRecorrentes(BigDecimal valorTotal, int numParcelas, LocalDate dataVencimentoInicial, LocalDate dataPagamento, String usuarioLogado, int numMeses) throws SQLException {
         for (int mes = 0; mes < numMeses; mes++) {
             LocalDate dataVencimento = dataVencimentoInicial.plusMonths(mes);
@@ -745,7 +684,6 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Deleta a despesa selecionada
     private void deletar() {
         int row = tabelaDespesas.getSelectedRow();
         if (row >= 0) {
@@ -767,7 +705,7 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Marca a despesa selecionada como paga
+    // Marca a despesa selecionada como paga com JDateChooser
     private void pagarDespesaSelecionada() {
         int row = tabelaDespesas.getSelectedRow();
         if (row >= 0) {
@@ -777,18 +715,41 @@ public class LancamentoDespesaPanel extends JPanel {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            String dataStr = JOptionPane.showInputDialog(this, "Informe a data de pagamento (dd/MM/yyyy):");
-            if (dataStr != null && !dataStr.isEmpty()) {
-                try {
-                    LocalDate dataPagamento = parseData(dataStr);
-                    String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
-                    despesaController.marcarComoPago(d.getId(), dataPagamento, usuarioLogado);
-                    registrarMovimentoCaixa(d, usuarioLogado);
-                    JOptionPane.showMessageDialog(this, "Despesa paga com sucesso!", "Sucesso",
-                            JOptionPane.INFORMATION_MESSAGE);
-                    carregarDespesasFiltradas();
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Erro ao pagar: " + ex.getMessage(), "Erro",
+            // Cria um JDateChooser com data atual pré-selecionada
+            JDateChooser dateChooser = new JDateChooser();
+            dateChooser.setDateFormatString("dd/MM/yyyy");
+            dateChooser.setFont(fieldFont);
+            dateChooser.setDate(new Date()); // Define a data atual
+            dateChooser.setPreferredSize(new Dimension(150, 25));
+            configurarCampoData((JTextFieldDateEditor) dateChooser.getDateEditor());
+            
+            // Painel para o diálogo
+            JPanel panel = new JPanel(new BorderLayout(5, 5));
+            panel.add(new JLabel("Selecione a data de pagamento:"), BorderLayout.NORTH);
+            panel.add(dateChooser, BorderLayout.CENTER);
+            
+            // Mostra o diálogo
+            int result = JOptionPane.showConfirmDialog(this, panel, "Data de Pagamento",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                Date selectedDate = dateChooser.getDate();
+                if (selectedDate != null) {
+                    try {
+                        LocalDate dataPagamento = selectedDate.toInstant()
+                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                        String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
+                        despesaController.marcarComoPago(d.getId(), dataPagamento, usuarioLogado);
+                        registrarMovimentoCaixa(d, usuarioLogado);
+                        JOptionPane.showMessageDialog(this, "Despesa paga com sucesso!", "Sucesso",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        carregarDespesasFiltradas();
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Erro ao pagar: " + ex.getMessage(), "Erro",
+                                JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "Data de pagamento inválida.", "Erro",
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
@@ -798,7 +759,6 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Registra movimento de caixa para despesa paga
     private void registrarMovimentoCaixa(Despesa d, String usuarioLogado) throws SQLException {
         if (!caixaController.existeCaixaAberto()) {
             throw new SQLException("Não há caixa aberto para registrar o movimento.");
@@ -816,7 +776,6 @@ public class LancamentoDespesaPanel extends JPanel {
         movimentoController.adicionarMovimento(movimento);
     }
 
-    // Converte forma de pagamento de despesa para movimento de caixa
     private CaixaMovimento.FormaPagamento converterFormaPagamento(Despesa.FormaPagamento forma) {
         switch (forma) {
             case DINHEIRO:
@@ -834,7 +793,6 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Carrega despesas com base nos filtros
     private void carregarDespesasFiltradas() {
         try {
             List<Despesa> todas = despesaController.listarPorFiltros(categoriaFiltro, null, null, chkRecorrente.isSelected() ? true : null, dataInicioFiltro, dataFimFiltro);
@@ -854,7 +812,6 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Atualiza a tabela de despesas
     private void atualizarTabelaDespesas() {
         modeloTabelaDespesas.setRowCount(0);
         for (Despesa d : listaDespesas) {
@@ -873,13 +830,11 @@ public class LancamentoDespesaPanel extends JPanel {
         lblValorTotal.setText(String.format("Valor Total: R$ %.2f", valorTotalDespesas));
     }
 
-    // Formata valor para exibição na tabela
     private String formatValorTabela(BigDecimal valor) {
         DecimalFormat df = new DecimalFormat("R$ #,##0.00");
         return df.format(valor);
     }
 
-    // Converte string de data para LocalDate
     private LocalDate parseData(String dataStr) throws ParseException {
         if (dataStr.trim().isEmpty() || !dataStr.matches("\\d{2}/\\d{2}/\\d{4}")) {
             throw new ParseException("Data inválida ou não informada.", 0);
@@ -888,7 +843,6 @@ public class LancamentoDespesaPanel extends JPanel {
         return date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
     }
 
-    // Filtro para formatar valores monetários
     private class CurrencyDocumentFilter extends DocumentFilter {
         @Override
         public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
@@ -900,7 +854,6 @@ public class LancamentoDespesaPanel extends JPanel {
                 super.replace(fb, 0, fb.getDocument().getLength(), formatted, attr);
             }
         }
-
         @Override
         public void replace(FilterBypass fb, int offset, int length, String string, AttributeSet attrs)
                 throws BadLocationException {
@@ -911,7 +864,6 @@ public class LancamentoDespesaPanel extends JPanel {
                 super.replace(fb, 0, fb.getDocument().getLength(), formatted, attrs);
             }
         }
-
         @Override
         public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
             StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
@@ -919,15 +871,12 @@ public class LancamentoDespesaPanel extends JPanel {
             String formatted = formatCurrency(removeNonDigits(sb.toString()));
             super.replace(fb, 0, fb.getDocument().getLength(), formatted, null);
         }
-
         private boolean isValidInput(String text) {
             return text.matches("[R$ 0-9,.]*");
         }
-
         private String removeNonDigits(String text) {
             return text.replaceAll("[^0-9]", "");
         }
-
         private String formatCurrency(String digits) {
             if (digits.isEmpty()) return "R$ 0,00";
             while (digits.length() < 3) {

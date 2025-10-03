@@ -67,7 +67,8 @@ public class TelaPrincipal extends JFrame {
 			abrirVendaProdutoPanel();
 		}));
 		menuAtendimento.addSeparator();
-		menuAtendimento.add(createMenuItem("Emprestar Aparelho", e -> {
+		menuAtendimento.add(createMenuItem("Emprestar Aparelho", e -> { 
+			abrirEmprestimoProdutoPanel();
 		}));
 		menuAtendimento.addSeparator();
 		menuAtendimento.add(createMenuItem("Relatório", e -> {
@@ -314,6 +315,13 @@ public class TelaPrincipal extends JFrame {
 	private void abrirLancamentoDespesaPanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new LancamentoDespesaPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirEmprestimoProdutoPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new EmprestimoProdutoPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

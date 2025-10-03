@@ -3,7 +3,6 @@ package controller;
 import dao.EmprestimoProdutoDAO;
 import model.EmprestimoProduto;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,21 +11,21 @@ public class EmprestimoProdutoController {
 
     private final EmprestimoProdutoDAO dao;
 
-    public EmprestimoProdutoController(Connection conn) {
-        this.dao = new EmprestimoProdutoDAO(conn);
+    public EmprestimoProdutoController() {
+        this.dao = new EmprestimoProdutoDAO();
     }
 
     // ============================
     // CREATE
     // ============================
-    public void adicionar(EmprestimoProduto e) throws SQLException {
-        if (e.getProdutoId() <= 0 || e.getPacienteId() <= 0 || e.getProfissionalId() <= 0) {
-            throw new IllegalArgumentException("Produto, Paciente e Profissional são obrigatórios.");
-        }
+    public boolean adicionar(EmprestimoProduto e) throws SQLException {
+        validarCamposObrigatorios(e, true);
+
         if (e.getDataEmprestimo() == null) {
             e.setDataEmprestimo(LocalDateTime.now());
         }
-        dao.inserir(e);
+
+        return dao.inserir(e);
     }
 
     // ============================
@@ -36,6 +35,9 @@ public class EmprestimoProdutoController {
         if (e.getId() <= 0) {
             throw new IllegalArgumentException("ID inválido para atualização.");
         }
+
+        validarCamposObrigatorios(e, false);
+
         dao.atualizar(e);
     }
 
@@ -74,5 +76,28 @@ public class EmprestimoProdutoController {
         e.setDevolvido(true);
         e.setDataDevolucao(LocalDateTime.now());
         dao.atualizar(e);
+    }
+
+    // ============================
+    // VALIDAÇÃO
+    // ============================
+    private void validarCamposObrigatorios(EmprestimoProduto e, boolean isNovo) {
+        if (e.getProdutoId() <= 0) {
+            throw new IllegalArgumentException("Produto é obrigatório.");
+        }
+        if (e.getPacienteId() <= 0) {
+            throw new IllegalArgumentException("Paciente é obrigatório.");
+        }
+        if (e.getProfissionalId() <= 0) {
+            throw new IllegalArgumentException("Profissional é obrigatório.");
+        }
+        if (e.getCodigoSerial() == null || e.getCodigoSerial().isBlank()) {
+            throw new IllegalArgumentException("Código serial é obrigatório.");
+        }
+
+        // Para novos registros, devolvido deve iniciar como falso
+        if (isNovo) {
+            e.setDevolvido(false);
+        }
     }
 }

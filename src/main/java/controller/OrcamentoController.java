@@ -8,28 +8,65 @@ import java.util.List;
 
 public class OrcamentoController {
 
-    private final OrcamentoDAO dao;
+	private final OrcamentoDAO dao;
 
-    public OrcamentoController() {
-        this.dao = new OrcamentoDAO();
-    }
+	public OrcamentoController() {
+		this.dao = new OrcamentoDAO();
+	}
 
-    public boolean criarOrcamento(Orcamento orcamento, String usuarioLogado) throws SQLException {
-        if (orcamento.getValorTotal().doubleValue() < 0) {
-            throw new IllegalArgumentException("Valor total não pode ser negativo.");
-        }
-        return dao.salvar(orcamento, usuarioLogado);
-    }
+	// ============================
+	// CREATE
+	// ============================
+	public void criarOrcamento(Orcamento orcamento, String usuarioLogado) throws SQLException {
+		validarOrcamento(orcamento);
+		dao.salvar(orcamento, usuarioLogado);
+	}
 
-    public Orcamento buscarPorId(int id) throws SQLException {
-        return dao.buscarPorId(id);
-    }
+	// ============================
+	// READ
+	// ============================
+	public Orcamento buscarPorId(int id) throws SQLException {
+		if (id <= 0)
+			throw new IllegalArgumentException("ID inválido.");
+		return dao.buscarPorId(id);
+	}
 
-    public List<Orcamento> listarTodos() throws SQLException {
-        return dao.listarTodos();
-    }
+	public List<Orcamento> listarTodos() throws SQLException {
+		return dao.listarTodos();
+	}
 
-    public boolean removerOrcamento(int id) throws SQLException {
-        return dao.deletar(id);
-    }
+	// ============================
+	// UPDATE
+	// ============================
+	public void atualizarOrcamento(Orcamento orcamento, String usuarioLogado) throws SQLException {
+		validarOrcamento(orcamento);
+		boolean atualizado = dao.atualizar(orcamento, usuarioLogado);
+		if (!atualizado) {
+			throw new SQLException("Orçamento não encontrado para atualização.");
+		}
+	}
+
+	// ============================
+	// DELETE
+	// ============================
+	public void removerOrcamento(int id) throws SQLException {
+		if (id <= 0)
+			throw new IllegalArgumentException("ID inválido.");
+		boolean removido = dao.deletar(id);
+		if (!removido) {
+			throw new SQLException("Orçamento não encontrado para remoção.");
+		}
+	}
+
+	// ============================
+	// VALIDAÇÃO
+	// ============================
+	private void validarOrcamento(Orcamento orcamento) {
+		if (orcamento == null) {
+			throw new IllegalArgumentException("Orçamento não pode ser nulo.");
+		}
+		if (orcamento.getValorTotal() == null || orcamento.getValorTotal().doubleValue() < 0) {
+			throw new IllegalArgumentException("Valor total não pode ser nulo ou negativo.");
+		}
+	}
 }

@@ -349,6 +349,7 @@ CREATE TABLE movimento_estoque (
 CREATE TABLE emprestimo_produto (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     produto_id INT NOT NULL,
+    codigo_serial VARCHAR(100),
     paciente_id INT NOT NULL,
     profissional_id INT NOT NULL,
     data_emprestimo TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -478,6 +479,7 @@ CREATE TABLE orcamento (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     paciente_id INT NULL,
     profissional_id INT NULL,
+    atendimento_id INT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) DEFAULT 0,
     observacoes TEXT,
@@ -491,7 +493,12 @@ CREATE TABLE orcamento (
         FOREIGN KEY (profissional_id)
         REFERENCES profissional(id)
         ON DELETE SET NULL
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_orcamento_atendimento
+        FOREIGN KEY (atendimento_id)
+        REFERENCES atendimento(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE    
 );
 
 -- ========================================
@@ -658,10 +665,3 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
-
-SELECT * FROM estoque;
-SELECT * FROM movimento_estoque;
-SELECT * FROM pagamento_compra;
-SELECT * FROM movimento_estoque;
-SELECT * FROM compra_produto;
-SELECT * FROM pagamento_venda;
