@@ -16,14 +16,12 @@ public class PagamentoCompraDAO {
     // ============================
     public boolean salvar(PagamentoCompra pc, String usuarioLogado) throws SQLException {
         String sql = """
-            INSERT INTO pagamento_compra 
+            INSERT INTO pagamento_compra
             (compra_id, data_vencimento, valor, metodo_pagamento, parcela, total_parcelas, status, observacoes, usuario)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
-
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
             stmt.setInt(1, pc.getCompraId());
             stmt.setDate(2, pc.getDataVencimento());
             stmt.setBigDecimal(3, pc.getValor());
@@ -33,10 +31,8 @@ public class PagamentoCompraDAO {
             stmt.setString(7, pc.getStatus().name());
             stmt.setString(8, pc.getObservacoes());
             stmt.setString(9, usuarioLogado);
-
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) throw new SQLException("Falha ao inserir PagamentoCompra.");
-
             try (ResultSet rs = stmt.getGeneratedKeys()) {
                 if (rs.next()) pc.setId(rs.getInt(1));
             }
@@ -49,10 +45,8 @@ public class PagamentoCompraDAO {
     // ============================
     public PagamentoCompra buscarPorId(int id) throws SQLException {
         String sql = "SELECT * FROM pagamento_compra WHERE id = ?";
-
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return mapRow(rs);
@@ -64,11 +58,9 @@ public class PagamentoCompraDAO {
     public List<PagamentoCompra> listarTodos() throws SQLException {
         List<PagamentoCompra> lista = new ArrayList<>();
         String sql = "SELECT * FROM pagamento_compra ORDER BY data_vencimento";
-
         try (Connection conn = Database.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-
             while (rs.next()) lista.add(mapRow(rs));
         }
         return lista;
@@ -77,14 +69,42 @@ public class PagamentoCompraDAO {
     public List<PagamentoCompra> listarPorCompra(int compraId) throws SQLException {
         List<PagamentoCompra> lista = new ArrayList<>();
         String sql = "SELECT * FROM pagamento_compra WHERE compra_id = ? ORDER BY parcela";
-
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, compraId);
-
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
+    public List<PagamentoCompra> listarPagamentosPendentes() throws SQLException {
+        List<PagamentoCompra> lista = new ArrayList<>();
+        String sql = "SELECT * FROM pagamento_compra WHERE status = ? ORDER BY data_vencimento";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, StatusPagamento.PENDENTE.name());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        }
+        return lista;
+    }
+
+    public List<PagamentoCompra> listarPagamentosPendentesBoleto() throws SQLException {
+        List<PagamentoCompra> lista = new ArrayList<>();
+        String sql = "SELECT * FROM pagamento_compra WHERE status = ? AND metodo_pagamento = ? ORDER BY data_vencimento";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, StatusPagamento.PENDENTE.name());
+            stmt.setString(2, MetodoPagamento.BOLETO.name());
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
             }
         }
         return lista;
@@ -95,15 +115,13 @@ public class PagamentoCompraDAO {
     // ============================
     public boolean atualizar(PagamentoCompra pc, String usuarioLogado) throws SQLException {
         String sql = """
-            UPDATE pagamento_compra SET 
-                compra_id = ?, data_vencimento = ?, valor = ?, metodo_pagamento = ?, 
+            UPDATE pagamento_compra SET
+                compra_id = ?, data_vencimento = ?, valor = ?, metodo_pagamento = ?,
                 parcela = ?, total_parcelas = ?, status = ?, observacoes = ?, usuario = ?
             WHERE id = ?
             """;
-
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, pc.getCompraId());
             stmt.setDate(2, pc.getDataVencimento());
             stmt.setBigDecimal(3, pc.getValor());
@@ -114,7 +132,6 @@ public class PagamentoCompraDAO {
             stmt.setString(8, pc.getObservacoes());
             stmt.setString(9, usuarioLogado);
             stmt.setInt(10, pc.getId());
-
             return stmt.executeUpdate() > 0;
         }
     }
@@ -126,7 +143,6 @@ public class PagamentoCompraDAO {
         String sql = "DELETE FROM pagamento_compra WHERE id = ?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }

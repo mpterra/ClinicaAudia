@@ -380,6 +380,7 @@ CREATE TABLE emprestimo_produto (
 CREATE TABLE compra (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     data_compra TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    cancelada TINYINT DEFAULT 0, -- 0=não, 1=sim
     usuario VARCHAR(50)
 );
 
