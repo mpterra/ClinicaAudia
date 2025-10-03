@@ -1,6 +1,7 @@
 package view;
 
 import controller.EmprestimoProdutoController;
+import controller.EstoqueController;
 import controller.PacienteController;
 import controller.ProfissionalController;
 import controller.ProdutoController;
@@ -9,7 +10,6 @@ import model.Paciente;
 import model.Profissional;
 import model.Produto;
 import util.Sessao;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import com.toedter.calendar.JCalendar;
 
 /**
@@ -40,9 +39,7 @@ import com.toedter.calendar.JCalendar;
  * Integra com controllers para operações no banco de dados.
  */
 public class EmprestimoProdutoPanel extends JPanel {
-
     private static final long serialVersionUID = 1L;
-
     // Componentes do formulário
     private JTextField txtBuscaPaciente;
     private JTextField txtBuscaProduto;
@@ -62,23 +59,23 @@ public class EmprestimoProdutoPanel extends JPanel {
     private JCalendar calendarDevolucao;
     private JTable tabelaEmprestimos;
     private DefaultTableModel modeloTabelaEmprestimos;
-
     // Estilo
     private final Color primaryColor = new Color(34, 139, 34); // Verde
     private final Color secondaryColor = new Color(200, 255, 200); // Verde claro
     private final Color thirdiaryColor = new Color(45, 99, 255); // Azul claro
     private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
     private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde muito claro
+    private final Color warningColor = new Color(255, 255, 204); // Amarelo para alerta (3 dias antes)
+    private final Color overdueColor = new Color(255, 204, 204); // Vermelho para atraso
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
-
     // Controladores
     private final EmprestimoProdutoController emprestimoController;
     private final PacienteController pacienteController;
     private final ProfissionalController profissionalController;
     private final ProdutoController produtoController;
-
+    private final EstoqueController estoqueController;
     // Variáveis de estado
     private Paciente pacienteSelecionado;
     private Produto produtoSelecionado;
@@ -95,17 +92,15 @@ public class EmprestimoProdutoPanel extends JPanel {
         pacienteController = new PacienteController();
         profissionalController = new ProfissionalController();
         produtoController = new ProdutoController();
-
+        estoqueController = new EstoqueController();
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(backgroundColor);
-
         // Inicializa estado
         cachePacientes = new HashMap<>();
         cacheProdutos = new HashMap<>();
         cacheProfissionais = new HashMap<>();
         emprestimosAtuais = new ArrayList<>();
-
         // Inicializa componentes de data
         try {
             MaskFormatter dateMask = new MaskFormatter("##/##/####");
@@ -114,14 +109,12 @@ public class EmprestimoProdutoPanel extends JPanel {
             dateEmprestimo.setPreferredSize(new Dimension(200, 25));
             dateEmprestimo.setFont(fieldFont);
             dateEmprestimo.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-
             dateDevolucao = new JFormattedTextField(dateMask);
             dateDevolucao.setPreferredSize(new Dimension(200, 25));
             dateDevolucao.setFont(fieldFont);
         } catch (ParseException e) {
             JOptionPane.showMessageDialog(this, "Erro ao configurar formato de data: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
-
         // Inicializa JCalendars e JPopupMenus para data de empréstimo
         calendarPopupEmprestimo = new JPopupMenu();
         calendarEmprestimo = new JCalendar();
@@ -140,7 +133,6 @@ public class EmprestimoProdutoPanel extends JPanel {
                 calendarPopupEmprestimo.setVisible(false);
             }
         });
-
         // Listener para abrir calendário de empréstimo
         dateEmprestimo.addMouseListener(new MouseAdapter() {
             @Override
@@ -152,7 +144,6 @@ public class EmprestimoProdutoPanel extends JPanel {
                 calendarPopupEmprestimo.show(dateEmprestimo, x - dateEmprestimo.getLocationOnScreen().x, y - dateEmprestimo.getLocationOnScreen().y);
             }
         });
-
         // Inicializa JCalendars e JPopupMenus para data de devolução
         calendarPopupDevolucao = new JPopupMenu();
         calendarDevolucao = new JCalendar();
@@ -171,7 +162,6 @@ public class EmprestimoProdutoPanel extends JPanel {
                 calendarPopupDevolucao.setVisible(false);
             }
         });
-
         // Listener para abrir calendário de devolução
         dateDevolucao.addMouseListener(new MouseAdapter() {
             @Override
@@ -183,21 +173,17 @@ public class EmprestimoProdutoPanel extends JPanel {
                 calendarPopupDevolucao.show(dateDevolucao, x - dateDevolucao.getLocationOnScreen().x, y - dateDevolucao.getLocationOnScreen().y);
             }
         });
-
         // Carrega dados iniciais
         carregarCacheInicial();
-
         // Título
         JLabel lblTitulo = new JLabel("Empréstimo de Produtos", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
-
         // Painéis de formulário e tabela
         JPanel painelFormulario = criarPainelFormulario();
         JPanel painelTabela = criarPainelTabela();
-
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
         splitPane.setResizeWeight(0.45);
@@ -206,7 +192,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         splitPane.setBackground(backgroundColor);
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.45));
         add(splitPane, BorderLayout.CENTER);
-
         // Carrega tabela inicial
         atualizarTabelaEmprestimos();
     }
@@ -245,14 +230,12 @@ public class EmprestimoProdutoPanel extends JPanel {
                         primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
-
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-
         // Seção de Busca
         JPanel buscaPanel = new JPanel(new GridBagLayout());
         buscaPanel.setBackground(backgroundColor);
@@ -260,14 +243,12 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcBusca.insets = new Insets(5, 5, 5, 5);
         gbcBusca.fill = GridBagConstraints.HORIZONTAL;
         gbcBusca.anchor = GridBagConstraints.WEST;
-
         JLabel lblBuscaPaciente = new JLabel("Paciente:");
         lblBuscaPaciente.setFont(labelFont);
         gbcBusca.gridx = 0;
         gbcBusca.gridy = 0;
         gbcBusca.weightx = 0.0;
         buscaPanel.add(lblBuscaPaciente, gbcBusca);
-
         txtBuscaPaciente = new JTextField(15);
         txtBuscaPaciente.setPreferredSize(new Dimension(200, 25));
         txtBuscaPaciente.setFont(fieldFont);
@@ -276,14 +257,12 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcBusca.gridy = 0;
         gbcBusca.weightx = 1.0;
         buscaPanel.add(txtBuscaPaciente, gbcBusca);
-
         JLabel lblBuscaProduto = new JLabel("Produto:");
         lblBuscaProduto.setFont(labelFont);
         gbcBusca.gridx = 2;
         gbcBusca.gridy = 0;
         gbcBusca.weightx = 0.0;
         buscaPanel.add(lblBuscaProduto, gbcBusca);
-
         txtBuscaProduto = new JTextField(15);
         txtBuscaProduto.setPreferredSize(new Dimension(200, 25));
         txtBuscaProduto.setFont(fieldFont);
@@ -292,12 +271,10 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcBusca.gridy = 0;
         gbcBusca.weightx = 1.0;
         buscaPanel.add(txtBuscaProduto, gbcBusca);
-
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         mainPanel.add(buscaPanel, gbc);
-
         // Seção de Dados
         JPanel dataPanel = new JPanel(new GridBagLayout());
         dataPanel.setBackground(backgroundColor);
@@ -305,7 +282,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.insets = new Insets(5, 5, 5, 5);
         gbcData.fill = GridBagConstraints.HORIZONTAL;
         gbcData.anchor = GridBagConstraints.WEST;
-
         // Dados do Paciente
         JLabel lblPacienteTitle = new JLabel("Dados do Paciente");
         lblPacienteTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -314,7 +290,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridy = 0;
         gbcData.gridwidth = 2;
         dataPanel.add(lblPacienteTitle, gbcData);
-
         JLabel lblNomePaciente = new JLabel("Nome:");
         lblNomePaciente.setFont(labelFont);
         gbcData.gridx = 0;
@@ -322,7 +297,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridwidth = 1;
         gbcData.weightx = 0.0;
         dataPanel.add(lblNomePaciente, gbcData);
-
         txtNomePaciente = new JTextField(15);
         txtNomePaciente.setEditable(false);
         txtNomePaciente.setBackground(Color.WHITE);
@@ -331,14 +305,12 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(txtNomePaciente, gbcData);
-
         JLabel lblTelefone = new JLabel("Telefone:");
         lblTelefone.setFont(labelFont);
         gbcData.gridx = 0;
         gbcData.gridy = 2;
         gbcData.weightx = 0.0;
         dataPanel.add(lblTelefone, gbcData);
-
         txtTelefone = new JTextField(15);
         txtTelefone.setEditable(false);
         txtTelefone.setBackground(Color.WHITE);
@@ -347,14 +319,12 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(txtTelefone, gbcData);
-
         JLabel lblIdade = new JLabel("Idade:");
         lblIdade.setFont(labelFont);
         gbcData.gridx = 0;
         gbcData.gridy = 3;
         gbcData.weightx = 0.0;
         dataPanel.add(lblIdade, gbcData);
-
         txtIdade = new JTextField(15);
         txtIdade.setEditable(false);
         txtIdade.setBackground(Color.WHITE);
@@ -363,14 +333,12 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(txtIdade, gbcData);
-
         JLabel lblEmail = new JLabel("Email:");
         lblEmail.setFont(labelFont);
         gbcData.gridx = 0;
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblEmail, gbcData);
-
         txtEmail = new JTextField(15);
         txtEmail.setEditable(false);
         txtEmail.setBackground(Color.WHITE);
@@ -379,7 +347,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(txtEmail, gbcData);
-
         // Dados do Produto
         JLabel lblProdutoTitle = new JLabel("Dados do Produto");
         lblProdutoTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -388,7 +355,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridy = 0;
         gbcData.gridwidth = 2;
         dataPanel.add(lblProdutoTitle, gbcData);
-
         JLabel lblNomeProduto = new JLabel("Nome:");
         lblNomeProduto.setFont(labelFont);
         gbcData.gridx = 2;
@@ -396,7 +362,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridwidth = 1;
         gbcData.weightx = 0.0;
         dataPanel.add(lblNomeProduto, gbcData);
-
         txtNomeProduto = new JTextField(15);
         txtNomeProduto.setEditable(false);
         txtNomeProduto.setBackground(Color.WHITE);
@@ -405,30 +370,25 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtNomeProduto, gbcData);
-
         JLabel lblCodigoSerial = new JLabel("Código Serial:");
         lblCodigoSerial.setFont(labelFont);
         gbcData.gridx = 2;
         gbcData.gridy = 2;
         gbcData.weightx = 0.0;
         dataPanel.add(lblCodigoSerial, gbcData);
-
         txtCodigoSerial = new JTextField(15);
-        txtCodigoSerial.setEditable(false);
-        txtCodigoSerial.setBackground(Color.WHITE);
+        txtCodigoSerial.setEditable(true);
         txtCodigoSerial.setPreferredSize(new Dimension(200, 25));
         txtCodigoSerial.setFont(fieldFont);
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtCodigoSerial, gbcData);
-
         JLabel lblDescricaoProduto = new JLabel("Descrição:");
         lblDescricaoProduto.setFont(labelFont);
         gbcData.gridx = 2;
         gbcData.gridy = 3;
         gbcData.weightx = 0.0;
         dataPanel.add(lblDescricaoProduto, gbcData);
-
         txtDescricaoProduto = new JTextField(15);
         txtDescricaoProduto.setEditable(false);
         txtDescricaoProduto.setBackground(Color.WHITE);
@@ -437,15 +397,13 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtDescricaoProduto, gbcData);
-
         // Dados do Empréstimo
         JPanel emprestimoPanel = new JPanel(new GridBagLayout());
         emprestimoPanel.setBackground(backgroundColor);
         GridBagConstraints gbcEmprestimo = new GridBagConstraints();
-        gbcEmprestimo.insets = new Insets(5, 5, 5, 10); // Aumentei o espaçamento à direita
+        gbcEmprestimo.insets = new Insets(5, 5, 5, 10);
         gbcEmprestimo.fill = GridBagConstraints.HORIZONTAL;
         gbcEmprestimo.anchor = GridBagConstraints.WEST;
-
         JLabel lblEmprestimoTitle = new JLabel("Dados do Empréstimo");
         lblEmprestimoTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
         lblEmprestimoTitle.setForeground(primaryColor);
@@ -453,42 +411,36 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcEmprestimo.gridy = 0;
         gbcEmprestimo.gridwidth = 2;
         emprestimoPanel.add(lblEmprestimoTitle, gbcEmprestimo);
-
         JLabel lblDataEmprestimo = new JLabel("Data Empréstimo:");
         lblDataEmprestimo.setFont(labelFont);
-        lblDataEmprestimo.setPreferredSize(new Dimension(120, 25)); // Definir largura fixa para alinhamento
+        lblDataEmprestimo.setPreferredSize(new Dimension(120, 25));
         gbcEmprestimo.gridx = 0;
         gbcEmprestimo.gridy = 1;
         gbcEmprestimo.gridwidth = 1;
         gbcEmprestimo.weightx = 0.0;
         emprestimoPanel.add(lblDataEmprestimo, gbcEmprestimo);
-
         gbcEmprestimo.gridx = 1;
         gbcEmprestimo.gridy = 1;
         gbcEmprestimo.weightx = 1.0;
         emprestimoPanel.add(dateEmprestimo, gbcEmprestimo);
-
         JLabel lblDataDevolucao = new JLabel("Data Devolução:");
         lblDataDevolucao.setFont(labelFont);
-        lblDataDevolucao.setPreferredSize(new Dimension(120, 25)); // Definir largura fixa para alinhamento
+        lblDataDevolucao.setPreferredSize(new Dimension(120, 25));
         gbcEmprestimo.gridx = 0;
         gbcEmprestimo.gridy = 2;
         gbcEmprestimo.weightx = 0.0;
         emprestimoPanel.add(lblDataDevolucao, gbcEmprestimo);
-
         gbcEmprestimo.gridx = 1;
         gbcEmprestimo.gridy = 2;
         gbcEmprestimo.weightx = 1.0;
         emprestimoPanel.add(dateDevolucao, gbcEmprestimo);
-
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
-        lblObservacoes.setPreferredSize(new Dimension(120, 25)); // Definir largura fixa para alinhamento
+        lblObservacoes.setPreferredSize(new Dimension(120, 25));
         gbcEmprestimo.gridx = 0;
         gbcEmprestimo.gridy = 3;
         gbcEmprestimo.weightx = 0.0;
         emprestimoPanel.add(lblObservacoes, gbcEmprestimo);
-
         txtObservacoes = new JTextArea(3, 15);
         txtObservacoes.setFont(fieldFont);
         txtObservacoes.setLineWrap(true);
@@ -499,23 +451,19 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbcEmprestimo.gridy = 3;
         gbcEmprestimo.weightx = 1.0;
         emprestimoPanel.add(scrollObservacoes, gbcEmprestimo);
-
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.weighty = 0.4;
         mainPanel.add(dataPanel, gbc);
-
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
         gbc.weighty = 0.0;
         mainPanel.add(emprestimoPanel, gbc);
-
         // Seção de Botões
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
         botoesPanel.setBackground(backgroundColor);
-
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
@@ -526,7 +474,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         btnLimpar.setToolTipText("Limpar todos os campos");
         btnLimpar.addActionListener(e -> limparCampos());
         botoesPanel.add(btnLimpar);
-
         JButton btnAdicionar = new JButton("Adicionar Empréstimo");
         btnAdicionar.setBackground(thirdiaryColor);
         btnAdicionar.setForeground(Color.WHITE);
@@ -537,14 +484,12 @@ public class EmprestimoProdutoPanel extends JPanel {
         btnAdicionar.setToolTipText("Adicionar empréstimo");
         btnAdicionar.addActionListener(e -> adicionarEmprestimo());
         botoesPanel.add(btnAdicionar);
-
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.weighty = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(botoesPanel, gbc);
-
         // Listeners para busca
         txtBuscaPaciente.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) { atualizarPaciente(); }
@@ -556,7 +501,6 @@ public class EmprestimoProdutoPanel extends JPanel {
             public void removeUpdate(DocumentEvent e) { atualizarProduto(); }
             public void changedUpdate(DocumentEvent e) { atualizarProduto(); }
         });
-
         panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
     }
@@ -576,7 +520,7 @@ public class EmprestimoProdutoPanel extends JPanel {
                         primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
-
+        // Definir colunas sem a coluna "ID"
         String[] colunas = {"Produto", "Serial", "Paciente", "Profissional", "Data Empréstimo", "Data Devolução", "Devolvido", "Observações"};
         modeloTabelaEmprestimos = new DefaultTableModel(colunas, 0) {
             @Override
@@ -588,7 +532,27 @@ public class EmprestimoProdutoPanel extends JPanel {
             @Override
             public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
-                c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
+                try {
+                    // Obter o ID da linha para buscar o EmprestimoProduto
+                    int id = (int) modeloTabelaEmprestimos.getValueAt(row, 0); // ID está armazenado internamente
+                    EmprestimoProduto emp = emprestimoController.buscarPorId(id);
+                    if (emp != null && !emp.isDevolvido() && emp.getDataDevolucao() != null) {
+                        LocalDate dataDevolucao = emp.getDataDevolucao().toLocalDate();
+                        LocalDate hoje = LocalDate.now();
+                        long diasRestantes = java.time.temporal.ChronoUnit.DAYS.between(hoje, dataDevolucao);
+                        if (diasRestantes <= 3 && diasRestantes > 0) {
+                            c.setBackground(warningColor); // Amarelo para 3 dias ou menos
+                        } else if (diasRestantes <= 0) {
+                            c.setBackground(overdueColor); // Vermelho para atrasado
+                        } else {
+                            c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
+                        }
+                    } else {
+                        c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
+                    }
+                } catch (SQLException ex) {
+                    c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
+                }
                 c.setForeground(Color.BLACK);
                 if (isRowSelected(row)) {
                     c.setBackground(secondaryColor);
@@ -610,14 +574,13 @@ public class EmprestimoProdutoPanel extends JPanel {
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER); // Centralizar texto
         for (int i = 0; i < tabelaEmprestimos.getColumnCount(); i++) {
             tabelaEmprestimos.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
         JScrollPane scroll = new JScrollPane(tabelaEmprestimos);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-
         // Painel inferior com botões
         JPanel southPanel = new JPanel(new GridBagLayout());
         southPanel.setBackground(backgroundColor);
@@ -625,7 +588,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-
         JButton btnEditar = new JButton("Editar");
         btnEditar.setBackground(thirdiaryColor);
         btnEditar.setForeground(Color.WHITE);
@@ -639,7 +601,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbc.gridy = 0;
         gbc.weightx = 0.0;
         southPanel.add(btnEditar, gbc);
-
         JButton btnDeletar = new JButton("Deletar");
         btnDeletar.setBackground(Color.RED);
         btnDeletar.setForeground(Color.WHITE);
@@ -651,7 +612,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         btnDeletar.addActionListener(e -> deletarEmprestimo());
         gbc.gridx = 1;
         southPanel.add(btnDeletar, gbc);
-
         JButton btnMarcarDevolucao = new JButton("Marcar Devolução");
         btnMarcarDevolucao.setBackground(primaryColor);
         btnMarcarDevolucao.setForeground(Color.WHITE);
@@ -664,12 +624,9 @@ public class EmprestimoProdutoPanel extends JPanel {
         gbc.gridx = 2;
         gbc.anchor = GridBagConstraints.EAST;
         southPanel.add(btnMarcarDevolucao, gbc);
-
         panel.add(southPanel, BorderLayout.SOUTH);
-
         // Listener para seleção na tabela
         tabelaEmprestimos.getSelectionModel().addListSelectionListener(e -> preencherCamposComSelecao());
-
         return panel;
     }
 
@@ -732,7 +689,6 @@ public class EmprestimoProdutoPanel extends JPanel {
         }
         if (produtoSelecionado != null) {
             txtNomeProduto.setText(produtoSelecionado.getNome());
-            txtCodigoSerial.setText(produtoSelecionado.getCodigoSerial() != null ? produtoSelecionado.getCodigoSerial() : "N/A");
             txtDescricaoProduto.setText(produtoSelecionado.getDescricao() != null ? produtoSelecionado.getDescricao() : "N/A");
         } else {
             limparCamposProduto();
@@ -762,9 +718,16 @@ public class EmprestimoProdutoPanel extends JPanel {
             if (Sessao.getUsuarioLogado() == null || Sessao.getUsuarioLogado().getProfissionalId() == null) {
                 throw new IllegalArgumentException("Nenhum profissional associado ao usuário logado!");
             }
+            String codigoSerial = txtCodigoSerial.getText().trim();
+            if (codigoSerial.isEmpty()) {
+                throw new IllegalArgumentException("Informe o código serial!");
+            }
             EmprestimoProduto emp = criarEmprestimoFromCampos(false);
             emp.setProdutoId(produtoSelecionado.getId());
-            emp.setCodigoSerial(produtoSelecionado.getCodigoSerial());
+            emp.setCodigoSerial(codigoSerial);
+            String usuarioLogado = Sessao.getUsuarioLogado().getUsuario();
+            // Verifica e reduz estoque
+            estoqueController.reduzirEstoque(emp.getProdutoId(), 1, "Empréstimo para paciente ID: " + emp.getPacienteId(), usuarioLogado);
             emprestimoController.adicionar(emp);
             atualizarTabelaEmprestimos();
             limparCampos();
@@ -781,14 +744,30 @@ public class EmprestimoProdutoPanel extends JPanel {
         int row = tabelaEmprestimos.getSelectedRow();
         if (row >= 0) {
             try {
-                if (Sessao.getUsuarioLogado() == null || Sessao.getUsuarioLogado().getProfissionalId() == null) {
-                    throw new IllegalArgumentException("Nenhum profissional associado ao usuário logado!");
+                int id = (int) modeloTabelaEmprestimos.getValueAt(row, 0); // ID está na primeira coluna internamente
+                EmprestimoProduto antigo = emprestimoController.buscarPorId(id);
+                EmprestimoProduto novo = criarEmprestimoFromCampos(true);
+                novo.setId(id);
+                novo.setProdutoId(produtoSelecionado != null ? produtoSelecionado.getId() : antigo.getProdutoId());
+                String codigoSerial = txtCodigoSerial.getText().trim();
+                if (codigoSerial.isEmpty()) {
+                    throw new IllegalArgumentException("Informe o código serial!");
                 }
-                EmprestimoProduto emp = criarEmprestimoFromCampos(true);
-                emp.setId((int) modeloTabelaEmprestimos.getValueAt(row, 0));
-                emp.setProdutoId(produtoSelecionado != null ? produtoSelecionado.getId() : 0);
-                emp.setCodigoSerial(produtoSelecionado != null ? produtoSelecionado.getCodigoSerial() : null);
-                emprestimoController.atualizar(emp);
+                novo.setCodigoSerial(codigoSerial);
+                String usuarioLogado = Sessao.getUsuarioLogado().getUsuario();
+                boolean wasEmprestado = !antigo.isDevolvido();
+                boolean willBeEmprestado = !novo.isDevolvido();
+                int oldProdutoId = antigo.getProdutoId();
+                int newProdutoId = novo.getProdutoId();
+                if (wasEmprestado && !willBeEmprestado) {
+                    estoqueController.incrementarEstoque(oldProdutoId, 1, "Devolução via edição de empréstimo", usuarioLogado);
+                } else if (!wasEmprestado && willBeEmprestado) {
+                    estoqueController.reduzirEstoque(newProdutoId, 1, "Empréstimo via edição", usuarioLogado);
+                } else if (wasEmprestado && willBeEmprestado && oldProdutoId != newProdutoId) {
+                    estoqueController.incrementarEstoque(oldProdutoId, 1, "Ajuste de produto em empréstimo via edição", usuarioLogado);
+                    estoqueController.reduzirEstoque(newProdutoId, 1, "Ajuste de produto em empréstimo via edição", usuarioLogado);
+                }
+                emprestimoController.atualizar(novo);
                 atualizarTabelaEmprestimos();
                 limparCampos();
                 JOptionPane.showMessageDialog(this, "Empréstimo atualizado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
@@ -810,6 +789,11 @@ public class EmprestimoProdutoPanel extends JPanel {
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
                     int id = (int) modeloTabelaEmprestimos.getValueAt(row, 0);
+                    EmprestimoProduto emp = emprestimoController.buscarPorId(id);
+                    String usuarioLogado = Sessao.getUsuarioLogado().getUsuario();
+                    if (!emp.isDevolvido()) {
+                        estoqueController.incrementarEstoque(emp.getProdutoId(), 1, "Devolução via deleção de empréstimo", usuarioLogado);
+                    }
                     emprestimoController.remover(id);
                     atualizarTabelaEmprestimos();
                     limparCampos();
@@ -831,10 +815,17 @@ public class EmprestimoProdutoPanel extends JPanel {
         if (row >= 0) {
             try {
                 int id = (int) modeloTabelaEmprestimos.getValueAt(row, 0);
-                emprestimoController.marcarDevolucao(id);
-                atualizarTabelaEmprestimos();
-                limparCampos();
-                JOptionPane.showMessageDialog(this, "Devolução marcada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                EmprestimoProduto emp = emprestimoController.buscarPorId(id);
+                String usuarioLogado = Sessao.getUsuarioLogado().getUsuario();
+                if (!emp.isDevolvido()) {
+                    estoqueController.incrementarEstoque(emp.getProdutoId(), 1, "Devolução de empréstimo", usuarioLogado);
+                    emprestimoController.marcarDevolucao(id);
+                    atualizarTabelaEmprestimos();
+                    limparCampos();
+                    JOptionPane.showMessageDialog(this, "Devolução marcada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Empréstimo já devolvido.", "Aviso", JOptionPane.WARNING_MESSAGE);
+                }
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro ao marcar devolução: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
@@ -844,39 +835,43 @@ public class EmprestimoProdutoPanel extends JPanel {
     }
 
     /**
-     * Atualiza a tabela de empréstimos com dados do banco.
+     * Atualiza a tabela de empréstimos com dados do banco, exibindo apenas empréstimos não devolvidos.
      */
     private void atualizarTabelaEmprestimos() {
         modeloTabelaEmprestimos.setRowCount(0);
         try {
             List<EmprestimoProduto> lista = emprestimoController.listarTodos();
             for (EmprestimoProduto emp : lista) {
-                Produto produto = cacheProdutos.get(emp.getProdutoId());
-                if (produto == null) {
-                    produto = produtoController.buscarPorId(emp.getProdutoId());
-                    if (produto != null) cacheProdutos.put(produto.getId(), produto);
+                // Filtra apenas empréstimos não devolvidos
+                if (!emp.isDevolvido()) {
+                    Produto produto = cacheProdutos.get(emp.getProdutoId());
+                    if (produto == null) {
+                        produto = produtoController.buscarPorId(emp.getProdutoId());
+                        if (produto != null) cacheProdutos.put(produto.getId(), produto);
+                    }
+                    Paciente paciente = cachePacientes.get(emp.getPacienteId());
+                    if (paciente == null) {
+                        paciente = pacienteController.buscarPorId(emp.getPacienteId());
+                        if (paciente != null) cachePacientes.put(paciente.getId(), paciente);
+                    }
+                    Profissional profissional = cacheProfissionais.get(emp.getProfissionalId());
+                    if (profissional == null) {
+                        profissional = profissionalController.buscarPorId(emp.getProfissionalId());
+                        if (profissional != null) cacheProfissionais.put(profissional.getId(), profissional);
+                    }
+                    // Adiciona a linha sem a coluna ID visível, mas mantém ID internamente
+                    modeloTabelaEmprestimos.addRow(new Object[]{
+                            emp.getId(), // Armazena ID internamente, mas não exibido
+                            produto != null ? produto.getNome() : "Desconhecido",
+                            emp.getCodigoSerial() != null ? emp.getCodigoSerial() : "N/A",
+                            paciente != null ? paciente.getNome() : "Desconhecido",
+                            profissional != null ? profissional.getNome() : "Desconhecido",
+                            emp.getDataEmprestimo() != null ? emp.getDataEmprestimo().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
+                            emp.getDataDevolucao() != null ? emp.getDataDevolucao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
+                            emp.isDevolvido() ? "Sim" : "Não",
+                            emp.getObservacoes() != null ? emp.getObservacoes() : ""
+                    });
                 }
-                Paciente paciente = cachePacientes.get(emp.getPacienteId());
-                if (paciente == null) {
-                    paciente = pacienteController.buscarPorId(emp.getPacienteId());
-                    if (paciente != null) cachePacientes.put(paciente.getId(), paciente);
-                }
-                Profissional profissional = cacheProfissionais.get(emp.getProfissionalId());
-                if (profissional == null) {
-                    profissional = profissionalController.buscarPorId(emp.getProfissionalId());
-                    if (profissional != null) cacheProfissionais.put(profissional.getId(), profissional);
-                }
-                modeloTabelaEmprestimos.addRow(new Object[]{
-                        emp.getId(),
-                        produto != null ? produto.getNome() : "Desconhecido",
-                        emp.getCodigoSerial() != null ? emp.getCodigoSerial() : "N/A",
-                        paciente != null ? paciente.getNome() : "Desconhecido",
-                        profissional != null ? profissional.getNome() : "Desconhecido",
-                        emp.getDataEmprestimo() != null ? emp.getDataEmprestimo().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
-                        emp.getDataDevolucao() != null ? emp.getDataDevolucao().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "",
-                        emp.isDevolvido() ? "Sim" : "Não",
-                        emp.getObservacoes() != null ? emp.getObservacoes() : ""
-                });
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Erro ao atualizar tabela: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -889,7 +884,7 @@ public class EmprestimoProdutoPanel extends JPanel {
     private void preencherCamposComSelecao() {
         int row = tabelaEmprestimos.getSelectedRow();
         if (row >= 0) {
-            int id = (int) modeloTabelaEmprestimos.getValueAt(row, 0);
+            int id = (int) modeloTabelaEmprestimos.getValueAt(row, 0); // ID na primeira coluna internamente
             try {
                 EmprestimoProduto emp = emprestimoController.buscarPorId(id);
                 if (emp != null) {
@@ -913,6 +908,7 @@ public class EmprestimoProdutoPanel extends JPanel {
                         dateDevolucao.setText(emp.getDataDevolucao().toLocalDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
                     }
                     txtObservacoes.setText(emp.getObservacoes() != null ? emp.getObservacoes() : "");
+                    txtCodigoSerial.setText(emp.getCodigoSerial() != null ? emp.getCodigoSerial() : "");
                 }
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Erro ao carregar empréstimo: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
@@ -928,17 +924,14 @@ public class EmprestimoProdutoPanel extends JPanel {
      */
     private EmprestimoProduto criarEmprestimoFromCampos(boolean isEdicao) {
         EmprestimoProduto emp = new EmprestimoProduto();
-
         if (pacienteSelecionado == null) {
             throw new IllegalArgumentException("Selecione um paciente!");
         }
         emp.setPacienteId(pacienteSelecionado.getId());
-
         if (Sessao.getUsuarioLogado() == null || Sessao.getUsuarioLogado().getProfissionalId() == null) {
             throw new IllegalArgumentException("Nenhum profissional associado ao usuário logado!");
         }
         emp.setProfissionalId(Sessao.getUsuarioLogado().getProfissionalId());
-
         // Data de empréstimo
         String dataText = dateEmprestimo.getText();
         if (!dataText.matches("\\d{2}/\\d{2}/\\d{4}")) {
@@ -946,20 +939,17 @@ public class EmprestimoProdutoPanel extends JPanel {
         }
         LocalDate date = LocalDate.parse(dataText, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         emp.setDataEmprestimo(date.atStartOfDay());
-
         // Data de devolução opcional
         String dataDevolucaoText = dateDevolucao.getText();
-        if (!dataDevolucaoText.equals("__/__/____")) {
+        if (!dataDevolucaoText.equals("__/__/____") && !dataDevolucaoText.isEmpty()) {
             if (!dataDevolucaoText.matches("\\d{2}/\\d{2}/\\d{4}")) {
                 throw new IllegalArgumentException("Data de devolução inválida!");
             }
             LocalDate dateDev = LocalDate.parse(dataDevolucaoText, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             emp.setDataDevolucao(dateDev.atStartOfDay());
         }
-
         emp.setObservacoes(txtObservacoes.getText().trim());
-        emp.setDevolvido(false);
-
+        emp.setDevolvido(emp.getDataDevolucao() != null);
         return emp;
     }
 

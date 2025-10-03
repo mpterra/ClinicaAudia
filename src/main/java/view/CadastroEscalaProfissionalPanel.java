@@ -14,6 +14,7 @@ import controller.ProfissionalController;
 import model.EscalaProfissional;
 import model.Profissional;
 import util.Sessao;
+
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
@@ -23,12 +24,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // Painel para cadastro e listagem de escalas de profissionais
 public class CadastroEscalaProfissionalPanel extends JPanel {
-
     private static final long serialVersionUID = 1L;
-
     // Componentes de entrada
     private JComboBox<Profissional> cbProfissional;
     private JButton btnSalvar, btnLimpar, btnExcluir, btnExcluirTodas;
@@ -41,44 +41,36 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
     private JComboBox<String>[] cbHoraFim = new JComboBox[DIAS_SEMANA.length];
     private JRadioButton[][] rbDisponivel = new JRadioButton[DIAS_SEMANA.length][2];
     private ButtonGroup[] bgDisponivel = new ButtonGroup[DIAS_SEMANA.length];
-
     // Estilo visual
     private final Color primaryColor = new Color(138, 43, 226); // Roxo
     private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
     private final Color rowColorLightLilac = new Color(230, 230, 250); // Lilás claro para linhas pares
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18); // Título principal
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14); // Labels, TitledBorder, tabela
-
     // Construtor
     public CadastroEscalaProfissionalPanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(5, 15, 15, 15));
         setBackground(backgroundColor);
-
         // Título do painel
         JLabel lblTitulo = new JLabel("Cadastro de Agenda de Profissionais", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(10, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
-
         // Painéis de cadastro e tabela
         JPanel panelCadastro = criarPainelCadastro();
         JPanel panelTabela = criarTabelaComPesquisa();
-
         // SplitPane para dividir cadastro e tabela
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelCadastro, panelTabela);
         splitPane.setResizeWeight(0.55); // Ajustado para 60-40
         splitPane.setDividerSize(7);
         splitPane.setBackground(backgroundColor);
-
         add(splitPane, BorderLayout.CENTER);
-
         // Garantir proporção 60-40 do JSplitPane
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.55));
         revalidate();
         repaint();
-
         // Ações dos botões
         btnLimpar.addActionListener(e -> limparCampos());
         btnSalvar.addActionListener(e -> {
@@ -92,21 +84,17 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         });
         btnExcluir.addActionListener(e -> excluirEscalaSelecionada());
         btnExcluirTodas.addActionListener(e -> excluirTodasEscalasDoProfissional());
-
         // Ação do combo de profissional
         cbProfissional.addActionListener(e -> carregarEscalasDoProfissionalSelecionado());
-
         // Carregar dados iniciais
         carregarProfissionais();
         carregarEscalas();
     }
-
     // Cria o painel de cadastro
     private JPanel criarPainelCadastro() {
         JPanel panelWrapper = new JPanel(new BorderLayout());
         panelWrapper.setBackground(backgroundColor);
         panelWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
-
         JPanel panelCadastro = new JPanel(new GridBagLayout());
         panelCadastro.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
@@ -118,11 +106,9 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                         primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panelCadastro.setBackground(backgroundColor);
-
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.anchor = GridBagConstraints.WEST;
-
         // Subtítulo
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -132,7 +118,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         lblSubtitulo.setForeground(Color.DARK_GRAY);
         panelCadastro.add(lblSubtitulo, gbc);
         gbc.gridwidth = 1;
-
         // Profissional
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -157,7 +142,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         panelCadastro.add(cbProfissional, gbc);
         gbc.weightx = 0.0;
         gbc.fill = GridBagConstraints.NONE;
-
         // Painel de dias
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -167,7 +151,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         JScrollPane scrollDias = criarPainelDiasSemana();
         panelCadastro.add(scrollDias, gbc);
         gbc.weighty = 0.0;
-
         // Botões
         JPanel panelBotoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         panelBotoes.setBackground(backgroundColor);
@@ -195,17 +178,14 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         panelBotoes.add(btnSalvar);
         panelBotoes.add(btnExcluir);
         panelBotoes.add(btnExcluirTodas);
-
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         panelCadastro.add(panelBotoes, gbc);
-
         panelWrapper.add(panelCadastro, BorderLayout.NORTH);
         return panelWrapper;
     }
-
     // Cria o painel de dias da semana
     @SuppressWarnings("unchecked")
     private JScrollPane criarPainelDiasSemana() {
@@ -215,7 +195,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         gbc.insets = new Insets(5, 10, 5, 10);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-
         // Colunas
         String[] colunasDia = { "Dia", "Hora Início", "Hora Fim", "Disponível" };
         for (int i = 0; i < colunasDia.length; i++) {
@@ -225,19 +204,15 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             lblColuna.setFont(labelFont);
             panelDias.add(lblColuna, gbc);
         }
-
         String[] horarios = gerarHorariosLimitados();
-
         for (int i = 0; i < DIAS_SEMANA.length; i++) {
             gbc.gridy = i + 1;
-
             // Dia
             gbc.gridx = 0;
             gbc.weightx = 0.0;
             JLabel lblDia = new JLabel(DIAS_SEMANA[i]);
             lblDia.setFont(labelFont);
             panelDias.add(lblDia, gbc);
-
             // Hora Início
             gbc.gridx = 1;
             gbc.weightx = 1.0;
@@ -246,7 +221,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             cbHoraInicio[i].setPreferredSize(new Dimension(200, 30));
             cbHoraInicio[i].setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             panelDias.add(cbHoraInicio[i], gbc);
-
             // Hora Fim
             gbc.gridx = 2;
             cbHoraFim[i] = new JComboBox<>(horarios);
@@ -254,7 +228,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             cbHoraFim[i].setPreferredSize(new Dimension(200, 30));
             cbHoraFim[i].setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             panelDias.add(cbHoraFim[i], gbc);
-
             // Disponível
             gbc.gridx = 3;
             gbc.weightx = 0.0;
@@ -274,7 +247,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             pDisponivel.add(rbDisponivel[i][0]);
             pDisponivel.add(rbDisponivel[i][1]);
             panelDias.add(pDisponivel, gbc);
-
             final int index = i;
             ActionListener toggleDisponivel = e -> {
                 boolean ativo = rbDisponivel[index][0].isSelected();
@@ -284,7 +256,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             rbDisponivel[i][0].addActionListener(toggleDisponivel);
             rbDisponivel[i][1].addActionListener(toggleDisponivel);
         }
-
         JScrollPane scroll = new JScrollPane(panelDias);
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -292,7 +263,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         scroll.setPreferredSize(new Dimension(600, 300));
         return scroll;
     }
-
     // Gera horários limitados (08:00 a 18:00, intervalos de 30 minutos)
     private String[] gerarHorariosLimitados() {
         List<String> horarios = new ArrayList<>();
@@ -305,7 +275,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         }
         return horarios.toArray(new String[0]);
     }
-
     // Cria o painel da tabela com pesquisa
     private JPanel criarTabelaComPesquisa() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -319,7 +288,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                         primaryColor),
                 new EmptyBorder(10, 10, 10, 10)));
         panel.setBackground(backgroundColor);
-
         // Pesquisa
         JPanel panelPesquisa = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         panelPesquisa.setBackground(backgroundColor);
@@ -338,7 +306,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             public void removeUpdate(DocumentEvent e) { filtrar(); }
             public void changedUpdate(DocumentEvent e) { filtrar(); }
         });
-
         // Tabela
         String[] colunas = { "Profissional", "Dia", "Hora Início", "Hora Fim", "Disponível" };
         modeloTabelaEscalas = new DefaultTableModel(colunas, 0) {
@@ -353,7 +320,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         tabelaEscalas.setIntercellSpacing(new Dimension(0, 0));
         tabelaEscalas.setFont(labelFont);
         tabelaEscalas.setFillsViewportHeight(true);
-
         // Renderizador para alternar cores das linhas
         DefaultTableCellRenderer rowRenderer = new DefaultTableCellRenderer() {
             @Override
@@ -370,24 +336,18 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
         for (int i = 0; i < tabelaEscalas.getColumnCount(); i++) {
             tabelaEscalas.getColumnModel().getColumn(i).setCellRenderer(rowRenderer);
         }
-
         JTableHeader header = tabelaEscalas.getTableHeader();
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
-
         sorter = new TableRowSorter<>(modeloTabelaEscalas);
         tabelaEscalas.setRowSorter(sorter);
-
         JScrollPane scrollTabela = new JScrollPane(tabelaEscalas);
         scrollTabela.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
-
         panel.add(panelPesquisa, BorderLayout.NORTH);
         panel.add(scrollTabela, BorderLayout.CENTER);
-
         return panel;
     }
-
     // Limpa os campos do formulário
     private void limparCampos() {
         for (int i = 0; i < DIAS_SEMANA.length; i++) {
@@ -398,7 +358,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             cbHoraFim[i].setEnabled(true);
         }
     }
-
     // Salva as escalas no banco
     private void salvarEscalas() throws SQLException {
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
@@ -406,33 +365,26 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "Selecione um profissional!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
         escalaController.removerTodasEscalasDoProfissional(prof.getId());
-
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
         List<EscalaProfissional> escalas = new ArrayList<>();
-
         for (int i = 0; i < DIAS_SEMANA.length; i++) {
             boolean disponivel = rbDisponivel[i][0].isSelected();
             if (!disponivel)
                 continue;
-
             String horaInicioStr = (String) cbHoraInicio[i].getSelectedItem();
             String horaFimStr = (String) cbHoraFim[i].getSelectedItem();
-
             try {
                 Date hi = sdf.parse(horaInicioStr);
                 Date hf = sdf.parse(horaFimStr);
                 Time horaInicio = new Time(hi.getTime());
                 Time horaFim = new Time(hf.getTime());
-
                 if (horaFim.before(horaInicio)) {
                     JOptionPane.showMessageDialog(this,
                             "Hora de término deve ser depois da hora de início para " + DIAS_SEMANA[i] + ".", "Erro",
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-
                 EscalaProfissional escala = new EscalaProfissional();
                 escala.setProfissionalId(prof.getId());
                 escala.setDiaSemana(i);
@@ -440,18 +392,15 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                 escala.setHoraFim(horaFim);
                 escala.setDisponivel(disponivel);
                 escalas.add(escala);
-
             } catch (ParseException e) {
                 JOptionPane.showMessageDialog(this, "Formato de hora inválido para " + DIAS_SEMANA[i] + ". Use HH:mm.",
                         "Erro", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
-
         boolean sucesso = true;
         for (EscalaProfissional e : escalas)
             sucesso &= escalaController.criarEscala(e, Sessao.getUsuarioLogado().getLogin());
-
         if (sucesso) {
             JOptionPane.showMessageDialog(this, "Escalas atualizadas com sucesso!", "Sucesso",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -461,7 +410,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
     // Exclui a escala selecionada
     private void excluirEscalaSelecionada() {
         int linha = tabelaEscalas.getSelectedRow();
@@ -484,7 +432,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
     // Exclui todas as escalas do profissional selecionado
     private void excluirTodasEscalasDoProfissional() {
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
@@ -497,19 +444,20 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                 JOptionPane.YES_NO_OPTION);
         if (confirm != JOptionPane.YES_OPTION)
             return;
-
         escalaController.removerTodasEscalasDoProfissional(prof.getId());
         JOptionPane.showMessageDialog(this, "Todas as escalas do profissional foram excluídas!", "Sucesso",
                 JOptionPane.INFORMATION_MESSAGE);
         limparCampos();
         carregarEscalas();
     }
-
     // Carrega os profissionais no JComboBox
     private void carregarProfissionais() {
         try {
-            List<Profissional> profs = new ProfissionalController().listarTodos();
-            profs.sort((p1, p2) -> Integer.compare(p1.getId(), p2.getId()));
+            // Carrega apenas profissionais do tipo FONOAUDIOLOGA que estão ativos
+            List<Profissional> profs = new ProfissionalController().buscarPorTipo("FONOAUDIOLOGA").stream()
+                    .filter(Profissional::isAtivo)
+                    .sorted((p1, p2) -> Integer.compare(p1.getId(), p2.getId()))
+                    .collect(Collectors.toList());
             cbProfissional.removeAllItems();
             for (Profissional p : profs)
                 cbProfissional.addItem(p);
@@ -521,7 +469,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-
     // Carrega as escalas na tabela
     private void carregarEscalas() {
         try {
@@ -539,7 +486,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             e.printStackTrace();
         }
     }
-
     // Carrega as escalas do profissional selecionado
     private void carregarEscalasDoProfissionalSelecionado() {
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
@@ -553,7 +499,6 @@ public class CadastroEscalaProfissionalPanel extends JPanel {
             cbHoraInicio[i].setEnabled(true);
             cbHoraFim[i].setEnabled(true);
         }
-
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
         for (EscalaProfissional e : escalas) {
             int dia = e.getDiaSemana();

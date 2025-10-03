@@ -539,7 +539,7 @@ public class VendaProdutoPanel extends JPanel {
         return panel;
     }
 
-    // Cria o painel da tabela de itens da venda atual
+ // Cria o painel da tabela de itens da venda atual
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -552,7 +552,6 @@ public class VendaProdutoPanel extends JPanel {
                         primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
-
         String[] colunas = {"Código Serial", "Produto", "Quantidade", "Preço Unitário", "Subtotal"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
@@ -593,25 +592,25 @@ public class VendaProdutoPanel extends JPanel {
         JScrollPane scroll = new JScrollPane(tabelaItensVenda);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-
-        // Painel inferior com layout corrigido
+        // Painel inferior com layout vertical
         JPanel southPanel = new JPanel(new GridBagLayout());
         southPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-
         // Label do valor total
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1.0;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0.0;
         southPanel.add(lblValorTotal, gbc);
-
+        // Painel auxiliar para limitar a largura do pagamentoPanel
+        JPanel wrapperPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        wrapperPanel.setBackground(backgroundColor);
         // Seção de Pagamento
         JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         pagamentoPanel.setBackground(backgroundColor);
@@ -628,12 +627,12 @@ public class VendaProdutoPanel extends JPanel {
         lblDataVencimento.setFont(labelFont);
         pagamentoPanel.add(lblDataVencimento);
         pagamentoPanel.add(dateVencimentoInicial);
+        wrapperPanel.add(pagamentoPanel);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
-        southPanel.add(pagamentoPanel, gbc);
-
+        southPanel.add(wrapperPanel, gbc);
         // Botão Realizar Venda
         JButton btnRealizarVenda = new JButton("Realizar Venda");
         btnRealizarVenda.setBackground(primaryColor);
@@ -644,12 +643,12 @@ public class VendaProdutoPanel extends JPanel {
         btnRealizarVenda.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRealizarVenda.setToolTipText("Finalizar a venda");
         btnRealizarVenda.addActionListener(e -> realizarVenda());
-        gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 1;
         gbc.weightx = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         southPanel.add(btnRealizarVenda, gbc);
-
         panel.add(southPanel, BorderLayout.SOUTH);
         return panel;
     }

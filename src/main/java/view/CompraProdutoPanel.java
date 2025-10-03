@@ -356,7 +356,7 @@ public class CompraProdutoPanel extends JPanel {
         panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
     }
-    // Cria o painel da tabela de itens da compra atual
+ // Cria o painel da tabela de itens da compra atual
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -409,13 +409,21 @@ public class CompraProdutoPanel extends JPanel {
         JScrollPane scroll = new JScrollPane(tabelaItensCompra);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-        JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        // Painel inferior com layout vertical
+        JPanel southPanel = new JPanel(new GridBagLayout());
         southPanel.setBackground(backgroundColor);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        // Valor Total
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
-        lblValorTotal.setBorder(new EmptyBorder(5, 5, 5, 5));
-        southPanel.add(lblValorTotal);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        southPanel.add(lblValorTotal, gbc);
         // Seção de Pagamento
         JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         pagamentoPanel.setBackground(backgroundColor);
@@ -428,7 +436,10 @@ public class CompraProdutoPanel extends JPanel {
         lblParcelas.setFont(labelFont);
         pagamentoPanel.add(lblParcelas);
         pagamentoPanel.add(spinnerParcelas);
-        southPanel.add(pagamentoPanel);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 2;
+        southPanel.add(pagamentoPanel, gbc);
         // Botão Realizar Compra
         JButton btnRealizarCompra = new JButton("Realizar Compra");
         btnRealizarCompra.setBackground(primaryColor);
@@ -439,7 +450,11 @@ public class CompraProdutoPanel extends JPanel {
         btnRealizarCompra.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRealizarCompra.setToolTipText("Finalizar a compra");
         btnRealizarCompra.addActionListener(e -> realizarCompra());
-        southPanel.add(btnRealizarCompra);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.EAST;
+        southPanel.add(btnRealizarCompra, gbc);
         panel.add(southPanel, BorderLayout.SOUTH);
         return panel;
     }

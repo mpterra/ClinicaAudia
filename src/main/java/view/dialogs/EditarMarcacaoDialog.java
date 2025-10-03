@@ -51,7 +51,7 @@ public class EditarMarcacaoDialog extends JDialog {
     private final PacienteController pacienteController = new PacienteController();
     private final ValorAtendimentoController valorAtendimentoController = new ValorAtendimentoController();
     private final EmpresaParceiraController empresaParceiraController = new EmpresaParceiraController();
-    private final ValorAtendimentoCalculator valorCalculator; // Adicionado para calcular valor
+    private final ValorAtendimentoCalculator valorCalculator;
     private JLabel lblNomePaciente;
     private JLabel lblTelefone;
     private JLabel lblIdade;
@@ -62,7 +62,7 @@ public class EditarMarcacaoDialog extends JDialog {
     private JComboBox<LocalTime> cbHorario;
     private JTextPane txtObservacoes;
     private JComboBox<String> cbData;
-    private JComboBox<EmpresaParceira> cbEmpresaParceira; // Adicionado para empresa parceira
+    private JComboBox<EmpresaParceira> cbEmpresaParceira;
     private JLabel lblValor;
     private JLabel lblStatusPagamento;
     private JButton btnReceberPagamento;
@@ -77,10 +77,9 @@ public class EditarMarcacaoDialog extends JDialog {
     public EditarMarcacaoDialog(Frame parent, Atendimento atendimento) {
         super(parent, "Editar Atendimento", true);
         this.atendimento = atendimento;
-        // Inicializa o calculador de valor com dependências
         this.valorCalculator = new ValorAtendimentoCalculator(valorAtendimentoController, new controller.ValorAtendimentoEmpresaController());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setSize(700, 650); // Aumentado para acomodar novo campo
+        setSize(700, 650);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
         setBackground(backgroundColor);
@@ -106,21 +105,18 @@ public class EditarMarcacaoDialog extends JDialog {
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
-
         // Título
         JLabel lblTitulo = new JLabel("Editar Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
-
         // Painel principal do formulário
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
-
         // Painel dados do paciente
         JPanel pacientePanel = new JPanel(new GridBagLayout());
         pacientePanel.setBackground(backgroundColor);
@@ -156,7 +152,6 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.gridy = 0;
         gbc.gridwidth = 4;
         formPanel.add(pacientePanel, gbc);
-
         // Profissional
         JLabel lblProfissional = new JLabel("Profissional:");
         lblProfissional.setFont(labelFont);
@@ -174,7 +169,6 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 15);
         formPanel.add(cbProfissional, gbc);
-
         // Empresa Parceira
         JLabel lblEmpresaParceira = new JLabel("Empresa Parceira:");
         lblEmpresaParceira.setFont(labelFont);
@@ -187,13 +181,12 @@ public class EditarMarcacaoDialog extends JDialog {
         cbEmpresaParceira = new JComboBox<>();
         cbEmpresaParceira.setPreferredSize(new Dimension(200, 25));
         cbEmpresaParceira.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        cbEmpresaParceira.addItem(null); // Permite selecionar "Nenhuma"
+        cbEmpresaParceira.addItem(null);
         gbc.gridx = 1;
         gbc.gridwidth = 3;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 15);
         formPanel.add(cbEmpresaParceira, gbc);
-
         // Linha dupla: Tipo | Situação
         JLabel lblTipo = new JLabel("Tipo:");
         lblTipo.setFont(labelFont);
@@ -223,7 +216,6 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbSituacao, gbc);
-
         // Linha dupla: Data | Horário
         JLabel lblData = new JLabel("Data:");
         lblData.setFont(labelFont);
@@ -252,7 +244,6 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbHorario, gbc);
-
         // Linha dupla: Valor | Status Pagamento
         JLabel lblValorTitle = new JLabel("Valor:");
         lblValorTitle.setFont(labelFont);
@@ -279,7 +270,6 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(lblStatusPagamento, gbc);
-
         // Observações
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
@@ -298,7 +288,6 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.BOTH;
         formPanel.add(scrollObservacoes, gbc);
-
         // Painel de botões
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         buttonPanel.setBackground(backgroundColor);
@@ -330,7 +319,6 @@ public class EditarMarcacaoDialog extends JDialog {
         mainPanel.add(formPanel, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(mainPanel, BorderLayout.CENTER);
-
         // Ações dos botões
         btnSalvar.addActionListener(e -> salvar());
         btnExcluir.addActionListener(e -> excluir());
@@ -345,7 +333,7 @@ public class EditarMarcacaoDialog extends JDialog {
             atualizarHorarios();
             atualizarValor();
         });
-        cbEmpresaParceira.addActionListener(e -> atualizarValor()); // Adicionado para atualizar valor ao mudar empresa
+        cbEmpresaParceira.addActionListener(e -> atualizarValor());
     }
 
     // Preenche os campos com os dados do atendimento
@@ -375,7 +363,6 @@ public class EditarMarcacaoDialog extends JDialog {
         } else {
             cbProfissional.setSelectedIndex(-1);
         }
-        // Preenche empresa parceira
         if (atendimento.getEmpresaParceira() != null) {
             selectEmpresaParceiraById(atendimento.getEmpresaParceira().getId());
         } else {
@@ -400,14 +387,14 @@ public class EditarMarcacaoDialog extends JDialog {
 
     // Carrega dados iniciais (profissionais, empresas e datas)
     private void carregarDadosIniciais() throws SQLException {
-        // Carrega profissionais
+        // Carrega profissionais (apenas FONOAUDIOLOGA e ativos)
         cbProfissional.removeAllItems();
-        profissionalController.listarTodos().stream()
+        profissionalController.buscarPorTipo("FONOAUDIOLOGA").stream()
                 .filter(Profissional::isAtivo)
                 .forEach(cbProfissional::addItem);
         // Carrega empresas parceiras
         cbEmpresaParceira.removeAllItems();
-        cbEmpresaParceira.addItem(null); // Permite "Nenhuma"
+        cbEmpresaParceira.addItem(null);
         empresaParceiraController.listarTodos().forEach(cbEmpresaParceira::addItem);
         // Carrega datas
         cbData.removeAllItems();
@@ -498,14 +485,12 @@ public class EditarMarcacaoDialog extends JDialog {
     private void atualizarValor() {
         Color pago = new Color(0, 150, 10);
         Color pendente = new Color(255, 0, 0);
-        Color isento = Color.BLACK; // Cor para ISENTO
-
+        Color isento = Color.BLACK;
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
         Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
         EmpresaParceira empresa = (EmpresaParceira) cbEmpresaParceira.getSelectedItem();
         if (prof != null && tipo != null) {
             try {
-                // Verifica se o tipo é isento de cobrança
                 if (tipo == Atendimento.Tipo.REUNIAO || tipo == Atendimento.Tipo.PESSOAL) {
                     atendimento.setValor(java.math.BigDecimal.ZERO);
                     atendimento.setStatusPagamento(Atendimento.StatusPagamento.ISENTO);
@@ -516,16 +501,13 @@ public class EditarMarcacaoDialog extends JDialog {
                     btnReceberPagamento.setEnabled(false);
                     return;
                 }
-                // Calcula valor usando o serviço ValorAtendimentoCalculator
                 BigDecimal valor = valorCalculator.calcularValor(prof, tipo, empresa);
                 atendimento.setValor(valor);
                 lblValor.setText("R$ " + String.format("%.2f", valor).replace(".", ","));
-                // Atualiza status de pagamento
                 if (valor.compareTo(BigDecimal.ZERO) == 0) {
                     atendimento.setStatusPagamento(Atendimento.StatusPagamento.ISENTO);
                     lblStatusPagamento.setForeground(isento);
                 } else {
-                    // Mantém o status atual do atendimento, se não for ISENTO
                     if (atendimento.getStatusPagamento() != Atendimento.StatusPagamento.ISENTO) {
                         lblStatusPagamento.setForeground(
                                 atendimento.getStatusPagamento() == Atendimento.StatusPagamento.PAGO ? pago : pendente);
@@ -548,7 +530,6 @@ public class EditarMarcacaoDialog extends JDialog {
         }
         lblStatusPagamento.setText(atendimento.getStatusPagamento().name());
         lblStatusPagamento.setFont(boldFont);
-        // Habilita o botão de pagamento apenas se valor > 0 e status != PAGO
         boolean podeCobrar = atendimento.getValor().compareTo(BigDecimal.ZERO) > 0 &&
                 atendimento.getStatusPagamento() != Atendimento.StatusPagamento.PAGO;
         btnReceberPagamento.setEnabled(podeCobrar);
@@ -559,7 +540,6 @@ public class EditarMarcacaoDialog extends JDialog {
         try {
             ReceberPagamentoAtendimentoDialog pagamentoDialog = new ReceberPagamentoAtendimentoDialog(this, atendimento);
             pagamentoDialog.setVisible(true);
-            // Recarrega o atendimento para atualizar o status de pagamento
             Atendimento updatedAtendimento = atendimentoController.buscarPorId(atendimento.getId());
             if (updatedAtendimento != null) {
                 this.atendimento = updatedAtendimento;
@@ -584,11 +564,9 @@ public class EditarMarcacaoDialog extends JDialog {
                 throw new CampoObrigatorioException("Preencha todos os campos!");
             }
             LocalDate data = LocalDate.parse(dataStr, formatoData);
-            // Captura data/hora original para validação condicional
             LocalDateTime originalDataHora = atendimento.getDataHora().toLocalDateTime();
             LocalDate originalData = originalDataHora.toLocalDate();
             LocalTime originalHora = originalDataHora.toLocalTime();
-            // Validação só aplica se data/hora mudou
             boolean dataHoraMudou = !data.equals(originalData) || !hora.equals(originalHora);
             if (dataHoraMudou) {
                 LocalDate hoje = LocalDate.now();
@@ -598,13 +576,12 @@ public class EditarMarcacaoDialog extends JDialog {
                 }
             }
             atendimento.setProfissional(prof);
-            atendimento.setEmpresaParceira(empresa); // Atualiza empresa parceira
+            atendimento.setEmpresaParceira(empresa);
             atendimento.setDataHora(Timestamp.valueOf(data.atTime(hora)));
             atendimento.setDuracaoMin(tipo == Atendimento.Tipo.AVALIACAO ? 90 : 60);
             atendimento.setTipo(tipo);
             atendimento.setSituacao(situacao);
             atendimento.setNotas(txtObservacoes.getText().replaceAll("<html>|</html>", ""));
-            // Recalcula o valor com base nos dados atuais
             atualizarValor();
             if (atendimentoController.atualizarAtendimento(atendimento, Sessao.getUsuarioLogado().getLogin())) {
                 JOptionPane.showMessageDialog(this, "Atendimento atualizado com sucesso!", "Sucesso",

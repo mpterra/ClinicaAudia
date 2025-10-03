@@ -177,7 +177,7 @@ CREATE TABLE atendimento (
     empresa_parceira_id INT NULL,
     notas TEXT,
     valor DECIMAL(10,2) DEFAULT 0,
-    status_pagamento ENUM('PENDENTE','PARCIAL','PAGO') DEFAULT 'PENDENTE',
+    status_pagamento ENUM('PENDENTE','ISENTO','PAGO') DEFAULT 'PENDENTE',
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     usuario VARCHAR(50),
