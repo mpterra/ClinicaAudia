@@ -8,7 +8,6 @@ import model.CaixaMovimento;
 import model.Despesa;
 import util.Sessao;
 import view.dialogs.EditarDespesaDialog;
-
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JTextFieldDateEditor;
 import javax.swing.*;
@@ -618,6 +617,10 @@ public class LancamentoDespesaPanel extends JPanel {
                 Date pagDate = dateChooserPagamento.getDate();
                 if (pagDate == null) throw new IllegalArgumentException("Data de pagamento é obrigatória.");
                 dataPagamento = pagDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                // Verifica se há caixa aberto antes de prosseguir com pagamento
+                if (!caixaController.existeCaixaAberto()) {
+                    throw new IllegalArgumentException("Não há caixa aberto para registrar o pagamento.");
+                }
             }
             boolean isRecorrente = chkRecorrente.isSelected();
             int numMeses = (Integer) spinnerMesesRecorrentes.getValue();
@@ -711,7 +714,7 @@ public class LancamentoDespesaPanel extends JPanel {
                     limparCampos();
                 } catch (SQLException ex) {
                     JOptionPane.showMessageDialog(this, "Erro ao deletar: " + ex.getMessage(), "Erro",
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.ERROR_MESSAGE);
                 }
             }
         } else {
@@ -729,6 +732,20 @@ public class LancamentoDespesaPanel extends JPanel {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            // Verifica se há caixa aberto antes de prosseguir
+            try {
+				if (!caixaController.existeCaixaAberto()) {
+				    JOptionPane.showMessageDialog(this, "Não há caixa aberto para registrar o pagamento.", "Erro",
+				            JOptionPane.ERROR_MESSAGE);
+				    return;
+				}
+			} catch (HeadlessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
             JDateChooser dateChooser = new JDateChooser();
             dateChooser.setDateFormatString("dd/MM/yyyy");
             dateChooser.setFont(fieldFont);
@@ -750,12 +767,45 @@ public class LancamentoDespesaPanel extends JPanel {
                         LocalDate dataPagamento = selectedDate.toInstant()
                                 .atZone(java.time.ZoneId.systemDefault()).toLocalDate();
                         String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
+
+                        // Verificar se é a última despesa recorrente não paga ANTES de marcar como pago
+                        boolean isUltimaRecorrente = d.isRecorrente() && despesaController.isUltimaDespesaRecorrente(d);
+
+                        // Marcar como pago
                         despesaController.marcarComoPago(d.getId(), dataPagamento, usuarioLogado);
+
+                        // Registrar movimento no caixa
                         registrarMovimentoCaixa(d, usuarioLogado);
+
+                        // Verificar alerta de renovação após pagamento
+                        if (isUltimaRecorrente) {
+                            int opcao = JOptionPane.showOptionDialog(this,
+                                    "Esta é a última despesa recorrente da série. Deseja renovar a despesa?",
+                                    "Renovar Despesa Recorrente",
+                                    JOptionPane.YES_NO_OPTION,
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    new String[]{"Sim", "Não"},
+                                    "Sim");
+                            if (opcao == JOptionPane.YES_OPTION) {
+                                // Criar uma nova despesa para renovação
+                                Despesa novaDespesa = new Despesa();
+                                novaDespesa.setDescricao(d.getDescricao());
+                                novaDespesa.setCategoria(d.getCategoria());
+                                novaDespesa.setValor(d.getValor());
+                                novaDespesa.setFormaPagamento(d.getFormaPagamento());
+                                novaDespesa.setDataVencimento(d.getDataVencimento().plusMonths(1));
+                                novaDespesa.setRecorrente(true);
+                                novaDespesa.setUsuario(usuarioLogado);
+                                EditarDespesaDialog dialog = new EditarDespesaDialog(this, novaDespesa);
+                                dialog.setVisible(true);
+                            }
+                        }
+
                         JOptionPane.showMessageDialog(this, "Despesa paga com sucesso!", "Sucesso",
                                 JOptionPane.INFORMATION_MESSAGE);
                         carregarDespesasFiltradas();
-                    } catch (Exception ex) {
+                    } catch (SQLException ex) {
                         JOptionPane.showMessageDialog(this, "Erro ao pagar: " + ex.getMessage(), "Erro",
                                 JOptionPane.ERROR_MESSAGE);
                     }
@@ -771,9 +821,7 @@ public class LancamentoDespesaPanel extends JPanel {
     }
 
     public void registrarMovimentoCaixa(Despesa d, String usuarioLogado) throws SQLException {
-        if (!caixaController.existeCaixaAberto()) {
-            throw new SQLException("Não há caixa aberto para registrar o movimento.");
-        }
+        // Verificação já feita antes de chamar este método
         Caixa caixaAberto = caixaController.getCaixaAberto();
         CaixaMovimento movimento = new CaixaMovimento();
         movimento.setCaixa(caixaAberto);
