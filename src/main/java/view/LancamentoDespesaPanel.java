@@ -7,9 +7,13 @@ import model.Caixa;
 import model.CaixaMovimento;
 import model.Despesa;
 import util.Sessao;
+import com.toedter.calendar.JDateChooser;
+import com.toedter.calendar.JTextFieldDateEditor;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
@@ -17,8 +21,8 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
-import javax.swing.text.MaskFormatter;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
@@ -27,7 +31,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,8 +44,8 @@ public class LancamentoDespesaPanel extends JPanel {
     private JTextField txtValor;
     private JCheckBox chkPago;
     private JComboBox<Despesa.FormaPagamento> cmbFormaPagamento;
-    private JFormattedTextField txtDataVencimento;
-    private JFormattedTextField txtDataPagamento;
+    private JDateChooser dateChooserVencimento;
+    private JDateChooser dateChooserPagamento;
     private JSpinner spinnerParcelas;
     private JCheckBox chkRecorrente;
     private JSpinner spinnerMesesRecorrentes;
@@ -51,8 +54,8 @@ public class LancamentoDespesaPanel extends JPanel {
     private DefaultTableModel modeloTabelaDespesas;
 
     // Componentes de filtro
-    private JFormattedTextField txtDataInicioFiltro;
-    private JFormattedTextField txtDataFimFiltro;
+    private JDateChooser dateChooserInicioFiltro;
+    private JDateChooser dateChooserFimFiltro;
     private JComboBox<Object> cmbCategoriaFiltro;
     private JTextField txtDescricaoFiltro;
 
@@ -180,6 +183,7 @@ public class LancamentoDespesaPanel extends JPanel {
         cmbCategoria = new JComboBox<>(Despesa.Categoria.values());
         cmbCategoria.setPreferredSize(new Dimension(150, 25));
         cmbCategoria.setFont(fieldFont);
+        cmbCategoria.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(cmbCategoria, gbcData);
@@ -219,18 +223,17 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblDataVencimento, gbcData);
-        try {
-            MaskFormatter maskData = new MaskFormatter("##/##/####");
-            txtDataVencimento = new JFormattedTextField(maskData);
-            txtDataVencimento.setPreferredSize(new Dimension(100, 25));
-            txtDataVencimento.setFont(fieldFont);
-            txtDataVencimento.setToolTipText("Digite a data de vencimento (dd/MM/yyyy)");
-            gbcData.gridx = 1;
-            gbcData.weightx = 1.0;
-            dataPanel.add(txtDataVencimento, gbcData);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        dateChooserVencimento = new JDateChooser();
+        dateChooserVencimento.setPreferredSize(new Dimension(150, 25));
+        dateChooserVencimento.setDateFormatString("dd/MM/yyyy");
+        dateChooserVencimento.setFont(fieldFont);
+        dateChooserVencimento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JTextFieldDateEditor editorVenc = (JTextFieldDateEditor) dateChooserVencimento.getDateEditor();
+        editorVenc.setToolTipText("Digite ou selecione a data de vencimento");
+        configurarBotaoHoje(dateChooserVencimento);
+        gbcData.gridx = 1;
+        gbcData.weightx = 1.0;
+        dataPanel.add(dateChooserVencimento, gbcData);
 
         // Checkbox Pago antes dos campos de pagamento
         JLabel lblPago = new JLabel("Pago?:");
@@ -255,6 +258,7 @@ public class LancamentoDespesaPanel extends JPanel {
         cmbFormaPagamento.setPreferredSize(new Dimension(150, 25));
         cmbFormaPagamento.setFont(fieldFont);
         cmbFormaPagamento.setEnabled(false);
+        cmbFormaPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(cmbFormaPagamento, gbcData);
@@ -275,19 +279,18 @@ public class LancamentoDespesaPanel extends JPanel {
         gbcData.gridy = 8;
         gbcData.weightx = 0.0;
         dataPanel.add(lblDataPagamento, gbcData);
-        try {
-            MaskFormatter maskDataPag = new MaskFormatter("##/##/####");
-            txtDataPagamento = new JFormattedTextField(maskDataPag);
-            txtDataPagamento.setPreferredSize(new Dimension(100, 25));
-            txtDataPagamento.setFont(fieldFont);
-            txtDataPagamento.setEnabled(false);
-            txtDataPagamento.setToolTipText("Digite a data de pagamento (dd/MM/yyyy)");
-            gbcData.gridx = 1;
-            gbcData.weightx = 1.0;
-            dataPanel.add(txtDataPagamento, gbcData);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        dateChooserPagamento = new JDateChooser();
+        dateChooserPagamento.setPreferredSize(new Dimension(150, 25));
+        dateChooserPagamento.setDateFormatString("dd/MM/yyyy");
+        dateChooserPagamento.setFont(fieldFont);
+        dateChooserPagamento.setEnabled(false);
+        dateChooserPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        JTextFieldDateEditor editorPag = (JTextFieldDateEditor) dateChooserPagamento.getDateEditor();
+        editorPag.setToolTipText("Digite ou selecione a data de pagamento");
+        configurarBotaoHoje(dateChooserPagamento);
+        gbcData.gridx = 1;
+        gbcData.weightx = 1.0;
+        dataPanel.add(dateChooserPagamento, gbcData);
 
         // Recorrente
         JLabel lblRecorrente = new JLabel("Recorrente Mensal?:");
@@ -373,30 +376,28 @@ public class LancamentoDespesaPanel extends JPanel {
         JLabel lblDe = new JLabel("De:");
         lblDe.setFont(labelFont);
         filtrosPanel.add(lblDe);
-        try {
-            MaskFormatter maskData = new MaskFormatter("##/##/####");
-            txtDataInicioFiltro = new JFormattedTextField(maskData);
-            txtDataInicioFiltro.setPreferredSize(new Dimension(100, 25));
-            txtDataInicioFiltro.setFont(fieldFont);
-            txtDataInicioFiltro.setText(sdf.format(java.sql.Date.valueOf(dataInicioFiltro)));
-            filtrosPanel.add(txtDataInicioFiltro);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        dateChooserInicioFiltro = new JDateChooser();
+        dateChooserInicioFiltro.setPreferredSize(new Dimension(150, 25));
+        dateChooserInicioFiltro.setDateFormatString("dd/MM/yyyy");
+        dateChooserInicioFiltro.setFont(fieldFont);
+        dateChooserInicioFiltro.setDate(Date.from(dataInicioFiltro.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
+        dateChooserInicioFiltro.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        configurarBotaoHoje(dateChooserInicioFiltro);
+        dateChooserInicioFiltro.addPropertyChangeListener("date", evt -> aplicarFiltros());
+        filtrosPanel.add(dateChooserInicioFiltro);
 
         JLabel lblAte = new JLabel("Até:");
         lblAte.setFont(labelFont);
         filtrosPanel.add(lblAte);
-        try {
-            MaskFormatter maskData = new MaskFormatter("##/##/####");
-            txtDataFimFiltro = new JFormattedTextField(maskData);
-            txtDataFimFiltro.setPreferredSize(new Dimension(100, 25));
-            txtDataFimFiltro.setFont(fieldFont);
-            txtDataFimFiltro.setText(sdf.format(java.sql.Date.valueOf(dataFimFiltro)));
-            filtrosPanel.add(txtDataFimFiltro);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        dateChooserFimFiltro = new JDateChooser();
+        dateChooserFimFiltro.setPreferredSize(new Dimension(150, 25));
+        dateChooserFimFiltro.setDateFormatString("dd/MM/yyyy");
+        dateChooserFimFiltro.setFont(fieldFont);
+        dateChooserFimFiltro.setDate(Date.from(dataFimFiltro.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()));
+        dateChooserFimFiltro.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        configurarBotaoHoje(dateChooserFimFiltro);
+        dateChooserFimFiltro.addPropertyChangeListener("date", evt -> aplicarFiltros());
+        filtrosPanel.add(dateChooserFimFiltro);
 
         JLabel lblCategoriaFiltro = new JLabel("Categoria:");
         lblCategoriaFiltro.setFont(labelFont);
@@ -408,6 +409,12 @@ public class LancamentoDespesaPanel extends JPanel {
         }
         cmbCategoriaFiltro.setPreferredSize(new Dimension(150, 25));
         cmbCategoriaFiltro.setFont(fieldFont);
+        cmbCategoriaFiltro.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cmbCategoriaFiltro.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                aplicarFiltros();
+            }
+        });
         filtrosPanel.add(cmbCategoriaFiltro);
 
         JLabel lblDescricaoFiltro = new JLabel("Descrição:");
@@ -416,14 +423,15 @@ public class LancamentoDespesaPanel extends JPanel {
         txtDescricaoFiltro = new JTextField(15);
         txtDescricaoFiltro.setPreferredSize(new Dimension(150, 25));
         txtDescricaoFiltro.setFont(fieldFont);
+        txtDescricaoFiltro.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { aplicarFiltros(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { aplicarFiltros(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { aplicarFiltros(); }
+        });
         filtrosPanel.add(txtDescricaoFiltro);
-
-        JButton btnFiltrar = new JButton("Filtrar");
-        btnFiltrar.setBackground(primaryColor);
-        btnFiltrar.setForeground(Color.WHITE);
-        btnFiltrar.setPreferredSize(new Dimension(80, 25));
-        btnFiltrar.addActionListener(e -> aplicarFiltros());
-        filtrosPanel.add(btnFiltrar);
 
         panel.add(filtrosPanel, BorderLayout.NORTH);
 
@@ -509,24 +517,49 @@ public class LancamentoDespesaPanel extends JPanel {
         return panel;
     }
 
+    // Configura o botão "Hoje" no popup do JDateChooser
+    private void configurarBotaoHoje(JDateChooser dateChooser) {
+        // Usa um listener para aguardar a criação do popup
+        dateChooser.addPropertyChangeListener("jcalendar", evt -> {
+            if (evt.getNewValue() != null) {
+                JPopupMenu popup = dateChooser.getJCalendar().getComponentPopupMenu();
+                if (popup != null) {
+                    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+                    buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+                    JButton btnHoje = new JButton("Hoje");
+                    btnHoje.setFont(fieldFont);
+                    btnHoje.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                    btnHoje.addActionListener(e -> {
+                        dateChooser.setDate(new Date());
+                        popup.setVisible(false);
+                    });
+                    buttonPanel.add(btnHoje);
+                    popup.add(buttonPanel, BorderLayout.SOUTH);
+                }
+            }
+        });
+    }
+
     // Método para aplicar os filtros informados
     private void aplicarFiltros() {
         try {
-            dataInicioFiltro = parseData(txtDataInicioFiltro.getText());
-            dataFimFiltro = parseData(txtDataFimFiltro.getText());
+            Date inicioDate = dateChooserInicioFiltro.getDate();
+            if (inicioDate != null) dataInicioFiltro = inicioDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            Date fimDate = dateChooserFimFiltro.getDate();
+            if (fimDate != null) dataFimFiltro = fimDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
             Object selectedCat = cmbCategoriaFiltro.getSelectedItem();
             categoriaFiltro = (selectedCat instanceof Despesa.Categoria) ? (Despesa.Categoria) selectedCat : null;
             descricaoFiltro = txtDescricaoFiltro.getText().trim().toLowerCase();
             carregarDespesasFiltradas();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Erro nos filtros: " + ex.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception ignored) {
+            // Ignora erros silenciosamente para atualização automática
         }
     }
 
     private void atualizarCamposPagamento() {
         boolean pago = chkPago.isSelected();
         cmbFormaPagamento.setEnabled(pago);
-        txtDataPagamento.setEnabled(pago);
+        dateChooserPagamento.setEnabled(pago);
         atualizarParcelas();
     }
 
@@ -550,11 +583,11 @@ public class LancamentoDespesaPanel extends JPanel {
         cmbCategoria.setSelectedIndex(0);
         txtDescricao.setText("");
         txtValor.setText("R$ 0,00");
-        txtDataVencimento.setText("");
+        dateChooserVencimento.setDate(null);
         chkPago.setSelected(false);
         cmbFormaPagamento.setSelectedIndex(0);
         spinnerParcelas.setValue(1);
-        txtDataPagamento.setText("");
+        dateChooserPagamento.setDate(null);
         chkRecorrente.setSelected(false);
         spinnerMesesRecorrentes.setValue(1);
         atualizarCamposPagamento();
@@ -571,11 +604,18 @@ public class LancamentoDespesaPanel extends JPanel {
             if (valorTotal.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("Valor deve ser maior que zero.");
             }
-            LocalDate dataVencimento = parseData(txtDataVencimento.getText());
+            Date vencDate = dateChooserVencimento.getDate();
+            if (vencDate == null) throw new IllegalArgumentException("Data de vencimento é obrigatória.");
+            LocalDate dataVencimento = vencDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
             boolean isPago = chkPago.isSelected();
             Despesa.FormaPagamento formaPagamento = (Despesa.FormaPagamento) cmbFormaPagamento.getSelectedItem();
             int numParcelas = (Integer) spinnerParcelas.getValue();
-            LocalDate dataPagamento = isPago ? parseData(txtDataPagamento.getText()) : null;
+            LocalDate dataPagamento = null;
+            if (isPago) {
+                Date pagDate = dateChooserPagamento.getDate();
+                if (pagDate == null) throw new IllegalArgumentException("Data de pagamento é obrigatória.");
+                dataPagamento = pagDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            }
             boolean isRecorrente = chkRecorrente.isSelected();
             int numMeses = (Integer) spinnerMesesRecorrentes.getValue();
             if (isRecorrente) {
@@ -644,7 +684,6 @@ public class LancamentoDespesaPanel extends JPanel {
     }
 
     private void lancarDespesasRecorrentes(BigDecimal valorTotal, int numParcelas, LocalDate dataVencimentoInicial, LocalDate dataPagamento, String usuarioLogado, int numMeses) throws SQLException {
-        // Lança despesas mensais recorrentes. Para término ou alteração, usuário deleta/edita manualmente via painel.
         for (int mes = 0; mes < numMeses; mes++) {
             LocalDate dataVencimento = dataVencimentoInicial.plusMonths(mes);
             if (numParcelas > 1) {
