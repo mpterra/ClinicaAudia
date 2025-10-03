@@ -442,7 +442,7 @@ public class EmprestimoProdutoPanel extends JPanel {
         JPanel emprestimoPanel = new JPanel(new GridBagLayout());
         emprestimoPanel.setBackground(backgroundColor);
         GridBagConstraints gbcEmprestimo = new GridBagConstraints();
-        gbcEmprestimo.insets = new Insets(5, 5, 5, 5);
+        gbcEmprestimo.insets = new Insets(5, 5, 5, 10); // Aumentei o espaçamento à direita
         gbcEmprestimo.fill = GridBagConstraints.HORIZONTAL;
         gbcEmprestimo.anchor = GridBagConstraints.WEST;
 
@@ -456,8 +456,10 @@ public class EmprestimoProdutoPanel extends JPanel {
 
         JLabel lblDataEmprestimo = new JLabel("Data Empréstimo:");
         lblDataEmprestimo.setFont(labelFont);
+        lblDataEmprestimo.setPreferredSize(new Dimension(120, 25)); // Definir largura fixa para alinhamento
         gbcEmprestimo.gridx = 0;
         gbcEmprestimo.gridy = 1;
+        gbcEmprestimo.gridwidth = 1;
         gbcEmprestimo.weightx = 0.0;
         emprestimoPanel.add(lblDataEmprestimo, gbcEmprestimo);
 
@@ -468,6 +470,7 @@ public class EmprestimoProdutoPanel extends JPanel {
 
         JLabel lblDataDevolucao = new JLabel("Data Devolução:");
         lblDataDevolucao.setFont(labelFont);
+        lblDataDevolucao.setPreferredSize(new Dimension(120, 25)); // Definir largura fixa para alinhamento
         gbcEmprestimo.gridx = 0;
         gbcEmprestimo.gridy = 2;
         gbcEmprestimo.weightx = 0.0;
@@ -480,6 +483,7 @@ public class EmprestimoProdutoPanel extends JPanel {
 
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
+        lblObservacoes.setPreferredSize(new Dimension(120, 25)); // Definir largura fixa para alinhamento
         gbcEmprestimo.gridx = 0;
         gbcEmprestimo.gridy = 3;
         gbcEmprestimo.weightx = 0.0;
