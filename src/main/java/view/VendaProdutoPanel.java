@@ -37,7 +37,6 @@ import util.Sessao;
 
 // Painel para registro de vendas de produtos com suporte a múltiplos itens, associadas a paciente, atendimento e/ou orçamento
 public class VendaProdutoPanel extends JPanel {
-
     private static final long serialVersionUID = 1L;
 
     // Componentes do formulário
@@ -131,15 +130,15 @@ public class VendaProdutoPanel extends JPanel {
 
         // Inicializa componentes de pagamento
         cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
-        cbMetodoPagamento.setPreferredSize(new Dimension(120, 25));
+        cbMetodoPagamento.setPreferredSize(new Dimension(106, 25)); // Largura reduzida em 12%
         cbMetodoPagamento.setFont(fieldFont);
         cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
-        spinnerParcelas.setPreferredSize(new Dimension(80, 25));
+        spinnerParcelas.setPreferredSize(new Dimension(70, 25)); // Largura reduzida em 12%
         spinnerParcelas.setFont(fieldFont);
         spinnerParcelas.setEnabled(false);
 
-     // Inicializa o JFormattedTextField com máscara
+        // Inicializa o JFormattedTextField com máscara
         try {
             MaskFormatter dateMask = new MaskFormatter("##/##/####");
             dateMask.setPlaceholderCharacter('_');
@@ -305,7 +304,6 @@ public class VendaProdutoPanel extends JPanel {
         JPanel buscaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         buscaPanel.setBackground(backgroundColor);
         buscaPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-
         JLabel lblBuscaPaciente = new JLabel("Paciente:");
         lblBuscaPaciente.setFont(labelFont);
         buscaPanel.add(lblBuscaPaciente);
@@ -314,7 +312,6 @@ public class VendaProdutoPanel extends JPanel {
         txtBuscaPaciente.setFont(fieldFont);
         txtBuscaPaciente.setToolTipText("Digite o nome do paciente");
         buscaPanel.add(txtBuscaPaciente);
-
         JLabel lblBuscaProduto = new JLabel("Produto:");
         lblBuscaProduto.setFont(labelFont);
         buscaPanel.add(lblBuscaProduto);
@@ -323,7 +320,6 @@ public class VendaProdutoPanel extends JPanel {
         txtBuscaProduto.setFont(fieldFont);
         txtBuscaProduto.setToolTipText("Digite o nome do produto");
         buscaPanel.add(txtBuscaProduto);
-
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -354,7 +350,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridwidth = 1;
         gbcData.weightx = 0.0;
         dataPanel.add(lblNomePaciente, gbcData);
-
         txtNomePaciente = new JTextField(15);
         txtNomePaciente.setEditable(false);
         txtNomePaciente.setBackground(Color.WHITE);
@@ -370,7 +365,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 2;
         gbcData.weightx = 0.0;
         dataPanel.add(lblTelefone, gbcData);
-
         txtTelefone = new JTextField(15);
         txtTelefone.setEditable(false);
         txtTelefone.setBackground(Color.WHITE);
@@ -386,7 +380,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 3;
         gbcData.weightx = 0.0;
         dataPanel.add(lblIdade, gbcData);
-
         txtIdade = new JTextField(15);
         txtIdade.setEditable(false);
         txtIdade.setBackground(Color.WHITE);
@@ -402,7 +395,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblEmail, gbcData);
-
         txtEmail = new JTextField(15);
         txtEmail.setEditable(false);
         txtEmail.setBackground(Color.WHITE);
@@ -428,7 +420,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridwidth = 1;
         gbcData.weightx = 0.0;
         dataPanel.add(lblNomeProduto, gbcData);
-
         txtNomeProduto = new JTextField(15);
         txtNomeProduto.setEditable(false);
         txtNomeProduto.setBackground(Color.WHITE);
@@ -444,7 +435,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 2;
         gbcData.weightx = 0.0;
         dataPanel.add(lblEstoque, gbcData);
-
         txtEstoque = new JTextField(15);
         txtEstoque.setEditable(false);
         txtEstoque.setBackground(Color.WHITE);
@@ -460,7 +450,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 3;
         gbcData.weightx = 0.0;
         dataPanel.add(lblCodigoSerial, gbcData);
-
         txtCodigoSerial = new JTextField(15);
         txtCodigoSerial.setPreferredSize(new Dimension(150, 25));
         txtCodigoSerial.setFont(fieldFont);
@@ -475,7 +464,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblQuantidade, gbcData);
-
         spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 1, 1));
         spinnerQuantidade.setPreferredSize(new Dimension(80, 25));
         spinnerQuantidade.setFont(fieldFont);
@@ -489,7 +477,6 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 5;
         gbcData.weightx = 0.0;
         dataPanel.add(lblPreco, gbcData);
-
         txtPrecoUnitario = new JTextField(15);
         txtPrecoUnitario.setText("0,00");
         txtPrecoUnitario.setPreferredSize(new Dimension(80, 25));
@@ -508,7 +495,6 @@ public class VendaProdutoPanel extends JPanel {
         // Seção de Botões
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
         botoesPanel.setBackground(backgroundColor);
-
         JButton btnLimpar = new JButton("Limpar");
         btnLimpar.setBackground(Color.LIGHT_GRAY);
         btnLimpar.setForeground(Color.BLACK);
@@ -518,7 +504,6 @@ public class VendaProdutoPanel extends JPanel {
         btnLimpar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnLimpar.setToolTipText("Limpar todos os campos");
         botoesPanel.add(btnLimpar);
-
         JButton btnAdicionarItem = new JButton("Adicionar Item");
         btnAdicionarItem.setBackground(thirdiaryColor);
         btnAdicionarItem.setForeground(Color.WHITE);
@@ -528,7 +513,6 @@ public class VendaProdutoPanel extends JPanel {
         btnAdicionarItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAdicionarItem.setToolTipText("Adicionar produto à venda");
         botoesPanel.add(btnAdicionarItem);
-
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -591,25 +575,21 @@ public class VendaProdutoPanel extends JPanel {
                 return c;
             }
         };
-
         tabelaItensVenda.setShowGrid(false);
         tabelaItensVenda.setIntercellSpacing(new Dimension(0, 0));
         tabelaItensVenda.setFillsViewportHeight(true);
         tabelaItensVenda.setRowHeight(25);
         tabelaItensVenda.setFont(fieldFont);
         tabelaItensVenda.setBackground(backgroundColor);
-
         JTableHeader header = tabelaItensVenda.getTableHeader();
         header.setFont(new Font("SansSerif", Font.BOLD, 14));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
-
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < tabelaItensVenda.getColumnCount(); i++) {
             tabelaItensVenda.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
-
         JScrollPane scroll = new JScrollPane(tabelaItensVenda);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
@@ -636,22 +616,18 @@ public class VendaProdutoPanel extends JPanel {
         JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         pagamentoPanel.setBackground(backgroundColor);
         pagamentoPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-
-        JLabel lblMetodo = new JLabel("Método Pagamento:");
+        JLabel lblMetodo = new JLabel("Forma pgto:");
         lblMetodo.setFont(labelFont);
         pagamentoPanel.add(lblMetodo);
         pagamentoPanel.add(cbMetodoPagamento);
-
         JLabel lblParcelas = new JLabel("Parcelas:");
         lblParcelas.setFont(labelFont);
         pagamentoPanel.add(lblParcelas);
         pagamentoPanel.add(spinnerParcelas);
-
-        JLabel lblDataVencimento = new JLabel("Data Vencimento Inicial:");
+        JLabel lblDataVencimento = new JLabel("1º Vencimento:");
         lblDataVencimento.setFont(labelFont);
         pagamentoPanel.add(lblDataVencimento);
         pagamentoPanel.add(dateVencimentoInicial);
-
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
@@ -675,7 +651,6 @@ public class VendaProdutoPanel extends JPanel {
         southPanel.add(btnRealizarVenda, gbc);
 
         panel.add(southPanel, BorderLayout.SOUTH);
-
         return panel;
     }
 
@@ -684,12 +659,10 @@ public class VendaProdutoPanel extends JPanel {
         if (!txtBuscaPaciente.isEditable()) return; // Ignora se o campo não é editável
         String busca = txtBuscaPaciente.getText().trim().toLowerCase();
         pacienteSelecionado = null;
-
         if (busca.isEmpty()) {
             limparCamposPaciente();
             return;
         }
-
         for (Paciente p : cachePacientes.values()) {
             if (p.getNome().toLowerCase().contains(busca)) {
                 if (pacienteSelecionado == null || p.getId() > pacienteSelecionado.getId()) {
@@ -697,7 +670,6 @@ public class VendaProdutoPanel extends JPanel {
                 }
             }
         }
-
         if (pacienteSelecionado != null) {
             txtNomePaciente.setText(pacienteSelecionado.getNome());
             txtTelefone.setText(pacienteSelecionado.getTelefone() != null ? pacienteSelecionado.getTelefone() : "N/A");
@@ -723,12 +695,10 @@ public class VendaProdutoPanel extends JPanel {
     private void atualizarProduto() {
         String busca = txtBuscaProduto.getText().trim().toLowerCase();
         produtoSelecionado = null;
-
         if (busca.isEmpty()) {
             limparCamposProduto();
             return;
         }
-
         for (Produto p : cacheProdutos.values()) {
             if (p.getNome().toLowerCase().contains(busca)) {
                 if (produtoSelecionado == null || p.getId() > produtoSelecionado.getId()) {
@@ -736,7 +706,6 @@ public class VendaProdutoPanel extends JPanel {
                 }
             }
         }
-
         if (produtoSelecionado != null) {
             txtNomeProduto.setText(produtoSelecionado.getNome());
             Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
@@ -806,12 +775,10 @@ public class VendaProdutoPanel extends JPanel {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Preço unitário inválido!");
             }
-
             Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
             if (estoque == null || estoque.getQuantidade() < quantidade) {
                 throw new IllegalArgumentException("Estoque insuficiente para o produto!");
             }
-
             VendaProduto vendaProduto = new VendaProduto();
             vendaProduto.setProdutoId(produtoSelecionado.getId());
             vendaProduto.setQuantidade(quantidade);
@@ -823,16 +790,13 @@ public class VendaProdutoPanel extends JPanel {
             if (produtoSelecionado.getGarantiaMeses() > 0) {
                 vendaProduto.setFimGarantia(Date.valueOf(dataVenda.plusMonths(produtoSelecionado.getGarantiaMeses())));
             }
-
             itensVendaAtual.add(vendaProduto);
             atualizarTabelaItens();
-
             txtBuscaProduto.setText("");
             txtCodigoSerial.setText("");
             spinnerQuantidade.setValue(1);
             limparCamposProduto();
             produtoSelecionado = null;
-
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao adicionar item: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
@@ -842,7 +806,6 @@ public class VendaProdutoPanel extends JPanel {
     private void atualizarTabelaItens() {
         modeloTabelaItens.setRowCount(0);
         valorTotalVenda = BigDecimal.ZERO;
-
         for (VendaProduto vp : itensVendaAtual) {
             Produto p = cacheProdutos.get(vp.getProdutoId());
             if (p == null) {
@@ -864,7 +827,6 @@ public class VendaProdutoPanel extends JPanel {
                     String.format("R$ %.2f", subtotal)
             });
         }
-
         lblValorTotal.setText(String.format("Valor Total: R$ %.2f", valorTotalVenda));
     }
 
@@ -877,7 +839,6 @@ public class VendaProdutoPanel extends JPanel {
             int parcelas = (Integer) spinnerParcelas.getValue();
             String metodo = (String) cbMetodoPagamento.getSelectedItem();
             LocalDate dataVencimento = LocalDate.now(); // Padrão: data atual
-
             // Validar e obter a data de vencimento inicial apenas para BOLETO
             if ("BOLETO".equals(metodo)) {
                 String dataText = dateVencimentoInicial.getText();
@@ -890,7 +851,6 @@ public class VendaProdutoPanel extends JPanel {
                     throw new IllegalArgumentException("Data de vencimento inválida!");
                 }
             }
-
             // Verificar caixa aberto apenas para métodos que não sejam BOLETO
             Caixa caixa = null;
             if (!metodo.equals("BOLETO")) {
@@ -899,7 +859,6 @@ public class VendaProdutoPanel extends JPanel {
                     throw new IllegalStateException("Nenhum caixa aberto encontrado!");
                 }
             }
-
             Venda venda = new Venda();
             venda.setPacienteId(pacienteSelecionado != null ? pacienteSelecionado.getId() : null);
             venda.setAtendimentoId(atendimentoSelecionado != null ? atendimentoSelecionado.getId() : null);
@@ -907,19 +866,15 @@ public class VendaProdutoPanel extends JPanel {
             venda.setValorTotal(valorTotalVenda);
             venda.setUsuario(Sessao.getUsuarioLogado().getLogin());
             venda.setDataHora(Timestamp.valueOf(LocalDateTime.now()));
-
             if (!vendaController.registrarVenda(venda, Sessao.getUsuarioLogado().getLogin())) {
                 throw new SQLException("Falha ao registrar venda!");
             }
-
             int vendaId = venda.getId();
-
             for (VendaProduto vp : itensVendaAtual) {
                 vp.setVendaId(vendaId);
                 if (!vendaProdutoController.adicionarProdutoVenda(vp)) {
                     throw new SQLException("Falha ao registrar produto da venda!");
                 }
-
                 Estoque estoque = cacheEstoque.get(vp.getProdutoId());
                 estoque.setQuantidade(estoque.getQuantidade() - vp.getQuantidade());
                 estoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
@@ -927,7 +882,6 @@ public class VendaProdutoPanel extends JPanel {
                     throw new SQLException("Falha ao atualizar estoque!");
                 }
                 cacheEstoque.put(estoque.getProdutoId(), estoque);
-
                 MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
                 movimentoEstoque.setProdutoId(vp.getProdutoId());
                 movimentoEstoque.setQuantidade(vp.getQuantidade());
@@ -938,7 +892,6 @@ public class VendaProdutoPanel extends JPanel {
                     throw new SQLException("Falha ao registrar movimento de estoque!");
                 }
             }
-
             // Para CREDITO, registrar uma única parcela no caixa com o valor total
             if ("CREDITO".equals(metodo)) {
                 PagamentoVenda pagamento = new PagamentoVenda();
@@ -951,7 +904,6 @@ public class VendaProdutoPanel extends JPanel {
                 pagamento.setDataHora(LocalDateTime.now());
                 pagamento.setDataVencimento(LocalDate.now()); // Data atual para CREDITO
                 pagamentoVendaController.inserir(pagamento);
-
                 CaixaMovimento movimentoCaixa = new CaixaMovimento();
                 movimentoCaixa.setCaixa(caixa);
                 movimentoCaixa.setTipo(CaixaMovimento.TipoMovimento.ENTRADA);
@@ -992,7 +944,6 @@ public class VendaProdutoPanel extends JPanel {
                 pagamento.setDataHora(LocalDateTime.now());
                 pagamento.setDataVencimento(LocalDate.now()); // Data atual para métodos à vista
                 pagamentoVendaController.inserir(pagamento);
-
                 CaixaMovimento movimentoCaixa = new CaixaMovimento();
                 movimentoCaixa.setCaixa(caixa);
                 movimentoCaixa.setTipo(CaixaMovimento.TipoMovimento.ENTRADA);
@@ -1005,7 +956,6 @@ public class VendaProdutoPanel extends JPanel {
                 movimentoCaixa.setDataHora(LocalDateTime.now());
                 caixaMovimentoController.adicionarMovimento(movimentoCaixa);
             }
-
             JOptionPane.showMessageDialog(this, "Venda realizada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             limparCampos();
         } catch (Exception e) {

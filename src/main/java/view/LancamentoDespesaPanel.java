@@ -1,4 +1,5 @@
 package view;
+
 import controller.CaixaController;
 import controller.CaixaMovimentoController;
 import controller.DespesaController;
@@ -6,6 +7,8 @@ import model.Caixa;
 import model.CaixaMovimento;
 import model.Despesa;
 import util.Sessao;
+import view.dialogs.EditarDespesaDialog;
+
 import com.toedter.calendar.JDateChooser;
 import com.toedter.calendar.JTextFieldDateEditor;
 import javax.swing.*;
@@ -21,9 +24,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.SQLException;
@@ -442,6 +443,20 @@ public class LancamentoDespesaPanel extends JPanel {
         for (int i = 0; i < tabelaDespesas.getColumnCount(); i++) {
             tabelaDespesas.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
+        // Adicionar listener de clique duplo
+        tabelaDespesas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+                    int row = tabelaDespesas.getSelectedRow();
+                    if (row >= 0) {
+                        Despesa despesa = listaDespesas.get(row);
+                        EditarDespesaDialog dialog = new EditarDespesaDialog(LancamentoDespesaPanel.this, despesa);
+                        dialog.setVisible(true);
+                    }
+                }
+            }
+        });
         JScrollPane scroll = new JScrollPane(tabelaDespesas);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
@@ -705,7 +720,6 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    // Marca a despesa selecionada como paga com JDateChooser
     private void pagarDespesaSelecionada() {
         int row = tabelaDespesas.getSelectedRow();
         if (row >= 0) {
@@ -715,23 +729,20 @@ public class LancamentoDespesaPanel extends JPanel {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            // Cria um JDateChooser com data atual pré-selecionada
             JDateChooser dateChooser = new JDateChooser();
             dateChooser.setDateFormatString("dd/MM/yyyy");
             dateChooser.setFont(fieldFont);
-            dateChooser.setDate(new Date()); // Define a data atual
+            dateChooser.setDate(new Date());
             dateChooser.setPreferredSize(new Dimension(150, 25));
             configurarCampoData((JTextFieldDateEditor) dateChooser.getDateEditor());
-            
-            // Painel para o diálogo
+
             JPanel panel = new JPanel(new BorderLayout(5, 5));
             panel.add(new JLabel("Selecione a data de pagamento:"), BorderLayout.NORTH);
             panel.add(dateChooser, BorderLayout.CENTER);
-            
-            // Mostra o diálogo
+
             int result = JOptionPane.showConfirmDialog(this, panel, "Data de Pagamento",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            
+
             if (result == JOptionPane.OK_OPTION) {
                 Date selectedDate = dateChooser.getDate();
                 if (selectedDate != null) {
@@ -759,7 +770,7 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    private void registrarMovimentoCaixa(Despesa d, String usuarioLogado) throws SQLException {
+    public void registrarMovimentoCaixa(Despesa d, String usuarioLogado) throws SQLException {
         if (!caixaController.existeCaixaAberto()) {
             throw new SQLException("Não há caixa aberto para registrar o movimento.");
         }
@@ -793,7 +804,7 @@ public class LancamentoDespesaPanel extends JPanel {
         }
     }
 
-    private void carregarDespesasFiltradas() {
+    public void carregarDespesasFiltradas() {
         try {
             List<Despesa> todas = despesaController.listarPorFiltros(categoriaFiltro, null, null, chkRecorrente.isSelected() ? true : null, dataInicioFiltro, dataFimFiltro);
             listaDespesas.clear();
@@ -814,7 +825,14 @@ public class LancamentoDespesaPanel extends JPanel {
 
     private void atualizarTabelaDespesas() {
         modeloTabelaDespesas.setRowCount(0);
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         for (Despesa d : listaDespesas) {
+            String dataVencimentoFormatada = d.getDataVencimento() != null
+                    ? sdf.format(Date.from(d.getDataVencimento().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+                    : "";
+            String dataPagamentoFormatada = d.getDataPagamento() != null
+                    ? sdf.format(Date.from(d.getDataPagamento().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
+                    : "";
             modeloTabelaDespesas.addRow(new Object[]{
                     d.getId(),
                     d.getDescricao(),
@@ -822,8 +840,8 @@ public class LancamentoDespesaPanel extends JPanel {
                     d.isRecorrente() ? "Sim" : "Não",
                     formatValorTabela(d.getValor()),
                     d.getFormaPagamento(),
-                    d.getDataVencimento(),
-                    d.getDataPagamento(),
+                    dataVencimentoFormatada,
+                    dataPagamentoFormatada,
                     d.getStatus()
             });
         }
@@ -854,6 +872,7 @@ public class LancamentoDespesaPanel extends JPanel {
                 super.replace(fb, 0, fb.getDocument().getLength(), formatted, attr);
             }
         }
+
         @Override
         public void replace(FilterBypass fb, int offset, int length, String string, AttributeSet attrs)
                 throws BadLocationException {
@@ -864,6 +883,7 @@ public class LancamentoDespesaPanel extends JPanel {
                 super.replace(fb, 0, fb.getDocument().getLength(), formatted, attrs);
             }
         }
+
         @Override
         public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
             StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
@@ -871,12 +891,15 @@ public class LancamentoDespesaPanel extends JPanel {
             String formatted = formatCurrency(removeNonDigits(sb.toString()));
             super.replace(fb, 0, fb.getDocument().getLength(), formatted, null);
         }
+
         private boolean isValidInput(String text) {
             return text.matches("[R$ 0-9,.]*");
         }
+
         private String removeNonDigits(String text) {
             return text.replaceAll("[^0-9]", "");
         }
+
         private String formatCurrency(String digits) {
             if (digits.isEmpty()) return "R$ 0,00";
             while (digits.length() < 3) {
