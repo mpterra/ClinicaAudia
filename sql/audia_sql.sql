@@ -667,5 +667,3 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
-
-SELECT * FROM pagamento_venda;

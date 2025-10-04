@@ -494,7 +494,7 @@ public class CheckoutPagamentoDialog extends JDialog {
             // Registrar pagamentos
             for (PagamentoVendaTemp p : pagamentos) {
                 if (p.metodo.equals("BOLETO")) {
-                    // Para BOLETO, registrar parcelas com datas de vencimento mensais
+                    // Para BOLETO, registrar parcelas com datas de vencimento mensais no mesmo dia do mês
                     BigDecimal valorParcela = p.valor.divide(BigDecimal.valueOf(p.parcelas), 2, BigDecimal.ROUND_HALF_UP);
                     for (int i = 1; i <= p.parcelas; i++) {
                         PagamentoVenda pagamento = new PagamentoVenda();
@@ -505,7 +505,7 @@ public class CheckoutPagamentoDialog extends JDialog {
                         pagamento.setTotalParcelas(p.parcelas);
                         pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
                         pagamento.setDataHora(LocalDateTime.now());
-                        pagamento.setDataVencimento(p.dataVencimentoInicial.plusDays((i - 1) * 30));
+                        pagamento.setDataVencimento(p.dataVencimentoInicial.plusMonths(i - 1)); // Mantém o mesmo dia do mês
                         pagamento.setStatus("PENDENTE"); // Pagamentos de boleto são pendentes
                         pagamento.setObservacoes("Parcela " + i + " de " + p.parcelas + " do boleto");
                         pagamentoVendaController.inserir(pagamento);
