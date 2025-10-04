@@ -17,6 +17,7 @@ public class PagamentoVenda {
     private MetodoPagamento metodoPagamento;
     private int parcela;
     private int totalParcelas;
+    private String status; // Novo campo: PAGO ou PENDENTE
     private String observacoes;
     private String usuario;
 
@@ -37,7 +38,7 @@ public class PagamentoVenda {
     // Construtor completo
     public PagamentoVenda(int id, Venda venda, LocalDateTime dataHora, LocalDate dataVencimento,
                           BigDecimal valor, MetodoPagamento metodoPagamento,
-                          int parcela, int totalParcelas, String observacoes, String usuario) {
+                          int parcela, int totalParcelas, String status, String observacoes, String usuario) {
         this.id = id;
         this.venda = venda;
         this.dataHora = dataHora;
@@ -46,6 +47,7 @@ public class PagamentoVenda {
         this.metodoPagamento = metodoPagamento;
         this.parcela = parcela;
         this.totalParcelas = totalParcelas;
+        this.status = status;
         this.observacoes = observacoes;
         this.usuario = usuario;
     }
@@ -117,6 +119,14 @@ public class PagamentoVenda {
         this.totalParcelas = totalParcelas;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getObservacoes() {
         return observacoes;
     }
@@ -147,6 +157,7 @@ public class PagamentoVenda {
                 ", metodoPagamento=" + metodoPagamento +
                 ", parcela=" + parcela +
                 ", totalParcelas=" + totalParcelas +
+                ", status='" + status + '\'' +
                 ", observacoes='" + observacoes + '\'' +
                 ", usuario='" + usuario + '\'' +
                 '}';

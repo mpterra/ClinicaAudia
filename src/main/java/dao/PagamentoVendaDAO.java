@@ -14,8 +14,8 @@ public class PagamentoVendaDAO {
     // Inserir pagamento
     // -----------------------------
     public void insert(PagamentoVenda pagamento) throws SQLException {
-        String sql = "INSERT INTO pagamento_venda (venda_id, data_vencimento, valor, metodo_pagamento, parcela, total_parcelas, observacoes, usuario) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO pagamento_venda (venda_id, data_vencimento, valor, metodo_pagamento, parcela, total_parcelas, status, observacoes, usuario) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -25,8 +25,9 @@ public class PagamentoVendaDAO {
             stmt.setString(4, pagamento.getMetodoPagamento().name());
             stmt.setInt(5, pagamento.getParcela());
             stmt.setInt(6, pagamento.getTotalParcelas());
-            stmt.setString(7, pagamento.getObservacoes());
-            stmt.setString(8, pagamento.getUsuario());
+            stmt.setString(7, pagamento.getStatus());
+            stmt.setString(8, pagamento.getObservacoes());
+            stmt.setString(9, pagamento.getUsuario());
 
             stmt.executeUpdate();
 
@@ -42,7 +43,7 @@ public class PagamentoVendaDAO {
     // Atualizar pagamento
     // -----------------------------
     public void update(PagamentoVenda pagamento) throws SQLException {
-        String sql = "UPDATE pagamento_venda SET data_vencimento=?, valor=?, metodo_pagamento=?, parcela=?, total_parcelas=?, observacoes=?, usuario=?, atualizado_em=NOW() " +
+        String sql = "UPDATE pagamento_venda SET data_vencimento=?, valor=?, metodo_pagamento=?, parcela=?, total_parcelas=?, status=?, observacoes=?, usuario=?, atualizado_em=NOW() " +
                      "WHERE id=?";
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -52,9 +53,10 @@ public class PagamentoVendaDAO {
             stmt.setString(3, pagamento.getMetodoPagamento().name());
             stmt.setInt(4, pagamento.getParcela());
             stmt.setInt(5, pagamento.getTotalParcelas());
-            stmt.setString(6, pagamento.getObservacoes());
-            stmt.setString(7, pagamento.getUsuario());
-            stmt.setInt(8, pagamento.getId());
+            stmt.setString(6, pagamento.getStatus());
+            stmt.setString(7, pagamento.getObservacoes());
+            stmt.setString(8, pagamento.getUsuario());
+            stmt.setInt(9, pagamento.getId());
 
             stmt.executeUpdate();
         }
@@ -142,6 +144,7 @@ public class PagamentoVendaDAO {
         pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.valueOf(rs.getString("metodo_pagamento")));
         pagamento.setParcela(rs.getInt("parcela"));
         pagamento.setTotalParcelas(rs.getInt("total_parcelas"));
+        pagamento.setStatus(rs.getString("status"));
         pagamento.setObservacoes(rs.getString("observacoes"));
         pagamento.setUsuario(rs.getString("usuario"));
 

@@ -506,6 +506,8 @@ public class CheckoutPagamentoDialog extends JDialog {
                         pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
                         pagamento.setDataHora(LocalDateTime.now());
                         pagamento.setDataVencimento(p.dataVencimentoInicial.plusDays((i - 1) * 30));
+                        pagamento.setStatus("PENDENTE"); // Pagamentos de boleto são pendentes
+                        pagamento.setObservacoes("Parcela " + i + " de " + p.parcelas + " do boleto");
                         pagamentoVendaController.inserir(pagamento);
                     }
                 } else {
@@ -519,6 +521,8 @@ public class CheckoutPagamentoDialog extends JDialog {
                     pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
                     pagamento.setDataHora(LocalDateTime.now());
                     pagamento.setDataVencimento(LocalDate.now());
+                    pagamento.setStatus("PAGO"); // Pagamentos à vista são considerados pagos
+                    pagamento.setObservacoes("Pagamento via " + p.metodo);
                     pagamentoVendaController.inserir(pagamento);
                     // Registrar movimento no caixa
                     CaixaMovimento movimentoCaixa = new CaixaMovimento();
