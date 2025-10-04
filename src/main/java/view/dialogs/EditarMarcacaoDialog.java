@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -105,18 +106,21 @@ public class EditarMarcacaoDialog extends JDialog {
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         mainPanel.setBackground(backgroundColor);
+
         // Título
         JLabel lblTitulo = new JLabel("Editar Atendimento", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(0, 0, 20, 0));
         add(lblTitulo, BorderLayout.NORTH);
+
         // Painel principal do formulário
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
+
         // Painel dados do paciente
         JPanel pacientePanel = new JPanel(new GridBagLayout());
         pacientePanel.setBackground(backgroundColor);
@@ -127,31 +131,37 @@ public class EditarMarcacaoDialog extends JDialog {
         GridBagConstraints gbcP = new GridBagConstraints();
         gbcP.insets = new Insets(5, 0, 5, 0);
         gbcP.anchor = GridBagConstraints.CENTER;
+
         lblNomePaciente = new JLabel();
         lblNomePaciente.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblNomePaciente.setHorizontalAlignment(SwingConstants.CENTER);
         gbcP.gridx = 0;
         gbcP.gridy = 0;
         pacientePanel.add(lblNomePaciente, gbcP);
+
         lblTelefone = new JLabel();
         lblTelefone.setFont(labelFont);
         lblTelefone.setHorizontalAlignment(SwingConstants.CENTER);
         gbcP.gridy = 1;
         pacientePanel.add(lblTelefone, gbcP);
+
         lblIdade = new JLabel();
         lblIdade.setFont(labelFont);
         lblIdade.setHorizontalAlignment(SwingConstants.CENTER);
         gbcP.gridy = 2;
         pacientePanel.add(lblIdade, gbcP);
+
         lblEmail = new JLabel();
         lblEmail.setFont(labelFont);
         lblEmail.setHorizontalAlignment(SwingConstants.CENTER);
         gbcP.gridy = 3;
         pacientePanel.add(lblEmail, gbcP);
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 4;
         formPanel.add(pacientePanel, gbc);
+
         // Profissional
         JLabel lblProfissional = new JLabel("Profissional:");
         lblProfissional.setFont(labelFont);
@@ -161,6 +171,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblProfissional, gbc);
+
         cbProfissional = new JComboBox<>();
         cbProfissional.setPreferredSize(new Dimension(200, 25));
         cbProfissional.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -169,6 +180,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 15);
         formPanel.add(cbProfissional, gbc);
+
         // Empresa Parceira
         JLabel lblEmpresaParceira = new JLabel("Empresa Parceira:");
         lblEmpresaParceira.setFont(labelFont);
@@ -178,6 +190,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblEmpresaParceira, gbc);
+
         cbEmpresaParceira = new JComboBox<>();
         cbEmpresaParceira.setPreferredSize(new Dimension(200, 25));
         cbEmpresaParceira.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -187,6 +200,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 15);
         formPanel.add(cbEmpresaParceira, gbc);
+
         // Linha dupla: Tipo | Situação
         JLabel lblTipo = new JLabel("Tipo:");
         lblTipo.setFont(labelFont);
@@ -196,19 +210,26 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblTipo, gbc);
-        cbTipo = new JComboBox<>(Atendimento.Tipo.values());
+
+        // Filtra os tipos, excluindo REUNIAO e PESSOAL
+        Atendimento.Tipo[] tiposPermitidos = Arrays.stream(Atendimento.Tipo.values())
+                .filter(tipo -> tipo != Atendimento.Tipo.REUNIAO && tipo != Atendimento.Tipo.PESSOAL)
+                .toArray(Atendimento.Tipo[]::new);
+        cbTipo = new JComboBox<>(tiposPermitidos);
         cbTipo.setPreferredSize(new Dimension(150, 25));
         cbTipo.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbTipo, gbc);
+
         JLabel lblSituacao = new JLabel("Situação:");
         lblSituacao.setFont(labelFont);
         gbc.gridx = 2;
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblSituacao, gbc);
+
         cbSituacao = new JComboBox<>(Atendimento.Situacao.values());
         cbSituacao.setPreferredSize(new Dimension(150, 25));
         cbSituacao.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -216,6 +237,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbSituacao, gbc);
+
         // Linha dupla: Data | Horário
         JLabel lblData = new JLabel("Data:");
         lblData.setFont(labelFont);
@@ -224,6 +246,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblData, gbc);
+
         cbData = new JComboBox<>();
         cbData.setPreferredSize(new Dimension(150, 25));
         cbData.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -231,12 +254,14 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbData, gbc);
+
         JLabel lblHorario = new JLabel("Horário:");
         lblHorario.setFont(labelFont);
         gbc.gridx = 2;
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblHorario, gbc);
+
         cbHorario = new JComboBox<>();
         cbHorario.setPreferredSize(new Dimension(150, 25));
         cbHorario.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -244,6 +269,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(cbHorario, gbc);
+
         // Linha dupla: Valor | Status Pagamento
         JLabel lblValorTitle = new JLabel("Valor:");
         lblValorTitle.setFont(labelFont);
@@ -252,24 +278,28 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblValorTitle, gbc);
+
         lblValor = new JLabel();
         lblValor.setFont(labelFont);
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(lblValor, gbc);
+
         JLabel lblStatusPagamentoTitle = new JLabel("Status Pagamento:");
         lblStatusPagamentoTitle.setFont(labelFont);
         gbc.gridx = 2;
         gbc.insets = new Insets(5, 15, 5, 5);
         gbc.anchor = GridBagConstraints.EAST;
         formPanel.add(lblStatusPagamentoTitle, gbc);
+
         lblStatusPagamento = new JLabel();
         lblStatusPagamento.setFont(boldFont);
         gbc.gridx = 3;
         gbc.insets = new Insets(5, 5, 5, 15);
         gbc.anchor = GridBagConstraints.WEST;
         formPanel.add(lblStatusPagamento, gbc);
+
         // Observações
         JLabel lblObservacoes = new JLabel("Observações:");
         lblObservacoes.setFont(labelFont);
@@ -279,6 +309,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 1.0;
         formPanel.add(lblObservacoes, gbc);
+
         txtObservacoes = new JTextPane();
         txtObservacoes.setContentType("text/html");
         txtObservacoes.setEditorKit(new HTMLEditorKit());
@@ -288,6 +319,7 @@ public class EditarMarcacaoDialog extends JDialog {
         gbc.gridwidth = 3;
         gbc.fill = GridBagConstraints.BOTH;
         formPanel.add(scrollObservacoes, gbc);
+
         // Painel de botões
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
         buttonPanel.setBackground(backgroundColor);
@@ -297,28 +329,34 @@ public class EditarMarcacaoDialog extends JDialog {
         btnReceberPagamento.setPreferredSize(new Dimension(150, 35));
         btnReceberPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnReceberPagamento.setEnabled(false);
+
         JButton btnSalvar = new JButton("Salvar");
         btnSalvar.setBackground(primaryColor);
         btnSalvar.setForeground(Color.WHITE);
         btnSalvar.setPreferredSize(new Dimension(100, 35));
         btnSalvar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         JButton btnExcluir = new JButton("Excluir");
         btnExcluir.setBackground(new Color(255, 99, 71));
         btnExcluir.setForeground(Color.WHITE);
         btnExcluir.setPreferredSize(new Dimension(100, 35));
         btnExcluir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         JButton btnCancelar = new JButton("Cancelar");
         btnCancelar.setBackground(Color.LIGHT_GRAY);
         btnCancelar.setForeground(Color.BLACK);
         btnCancelar.setPreferredSize(new Dimension(100, 35));
         btnCancelar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         buttonPanel.add(btnCancelar);
         buttonPanel.add(btnReceberPagamento);
         buttonPanel.add(btnExcluir);
         buttonPanel.add(btnSalvar);
+
         mainPanel.add(formPanel, BorderLayout.CENTER);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(mainPanel, BorderLayout.CENTER);
+
         // Ações dos botões
         btnSalvar.addActionListener(e -> salvar());
         btnExcluir.addActionListener(e -> excluir());
@@ -358,18 +396,40 @@ public class EditarMarcacaoDialog extends JDialog {
             lblIdade.setText("Idade: Não informada");
             lblEmail.setText("Email: Não informado");
         }
+
         if (atendimento.getProfissional() != null) {
             selectProfissionalById(atendimento.getProfissional().getId());
         } else {
             cbProfissional.setSelectedIndex(-1);
         }
+
         if (atendimento.getEmpresaParceira() != null) {
             selectEmpresaParceiraById(atendimento.getEmpresaParceira().getId());
         } else {
             cbEmpresaParceira.setSelectedItem(null);
         }
-        cbTipo.setSelectedItem(atendimento.getTipo());
+
+        // Exibe o tipo original, mas desabilita o combo se for REUNIAO ou PESSOAL
+        Atendimento.Tipo tipoAtendimento = atendimento.getTipo();
+        if (tipoAtendimento == Atendimento.Tipo.REUNIAO || tipoAtendimento == Atendimento.Tipo.PESSOAL) {
+            cbTipo.setSelectedItem(null);
+            cbTipo.setEnabled(false);
+            // Exibe o tipo em um JLabel adicional
+            JLabel lblTipoFixo = new JLabel(tipoAtendimento.name());
+            lblTipoFixo.setFont(labelFont);
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = 1;
+            gbc.gridy = 3;
+            gbc.insets = new Insets(5, 5, 5, 15);
+            gbc.anchor = GridBagConstraints.WEST;
+            ((JPanel) cbTipo.getParent()).add(lblTipoFixo, gbc);
+        } else {
+            cbTipo.setSelectedItem(tipoAtendimento);
+            cbTipo.setEnabled(true);
+        }
+
         cbSituacao.setSelectedItem(atendimento.getSituacao());
+
         String dataStr = atendimento.getDataHora().toLocalDateTime().toLocalDate().format(formatoData);
         boolean found = false;
         for (int i = 0; i < cbData.getItemCount(); i++) {
@@ -380,8 +440,24 @@ public class EditarMarcacaoDialog extends JDialog {
         }
         if (!found) cbData.insertItemAt(dataStr, 0);
         cbData.setSelectedItem(dataStr);
+
         txtObservacoes.setText(atendimento.getNotas() != null ? "<html>" + atendimento.getNotas() + "</html>" : "<html></html>");
-        atualizarValor();
+
+        // Exibe o valor e status de pagamento do atendimento original
+        Color pago = new Color(0, 150, 10);
+        Color pendente = new Color(255, 0, 0);
+        Color isento = Color.BLACK;
+        BigDecimal valor = atendimento.getValor() != null ? atendimento.getValor() : BigDecimal.ZERO;
+        lblValor.setText("R$ " + String.format("%.2f", valor).replace(".", ","));
+        lblStatusPagamento.setText(atendimento.getStatusPagamento().name());
+        lblStatusPagamento.setFont(boldFont);
+        lblStatusPagamento.setForeground(
+                atendimento.getStatusPagamento() == Atendimento.StatusPagamento.PAGO ? pago :
+                atendimento.getStatusPagamento() == Atendimento.StatusPagamento.ISENTO ? isento : pendente);
+        boolean podeCobrar = valor.compareTo(BigDecimal.ZERO) > 0 &&
+                atendimento.getStatusPagamento() != Atendimento.StatusPagamento.PAGO;
+        btnReceberPagamento.setEnabled(podeCobrar);
+
         atualizarHorarios();
     }
 
@@ -392,10 +468,12 @@ public class EditarMarcacaoDialog extends JDialog {
         profissionalController.buscarPorTipo("FONOAUDIOLOGA").stream()
                 .filter(Profissional::isAtivo)
                 .forEach(cbProfissional::addItem);
+
         // Carrega empresas parceiras
         cbEmpresaParceira.removeAllItems();
         cbEmpresaParceira.addItem(null);
         empresaParceiraController.listarTodos().forEach(cbEmpresaParceira::addItem);
+
         // Carrega datas
         cbData.removeAllItems();
         LocalDate hoje = LocalDate.now();
@@ -424,15 +502,20 @@ public class EditarMarcacaoDialog extends JDialog {
         Profissional prof = (Profissional) cbProfissional.getSelectedItem();
         String dataStr = (String) cbData.getSelectedItem();
         Atendimento.Tipo tipo = (Atendimento.Tipo) cbTipo.getSelectedItem();
-        if (prof == null || dataStr == null || tipo == null) return;
+        // Usa o tipo do atendimento original se REUNIAO ou PESSOAL
+        Atendimento.Tipo tipoUsado = (tipo == null) ? atendimento.getTipo() : tipo;
+        if (prof == null || dataStr == null || tipoUsado == null) return;
         try {
             LocalDate data = LocalDate.parse(dataStr, formatoData);
             int diaSemana = data.getDayOfWeek().getValue() - 1;
-            int duracaoMin = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
+            // Define duração: 90 minutos para AVALIACAO, 30 para PESSOAL, 60 para outros
+            int duracaoMin = tipoUsado == Atendimento.Tipo.AVALIACAO ? 90 : tipoUsado == Atendimento.Tipo.PESSOAL ? 30 : 60;
+
             // Carrega escalas do profissional para o dia da semana
             List<EscalaProfissional> escalas = escalaController.listarTodas().stream()
                     .filter(e -> e.getProfissionalId() == prof.getId() && e.getDiaSemana() == diaSemana && e.isDisponivel())
                     .collect(Collectors.toList());
+
             // Carrega intervalos ocupados (excluindo CANCELADO e o próprio atendimento)
             List<Atendimento> atendimentos = atendimentoController.listarTodos().stream()
                     .filter(a -> a.getProfissional().getId() == prof.getId()
@@ -440,12 +523,14 @@ public class EditarMarcacaoDialog extends JDialog {
                             && a.getSituacao() != Atendimento.Situacao.CANCELADO
                             && a.getId() != atendimento.getId())
                     .collect(Collectors.toList());
+
             List<Intervalo> ocupados = new ArrayList<>();
             for (Atendimento a : atendimentos) {
                 LocalTime inicio = a.getDataHora().toLocalDateTime().toLocalTime();
                 LocalTime fim = inicio.plusMinutes(a.getDuracaoMin());
                 ocupados.add(new Intervalo(inicio, fim));
             }
+
             // Gera horários disponíveis
             LocalTime horarioOriginal = atendimento.getDataHora().toLocalDateTime().toLocalTime();
             boolean horarioOriginalAdicionado = false;
@@ -491,17 +576,9 @@ public class EditarMarcacaoDialog extends JDialog {
         EmpresaParceira empresa = (EmpresaParceira) cbEmpresaParceira.getSelectedItem();
         if (prof != null && tipo != null) {
             try {
-                if (tipo == Atendimento.Tipo.REUNIAO || tipo == Atendimento.Tipo.PESSOAL) {
-                    atendimento.setValor(java.math.BigDecimal.ZERO);
-                    atendimento.setStatusPagamento(Atendimento.StatusPagamento.ISENTO);
-                    lblValor.setText("R$ 0,00");
-                    lblStatusPagamento.setText(Atendimento.StatusPagamento.ISENTO.name());
-                    lblStatusPagamento.setFont(boldFont);
-                    lblStatusPagamento.setForeground(isento);
-                    btnReceberPagamento.setEnabled(false);
-                    return;
-                }
-                BigDecimal valor = valorCalculator.calcularValor(prof, tipo, empresa);
+                // Converte Atendimento.Tipo para ValorAtendimento.Tipo
+                ValorAtendimento.Tipo tipoValor = ValorAtendimento.Tipo.valueOf(tipo.name());
+                BigDecimal valor = valorCalculator.calcularValor(prof, tipoValor, empresa);
                 atendimento.setValor(valor);
                 lblValor.setText("R$ " + String.format("%.2f", valor).replace(".", ","));
                 if (valor.compareTo(BigDecimal.ZERO) == 0) {
@@ -578,7 +655,8 @@ public class EditarMarcacaoDialog extends JDialog {
             atendimento.setProfissional(prof);
             atendimento.setEmpresaParceira(empresa);
             atendimento.setDataHora(Timestamp.valueOf(data.atTime(hora)));
-            atendimento.setDuracaoMin(tipo == Atendimento.Tipo.AVALIACAO ? 90 : 60);
+            // Define duração: 90 minutos para AVALIACAO, 30 para PESSOAL, 60 para outros
+            atendimento.setDuracaoMin(tipo == Atendimento.Tipo.AVALIACAO ? 90 : tipo == Atendimento.Tipo.PESSOAL ? 30 : 60);
             atendimento.setTipo(tipo);
             atendimento.setSituacao(situacao);
             atendimento.setNotas(txtObservacoes.getText().replaceAll("<html>|</html>", ""));

@@ -29,15 +29,21 @@ public class HorarioDisponivelValidator {
 
     /**
      * Lista horários disponíveis para um profissional em uma data e tipo específicos.
-     * @param prof Profissional selecionado.
-     * @param data Data selecionada.
-     * @param tipo Tipo de atendimento.
+     * @param prof Profissional selecionado (não pode ser nulo).
+     * @param data Data selecionada (não pode ser nula).
+     * @param tipo Tipo de atendimento (não pode ser nulo).
      * @return Lista de horários disponíveis.
      * @throws SQLException se houver erro ao acessar dados.
+     * @throws IllegalArgumentException se os parâmetros forem inválidos.
      */
     public List<LocalTime> listarHorariosDisponiveis(Profissional prof, LocalDate data, Atendimento.Tipo tipo) throws SQLException {
+        if (prof == null || data == null || tipo == null) {
+            throw new IllegalArgumentException("Profissional, data e tipo de atendimento são obrigatórios.");
+        }
+
         List<LocalTime> horarios = new ArrayList<>();
-        int duracao = (tipo == Atendimento.Tipo.AVALIACAO) ? 90 : 60;
+        // Define duração: 90 minutos para AVALIACAO, 30 para PESSOAL, 60 para outros tipos
+        int duracao = tipo == Atendimento.Tipo.AVALIACAO ? 90 : tipo == Atendimento.Tipo.PESSOAL ? 30 : 60;
         int diaSemana = data.getDayOfWeek().getValue() - 1;
 
         // Filtra escalas do profissional para o dia da semana
@@ -98,15 +104,20 @@ public class HorarioDisponivelValidator {
      * @param inicioProposto Início proposto.
      * @param duracao Duração em minutos.
      * @param atendimentos Lista de atendimentos existentes.
-     * @throws Exception se houver conflito.
+     * @throws SQLException se houver erro ao acessar dados.
+     * @throws IllegalArgumentException se houver conflito de horário.
      */
-    public void validarConflito(LocalDateTime inicioProposto, int duracao, List<Atendimento> atendimentos) throws Exception {
+    public void validarConflito(LocalDateTime inicioProposto, int duracao, List<Atendimento> atendimentos) throws SQLException {
+        if (inicioProposto == null || duracao <= 0) {
+            throw new IllegalArgumentException("Horário de início e duração são obrigatórios e devem ser válidos.");
+        }
+
         LocalDateTime fimProposto = inicioProposto.plusMinutes(duracao);
         for (Atendimento a : atendimentos) {
             LocalDateTime inicioExist = a.getDataHora().toLocalDateTime();
             LocalDateTime fimExist = inicioExist.plusMinutes(a.getDuracaoMin());
             if (!(fimProposto.compareTo(inicioExist) <= 0 || inicioProposto.compareTo(fimExist) >= 0)) {
-                throw new Exception("Horário Indisponível para o profissional");
+                throw new IllegalArgumentException("Horário indisponível para o profissional.");
             }
         }
     }

@@ -6,10 +6,10 @@ import exception.CampoObrigatorioException;
 import model.Atendimento;
 import model.EmpresaParceira;
 import model.Profissional;
+import model.ValorAtendimento;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -94,10 +94,16 @@ public class AgendamentoService {
      * Calcula a duração do atendimento com base no tipo.
      *
      * @param tipo Tipo de atendimento.
-     * @return Duração em minutos (90 para AVALIACAO, 60 para outros).
+     * @return Duração em minutos (90 para AVALIACAO, 30 para PESSOAL, 60 para outros).
      */
     private int calcularDuracao(Atendimento.Tipo tipo) {
-        return tipo == Atendimento.Tipo.AVALIACAO ? 90 : 60;
+        if (tipo == Atendimento.Tipo.AVALIACAO) {
+            return 90;
+        } else if (tipo == Atendimento.Tipo.PESSOAL) {
+            return 30;
+        } else {
+            return 60;
+        }
     }
 
     /**
@@ -118,12 +124,7 @@ public class AgendamentoService {
                         && a.getSituacao() != Atendimento.Situacao.CANCELADO
                         && (isNovo || a.getId() != atendimentoId[0]))
                 .toList();
-        try {
-            horarioValidator.validarConflito(request.getDataHora(), duracao, atendimentos);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        horarioValidator.validarConflito(request.getDataHora(), duracao, atendimentos);
     }
 
     /**
@@ -132,10 +133,13 @@ public class AgendamentoService {
      * @param request DTO com os dados do agendamento.
      * @return Valor calculado do atendimento.
      * @throws IllegalArgumentException se houver erro no cálculo.
+     * @throws SQLException se houver erro ao acessar o banco de dados.
      */
-    private BigDecimal calcularValor(AgendamentoRequest request) {
+    private BigDecimal calcularValor(AgendamentoRequest request) throws SQLException {
         try {
-            return valorCalculator.calcularValor(request.getProfissional(), request.getTipo(), request.getEmpresaParceira());
+            // Converte Atendimento.Tipo para ValorAtendimento.Tipo
+            ValorAtendimento.Tipo tipoValor = ValorAtendimento.Tipo.valueOf(request.getTipo().name());
+            return valorCalculator.calcularValor(request.getProfissional(), tipoValor, request.getEmpresaParceira());
         } catch (Exception e) {
             throw new IllegalArgumentException("Erro ao calcular valor: " + e.getMessage(), e);
         }

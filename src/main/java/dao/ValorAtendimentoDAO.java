@@ -1,7 +1,6 @@
 package dao;
 
 import model.ValorAtendimento;
-import model.ValorAtendimento.Tipo;
 import util.Database;
 
 import java.sql.*;
@@ -28,18 +27,25 @@ public class ValorAtendimentoDAO {
             stmt.setBigDecimal(3, valorAtendimento.getValor() != null ? valorAtendimento.getValor() : BigDecimal.ZERO);
             stmt.setString(4, usuarioLogado);
 
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new SQLException("Falha ao inserir ValorAtendimento, nenhuma linha afetada.");
-            }
-
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    valorAtendimento.setId(rs.getInt(1));
+            try {
+                int affectedRows = stmt.executeUpdate();
+                if (affectedRows == 0) {
+                    throw new SQLException("Falha ao inserir ValorAtendimento, nenhuma linha afetada.");
                 }
+
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        valorAtendimento.setId(rs.getInt(1));
+                    }
+                }
+                return true;
+            } catch (SQLException e) {
+                if (e.getErrorCode() == 1062) { // Código de erro para violação de constraint UNIQUE
+                    throw new SQLException("Já existe um valor de atendimento para este profissional e tipo.");
+                }
+                throw e;
             }
         }
-        return true;
     }
 
     // ============================
@@ -108,7 +114,14 @@ public class ValorAtendimentoDAO {
             stmt.setString(4, usuarioLogado);
             stmt.setInt(5, valorAtendimento.getId());
 
-            return stmt.executeUpdate() > 0;
+            try {
+                return stmt.executeUpdate() > 0;
+            } catch (SQLException e) {
+                if (e.getErrorCode() == 1062) { // Código de erro para violação de constraint UNIQUE
+                    throw new SQLException("Já existe um valor de atendimento para este profissional e tipo.");
+                }
+                throw e;
+            }
         }
     }
 
@@ -126,34 +139,34 @@ public class ValorAtendimentoDAO {
     }
 
     // ============================
+    // READ BY PROFISSIONAL AND TIPO
+    // ============================
+    public ValorAtendimento buscarPorProfissionalETipo(int profissionalId, ValorAtendimento.Tipo tipo) throws SQLException {
+        String sql = "SELECT * FROM valor_atendimento WHERE profissional_id = ? AND tipo = ?";
+        try (Connection conn = Database.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, profissionalId);
+            stmt.setString(2, tipo.name());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        }
+        return null;
+    }
+
+    // ============================
     // MAP ROW
     // ============================
     private ValorAtendimento mapRow(ResultSet rs) throws SQLException {
         ValorAtendimento v = new ValorAtendimento();
         v.setId(rs.getInt("id"));
         v.setProfissionalId(rs.getInt("profissional_id"));
-        v.setTipo(Tipo.valueOf(rs.getString("tipo")));
+        v.setTipo(ValorAtendimento.Tipo.valueOf(rs.getString("tipo")));
         v.setValor(rs.getBigDecimal("valor"));
         v.setCriadoEm(rs.getTimestamp("criado_em").toLocalDateTime());
         v.setAtualizadoEm(rs.getTimestamp("atualizado_em").toLocalDateTime());
         v.setUsuario(rs.getString("usuario"));
         return v;
     }
-
-	public ValorAtendimento buscarPorProfissionalETipo(int id, model.Atendimento.Tipo tipo) {
-		String sql = "SELECT * FROM valor_atendimento WHERE profissional_id = ? AND tipo = ?";
-		try (Connection conn = Database.getConnection();
-			 PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-			stmt.setInt(1, id);
-			stmt.setString(2, tipo.name());
-			try (ResultSet rs = stmt.executeQuery()) {
-				if (rs.next()) return mapRow(rs);
-			}
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
 }

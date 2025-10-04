@@ -13,12 +13,14 @@ public class ValorAtendimento {
     private LocalDateTime atualizadoEm;
     private String usuario;
 
-    // Enum para o campo 'tipo'
+    // Enum para o campo 'tipo' atualizado com novos valores
     public enum Tipo {
         AVALIACAO,
         RETORNO,
         REGULAGEM,
-        EXAME
+        EXAME,
+        REUNIAO,
+        PESSOAL
     }
 
     // Construtores

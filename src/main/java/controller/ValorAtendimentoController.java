@@ -1,7 +1,6 @@
 package controller;
 
 import dao.ValorAtendimentoDAO;
-import model.Atendimento.Tipo;
 import model.ValorAtendimento;
 
 import java.sql.SQLException;
@@ -46,6 +45,16 @@ public class ValorAtendimentoController {
         return valorAtendimentoDAO.listarPorProfissional(profissionalId);
     }
 
+    public ValorAtendimento buscarPorProfissionalETipo(int profissionalId, ValorAtendimento.Tipo tipo) throws SQLException {
+        if (profissionalId <= 0) {
+            throw new IllegalArgumentException("ProfissionalId inválido.");
+        }
+        if (tipo == null) {
+            throw new IllegalArgumentException("Tipo inválido.");
+        }
+        return valorAtendimentoDAO.buscarPorProfissionalETipo(profissionalId, tipo);
+    }
+
     // ============================
     // UPDATE
     // ============================
@@ -65,11 +74,4 @@ public class ValorAtendimentoController {
         }
         return valorAtendimentoDAO.deletar(id);
     }
-
-	public ValorAtendimento buscarPorProfissionalETipo(int id, Tipo tipo) {
-		if (id <= 0) {
-			throw new IllegalArgumentException("ProfissionalId inválido.");
-		}
-		return valorAtendimentoDAO.buscarPorProfissionalETipo(id, tipo);
-	}
 }
