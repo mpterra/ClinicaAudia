@@ -13,20 +13,17 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
-import javax.swing.text.MaskFormatter;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import controller.*;
 import model.*;
 import util.Sessao;
@@ -48,16 +45,17 @@ public class VendaProdutoPanel extends JPanel {
     private JTextField txtCodigoSerial;
     private JSpinner spinnerQuantidade;
     private JTextField txtPrecoUnitario;
+    private JTextField txtDesconto;
     private JTable tabelaItensVenda;
     private DefaultTableModel modeloTabelaItens;
     private JLabel lblValorTotal;
 
     // Estilo
-    private final Color primaryColor = new Color(34, 139, 34); // Verde
-    private final Color secondaryColor = new Color(200, 255, 200); // Verde claro
-    private final Color thirdiaryColor = new Color(45, 99, 255); // Azul claro
-    private final Color backgroundColor = new Color(245, 245, 245); // Fundo geral
-    private final Color rowColorLightGreen = new Color(230, 255, 230); // Verde muito claro
+    private final Color primaryColor = new Color(34, 139, 34);
+    private final Color secondaryColor = new Color(200, 255, 200);
+    private final Color thirdiaryColor = new Color(45, 99, 255);
+    private final Color backgroundColor = new Color(245, 245, 245);
+    private final Color rowColorLightGreen = new Color(230, 255, 230);
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
@@ -84,28 +82,24 @@ public class VendaProdutoPanel extends JPanel {
     private Map<Integer, Produto> cacheProdutos;
     private Map<Integer, Estoque> cacheEstoque;
 
-    // Construtor padrão
+    // Construtores
     public VendaProdutoPanel() {
         this(null, null);
     }
 
-    // Construtor para inicializar com atendimento
     public VendaProdutoPanel(Integer atendimentoId) {
         this(atendimentoId, null);
     }
 
-    // Construtor para inicializar com orçamento
     public VendaProdutoPanel(Orcamento orcamento) {
         this(null, orcamento);
     }
 
-    // Construtor para inicializar com atendimento e/ou orçamento
     public VendaProdutoPanel(Integer atendimentoId, Orcamento orcamento) {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(backgroundColor);
 
-        // Inicializa estado
         itensVendaAtual = new ArrayList<>();
         valorTotalVenda = BigDecimal.ZERO;
         cachePacientes = new HashMap<>();
@@ -114,7 +108,6 @@ public class VendaProdutoPanel extends JPanel {
         atendimentoSelecionado = null;
         orcamentoSelecionado = orcamento;
 
-        // Carrega dados iniciais
         carregarCacheInicial();
         if (atendimentoId != null) {
             carregarAtendimento(atendimentoId);
@@ -123,18 +116,14 @@ public class VendaProdutoPanel extends JPanel {
             carregarOrcamento(orcamento);
         }
 
-        // Título
         JLabel lblTitulo = new JLabel("Venda de Produtos", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
 
-        // Painéis de formulário e tabela
         JPanel painelFormulario = criarPainelFormulario();
         JPanel painelTabela = criarPainelTabela();
-
-        // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
         splitPane.setResizeWeight(0.45);
         splitPane.setDividerSize(5);
@@ -180,7 +169,7 @@ public class VendaProdutoPanel extends JPanel {
         }
     }
 
-    // Carrega dados do orçamento e seus produtos
+    // Carrega dados do orçamento
     private void carregarOrcamento(Orcamento orcamento) {
         try {
             orcamentoSelecionado = orcamento;
@@ -196,8 +185,9 @@ public class VendaProdutoPanel extends JPanel {
                 vp.setProdutoId(op.getProdutoId());
                 vp.setQuantidade(op.getQuantidade());
                 vp.setPrecoUnitario(op.getPrecoUnitario());
+                vp.setDesconto(BigDecimal.ZERO); // Inicializa desconto como 0
                 vp.setDataVenda(Timestamp.valueOf(LocalDateTime.now()));
-                vp.setCogidoSerial(null); // Usa null para evitar conflitos com UNIQUE
+                vp.setCogidoSerial(null);
                 itensVendaAtual.add(vp);
             }
             atualizarTabelaItens();
@@ -392,7 +382,7 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblQuantidade, gbcData);
-        spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1)); // Valor inicial ajustável
+        spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
         spinnerQuantidade.setPreferredSize(new Dimension(80, 25));
         spinnerQuantidade.setFont(fieldFont);
         gbcData.gridx = 3;
@@ -413,6 +403,21 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtPrecoUnitario, gbcData);
+
+        JLabel lblDesconto = new JLabel("Desconto (%):");
+        lblDesconto.setFont(labelFont);
+        gbcData.gridx = 2;
+        gbcData.gridy = 6;
+        gbcData.weightx = 0.0;
+        dataPanel.add(lblDesconto, gbcData);
+        txtDesconto = new JTextField(15);
+        txtDesconto.setText("0,00");
+        txtDesconto.setPreferredSize(new Dimension(80, 25));
+        txtDesconto.setFont(fieldFont);
+        ((AbstractDocument) txtDesconto.getDocument()).setDocumentFilter(new PercentDocumentFilter());
+        gbcData.gridx = 3;
+        gbcData.weightx = 1.0;
+        dataPanel.add(txtDesconto, gbcData);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -476,7 +481,7 @@ public class VendaProdutoPanel extends JPanel {
         return panel;
     }
 
-    // Cria o painel da tabela de itens da venda atual
+    // Cria o painel da tabela
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -490,7 +495,8 @@ public class VendaProdutoPanel extends JPanel {
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
 
-        String[] colunas = {"Código Serial", "Produto", "Quantidade", "Preço Unitário", "Subtotal"};
+        // Adiciona coluna "Preço Cheio" antes de "Preço Unitário"
+        String[] colunas = {"Código Serial", "Produto", "Quantidade", "Preço", "Preço Desconto", "Desconto (%)", "Subtotal"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -531,7 +537,6 @@ public class VendaProdutoPanel extends JPanel {
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
 
-        // Painel inferior
         JPanel southPanel = new JPanel(new GridBagLayout());
         southPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -539,7 +544,6 @@ public class VendaProdutoPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
 
-        // Label do valor total
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
@@ -549,7 +553,6 @@ public class VendaProdutoPanel extends JPanel {
         gbc.weightx = 0.0;
         southPanel.add(lblValorTotal, gbc);
 
-        // Botão Realizar Venda
         JButton btnRealizarVenda = new JButton("Realizar Venda");
         btnRealizarVenda.setBackground(primaryColor);
         btnRealizarVenda.setForeground(Color.WHITE);
@@ -570,13 +573,12 @@ public class VendaProdutoPanel extends JPanel {
         return panel;
     }
 
-    // Abre o diálogo de checkout para gerenciar pagamentos
+    // Abre o diálogo de checkout
     private void abrirCheckoutPagamento() {
         if (itensVendaAtual.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Adicione pelo menos um produto à venda!", "Erro", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // Obtém o JFrame pai
         JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         CheckoutPagamentoDialog dialog = new CheckoutPagamentoDialog(parentFrame, valorTotalVenda, itensVendaAtual, pacienteSelecionado, atendimentoSelecionado, orcamentoSelecionado);
         dialog.setVisible(true);
@@ -643,8 +645,8 @@ public class VendaProdutoPanel extends JPanel {
             int quantidadeEstoque = estoque != null ? estoque.getQuantidade() : 0;
             txtEstoque.setText(String.valueOf(quantidadeEstoque));
             txtPrecoUnitario.setText(String.format("%.2f", produtoSelecionado.getPrecoVenda()).replace(".", ","));
+            txtDesconto.setText("0,00");
             txtCodigoSerial.setText("");
-            // Atualiza o spinner com o estoque disponível
             spinnerQuantidade.setModel(new SpinnerNumberModel(1, 1, quantidadeEstoque, 1));
         } else {
             limparCamposProduto();
@@ -656,11 +658,12 @@ public class VendaProdutoPanel extends JPanel {
         txtNomeProduto.setText("");
         txtEstoque.setText("");
         txtPrecoUnitario.setText("0,00");
+        txtDesconto.setText("0,00");
         txtCodigoSerial.setText("");
         spinnerQuantidade.setModel(new SpinnerNumberModel(1, 1, 1, 1));
     }
 
-    // Adiciona um item à venda atual
+    // Adiciona um item à venda
     private void adicionarItemVenda() {
         try {
             if (produtoSelecionado == null) {
@@ -678,11 +681,10 @@ public class VendaProdutoPanel extends JPanel {
                 if (resposta != JOptionPane.YES_OPTION) {
                     return;
                 }
-                codigoSerial = null; // Usa null para evitar conflitos com UNIQUE
+                codigoSerial = null;
             } else if (vendaProdutoController.serialExiste(codigoSerial)) {
                 throw new IllegalArgumentException("Código serial já utilizado em outra venda!");
             }
-            // Valida se já existe um item do mesmo produto sem código serial
             if (codigoSerial == null) {
                 boolean hasNoSerial = itensVendaAtual.stream()
                         .anyMatch(vp -> vp.getProdutoId() == produtoSelecionado.getId() && vp.getCogidoSerial() == null);
@@ -701,6 +703,19 @@ public class VendaProdutoPanel extends JPanel {
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Preço unitário inválido!");
             }
+            BigDecimal descontoPercentual;
+            BigDecimal descontoMonetario;
+            try {
+                String text = txtDesconto.getText().replace(",", ".");
+                descontoPercentual = new BigDecimal(text);
+                if (descontoPercentual.compareTo(BigDecimal.ZERO) < 0 || descontoPercentual.compareTo(new BigDecimal("100.00")) > 0) {
+                    throw new IllegalArgumentException("Desconto deve ser entre 0% e 100%!");
+                }
+                // Calcula o desconto em valor monetário
+                descontoMonetario = precoUnitario.multiply(descontoPercentual).divide(new BigDecimal("100.00"));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Desconto inválido!");
+            }
             Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
             if (estoque == null || estoque.getQuantidade() < quantidade) {
                 throw new IllegalArgumentException("Estoque insuficiente para o produto!");
@@ -709,6 +724,7 @@ public class VendaProdutoPanel extends JPanel {
             vendaProduto.setProdutoId(produtoSelecionado.getId());
             vendaProduto.setQuantidade(quantidade);
             vendaProduto.setPrecoUnitario(precoUnitario);
+            vendaProduto.setDesconto(descontoMonetario); // Armazena o desconto em reais
             vendaProduto.setCogidoSerial(codigoSerial);
             LocalDate dataVenda = LocalDate.now();
             vendaProduto.setDataVenda(Timestamp.valueOf(dataVenda.atStartOfDay()));
@@ -728,7 +744,7 @@ public class VendaProdutoPanel extends JPanel {
         }
     }
 
-    // Remove o item selecionado da tabela de itens da venda
+    // Remove o item selecionado
     private void removerItemVenda() {
         int selectedRow = tabelaItensVenda.getSelectedRow();
         if (selectedRow >= 0) {
@@ -739,7 +755,7 @@ public class VendaProdutoPanel extends JPanel {
         }
     }
 
-    // Atualiza a tabela de itens da venda atual
+    // Atualiza a tabela de itens
     private void atualizarTabelaItens() {
         modeloTabelaItens.setRowCount(0);
         valorTotalVenda = BigDecimal.ZERO;
@@ -754,13 +770,20 @@ public class VendaProdutoPanel extends JPanel {
                     continue;
                 }
             }
-            BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
+            BigDecimal precoCheio = vp.getPrecoUnitario();
+            BigDecimal descontoMonetario = vp.getDesconto() != null ? vp.getDesconto() : BigDecimal.ZERO;
+            // Calcula o percentual de desconto para exibição
+            BigDecimal descontoPercentual = descontoMonetario.multiply(new BigDecimal("100.00")).divide(precoCheio, 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal precoComDesconto = precoCheio.subtract(descontoMonetario);
+            BigDecimal subtotal = precoComDesconto.multiply(BigDecimal.valueOf(vp.getQuantidade()));
             valorTotalVenda = valorTotalVenda.add(subtotal);
             modeloTabelaItens.addRow(new Object[]{
                     vp.getCogidoSerial() != null ? vp.getCogidoSerial() : "",
                     p.getNome(),
                     vp.getQuantidade(),
-                    String.format("R$ %.2f", vp.getPrecoUnitario()),
+                    String.format("R$ %.2f", precoCheio), // Preço cheio
+                    String.format("R$ %.2f", precoComDesconto), // Preço com desconto
+                    String.format("%.2f%%", descontoPercentual), // Desconto em %
                     String.format("R$ %.2f", subtotal)
             });
         }
@@ -777,9 +800,10 @@ public class VendaProdutoPanel extends JPanel {
         txtEmail.setText("");
         txtNomeProduto.setText("");
         txtEstoque.setText("");
+        txtPrecoUnitario.setText("0,00");
+        txtDesconto.setText("0,00");
         txtCodigoSerial.setText("");
         spinnerQuantidade.setValue(1);
-        txtPrecoUnitario.setText("0,00");
         pacienteSelecionado = null;
         produtoSelecionado = null;
         atendimentoSelecionado = null;
@@ -789,7 +813,7 @@ public class VendaProdutoPanel extends JPanel {
         atualizarTabelaItens();
     }
 
-    // Filtro para formatar entrada de valores monetários
+    // Filtro para entrada de valores monetários
     private class CurrencyDocumentFilter extends DocumentFilter {
         @Override
         public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
@@ -846,6 +870,57 @@ public class VendaProdutoPanel extends JPanel {
                 }
             }
             return formattedReais + "," + cents;
+        }
+    }
+
+    // Filtro para entrada de porcentagem
+    private class PercentDocumentFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
+            sb.insert(offset, string);
+            if (isValidInput(sb.toString())) {
+                String formatted = formatPercent(removeNonDigits(sb.toString()));
+                super.replace(fb, 0, fb.getDocument().getLength(), formatted, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String string, AttributeSet attrs) throws BadLocationException {
+            StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
+            sb.replace(offset, offset + length, string);
+            if (isValidInput(sb.toString())) {
+                String formatted = formatPercent(removeNonDigits(sb.toString()));
+                super.replace(fb, 0, fb.getDocument().getLength(), formatted, attrs);
+            }
+        }
+
+        @Override
+        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+            StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
+            sb.delete(offset, offset + length);
+            String formatted = formatPercent(removeNonDigits(sb.toString()));
+            super.replace(fb, 0, fb.getDocument().getLength(), formatted, null);
+        }
+
+        private boolean isValidInput(String text) {
+            return text.matches("[0-9,.]*");
+        }
+
+        private String removeNonDigits(String text) {
+            return text.replaceAll("[^0-9]", "");
+        }
+
+        private String formatPercent(String digits) {
+            if (digits.isEmpty()) return "0,00";
+            while (digits.length() < 3) {
+                digits = "0" + digits;
+            }
+            String decimals = digits.substring(digits.length() - 2);
+            String integer = digits.substring(0, digits.length() - 2);
+            integer = integer.replaceFirst("^0+(?!$)", "");
+            if (integer.isEmpty()) integer = "0";
+            return integer + "," + decimals;
         }
     }
 }

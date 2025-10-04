@@ -557,6 +557,7 @@ CREATE TABLE venda_produto (
     produto_id INT NOT NULL,
     quantidade INT NOT NULL DEFAULT 1,
     preco_unitario DECIMAL(10,2) NOT NULL,
+    desconto DECIMAL(10,2) DEFAULT 0,
     data_venda TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     garantia_meses INT DEFAULT 0,
     fim_garantia DATE,
@@ -671,3 +672,5 @@ CREATE TABLE caixa_movimento (
 
 SELECT * FROM pagamento_venda;
 SELECT * FROM pagamento_compra;
+SELECT * FROM venda_produto;
+

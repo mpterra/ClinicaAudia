@@ -437,7 +437,7 @@ public class PagamentoVendaPanel extends JPanel {
     }
 
     /**
-     * Abre popup para pagar o boleto selecionado.
+     * Abre popup para registrar o recebimento do boleto selecionado.
      */
     private void pagarBoleto() {
         int row = tabelaPagamentos.getSelectedRow();
@@ -454,7 +454,7 @@ public class PagamentoVendaPanel extends JPanel {
             return;
         }
 
-        // Popup para registrar o pagamento
+        // Popup para registrar o recebimento
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Receber Boleto");
         dialog.setLayout(new GridBagLayout());
         dialog.getContentPane().setBackground(backgroundColor);
@@ -487,6 +487,7 @@ public class PagamentoVendaPanel extends JPanel {
         cmbMetodoPagamento.setFont(fieldFont);
         cmbMetodoPagamento.setPreferredSize(new Dimension(120, 25));
         cmbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cmbMetodoPagamento.setSelectedItem(PagamentoVenda.MetodoPagamento.DEBITO); // Define DÉBITO como padrão
         gbc.gridx = 1;
         dialog.add(cmbMetodoPagamento, gbc);
 
