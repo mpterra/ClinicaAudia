@@ -11,16 +11,14 @@ public class Produto {
     private String codigoSerial;
     private String descricao;
     private int garantiaMeses;
-    private BigDecimal precoVenda; // Preço de venda padrão para a tela de vendas
-    private BigDecimal precoCusto; // Preço de custo médio para cálculo de lucro
+    private BigDecimal precoVenda;
+    private BigDecimal precoCusto;
     private Timestamp criadoEm;
     private Timestamp atualizadoEm;
     private String usuario;
 
-    // Construtor vazio
     public Produto() {}
 
-    // Construtor completo
     public Produto(int id, int tipoProdutoId, String nome, String codigoSerial, String descricao,
                    int garantiaMeses, BigDecimal precoVenda, BigDecimal precoCusto,
                    Timestamp criadoEm, Timestamp atualizadoEm, String usuario) {
@@ -70,4 +68,10 @@ public class Produto {
 
     public String getUsuario() { return usuario; }
     public void setUsuario(String usuario) { this.usuario = usuario; }
+
+    // toString para exibir nome do produto no JComboBox
+    @Override
+    public String toString() {
+        return nome;
+    }
 }

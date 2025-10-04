@@ -587,7 +587,7 @@ CREATE TABLE pagamento_venda (
     metodo_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO','BOLETO') NOT NULL,
     parcela INT DEFAULT 1,
     total_parcelas INT DEFAULT 1,
-    status ENUM('PAGO','PENDENTE') DEFAULT 'PENDENTE',
+    status ENUM('PAGO','PENDENTE','CANCELADO') DEFAULT 'PENDENTE',
     observacoes TEXT,
     usuario VARCHAR(50),
     atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -669,8 +669,4 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
-
-SELECT * FROM pagamento_venda;
-SELECT * FROM pagamento_compra;
-SELECT * FROM venda_produto;
 
