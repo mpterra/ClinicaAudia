@@ -586,6 +586,7 @@ CREATE TABLE pagamento_venda (
     metodo_pagamento ENUM('DINHEIRO','PIX','DEBITO','CREDITO','BOLETO') NOT NULL,
     parcela INT DEFAULT 1,
     total_parcelas INT DEFAULT 1,
+    status ENUM('PAGO','PENDENTE') DEFAULT 'PENDENTE',
     observacoes TEXT,
     usuario VARCHAR(50),
     CONSTRAINT fk_pag_venda
@@ -666,3 +667,5 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
+
+SELECT * FROM pagamento_venda;

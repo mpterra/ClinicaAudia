@@ -15,17 +15,13 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,8 +30,9 @@ import java.util.Map;
 import controller.*;
 import model.*;
 import util.Sessao;
+import view.dialogs.CheckoutPagamentoDialog;
 
-// Painel para registro de vendas de produtos com suporte a múltiplos itens, associadas a paciente, atendimento e/ou orçamento
+// Painel para registro de vendas de produtos
 public class VendaProdutoPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
@@ -51,14 +48,9 @@ public class VendaProdutoPanel extends JPanel {
     private JTextField txtCodigoSerial;
     private JSpinner spinnerQuantidade;
     private JTextField txtPrecoUnitario;
-    private JComboBox<String> cbMetodoPagamento;
-    private JSpinner spinnerParcelas;
     private JTable tabelaItensVenda;
     private DefaultTableModel modeloTabelaItens;
     private JLabel lblValorTotal;
-    private JFormattedTextField dateVencimentoInicial;
-    private JPopupMenu calendarPopup;
-    private JCalendar calendar;
 
     // Estilo
     private final Color primaryColor = new Color(34, 139, 34); // Verde
@@ -77,9 +69,6 @@ public class VendaProdutoPanel extends JPanel {
     private final VendaProdutoController vendaProdutoController = new VendaProdutoController();
     private final EstoqueController estoqueController = new EstoqueController();
     private final MovimentoEstoqueController movimentoEstoqueController = new MovimentoEstoqueController();
-    private final CaixaController caixaController = new CaixaController();
-    private final CaixaMovimentoController caixaMovimentoController = new CaixaMovimentoController();
-    private final PagamentoVendaController pagamentoVendaController = new PagamentoVendaController();
     private final OrcamentoController orcamentoController = new OrcamentoController();
     private final OrcamentoProdutoController orcamentoProdutoController = new OrcamentoProdutoController();
     private final AtendimentoController atendimentoController = new AtendimentoController();
@@ -94,9 +83,6 @@ public class VendaProdutoPanel extends JPanel {
     private Map<Integer, Paciente> cachePacientes;
     private Map<Integer, Produto> cacheProdutos;
     private Map<Integer, Estoque> cacheEstoque;
-
-    // Formas de pagamento disponíveis
-    private static final String[] FORMAS_PAGAMENTO = {"DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO"};
 
     // Construtor padrão
     public VendaProdutoPanel() {
@@ -127,63 +113,6 @@ public class VendaProdutoPanel extends JPanel {
         cacheEstoque = new HashMap<>();
         atendimentoSelecionado = null;
         orcamentoSelecionado = orcamento;
-
-        // Inicializa componentes de pagamento
-        cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
-        cbMetodoPagamento.setPreferredSize(new Dimension(106, 25)); // Largura reduzida em 12%
-        cbMetodoPagamento.setFont(fieldFont);
-        cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
-        spinnerParcelas.setPreferredSize(new Dimension(70, 25)); // Largura reduzida em 12%
-        spinnerParcelas.setFont(fieldFont);
-        spinnerParcelas.setEnabled(false);
-
-        // Inicializa o JFormattedTextField com máscara
-        try {
-            MaskFormatter dateMask = new MaskFormatter("##/##/####");
-            dateMask.setPlaceholderCharacter('_');
-            dateVencimentoInicial = new JFormattedTextField(dateMask);
-            dateVencimentoInicial.setPreferredSize(new Dimension(120, 25));
-            dateVencimentoInicial.setFont(fieldFont);
-            dateVencimentoInicial.setEnabled(false);
-            dateVencimentoInicial.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao configurar formato de data: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
-
-        // Inicializa o JCalendar e JPopupMenu
-        calendarPopup = new JPopupMenu();
-        calendar = new JCalendar();
-        calendar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        calendar.setDecorationBackgroundColor(backgroundColor);
-        calendar.setTodayButtonVisible(true);
-        calendarPopup.add(calendar);
-        calendarPopup.setPreferredSize(new Dimension(400, 300)); // Aumenta o tamanho do calendário
-        calendar.addPropertyChangeListener("calendar", evt -> {
-            java.util.Calendar selectedDate = calendar.getCalendar();
-            if (selectedDate != null) {
-                LocalDate date = selectedDate.getTime().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate();
-                dateVencimentoInicial.setText(date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                calendarPopup.setVisible(false);
-            }
-        });
-
-        // Listener para abrir o calendário centralizado
-        dateVencimentoInicial.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (dateVencimentoInicial.isEnabled()) {
-                    // Calcula a posição central da tela
-                    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                    Dimension popupSize = calendarPopup.getPreferredSize();
-                    int x = (screenSize.width - popupSize.width) / 2;
-                    int y = (screenSize.height - popupSize.height) / 2;
-                    calendarPopup.show(dateVencimentoInicial, x - dateVencimentoInicial.getLocationOnScreen().x, y - dateVencimentoInicial.getLocationOnScreen().y);
-                }
-            }
-        });
 
         // Carrega dados iniciais
         carregarCacheInicial();
@@ -241,7 +170,7 @@ public class VendaProdutoPanel extends JPanel {
                 if (pacienteSelecionado != null) {
                     txtBuscaPaciente.setText(pacienteSelecionado.getNome());
                     atualizarPaciente();
-                    txtBuscaPaciente.setEditable(false); // Bloqueia edição do paciente
+                    txtBuscaPaciente.setEditable(false);
                 }
             } else {
                 throw new IllegalArgumentException("Atendimento não encontrado!");
@@ -259,9 +188,8 @@ public class VendaProdutoPanel extends JPanel {
                 pacienteSelecionado = pacienteController.buscarPorId(orcamentoSelecionado.getPacienteId());
                 txtBuscaPaciente.setText(pacienteSelecionado.getNome());
                 atualizarPaciente();
-                txtBuscaPaciente.setEditable(false); // Bloqueia edição do paciente
+                txtBuscaPaciente.setEditable(false);
             }
-            // Carrega produtos do orçamento
             List<OrcamentoProduto> produtosOrcamento = orcamentoProdutoController.listarPorOrcamento(orcamentoSelecionado.getId());
             for (OrcamentoProduto op : produtosOrcamento) {
                 VendaProduto vp = new VendaProduto();
@@ -269,7 +197,7 @@ public class VendaProdutoPanel extends JPanel {
                 vp.setQuantidade(op.getQuantidade());
                 vp.setPrecoUnitario(op.getPrecoUnitario());
                 vp.setDataVenda(Timestamp.valueOf(LocalDateTime.now()));
-                vp.setCogidoSerial(""); // Código serial será preenchido manualmente
+                vp.setCogidoSerial(null); // Usa null para evitar conflitos com UNIQUE
                 itensVendaAtual.add(vp);
             }
             atualizarTabelaItens();
@@ -464,7 +392,7 @@ public class VendaProdutoPanel extends JPanel {
         gbcData.gridy = 4;
         gbcData.weightx = 0.0;
         dataPanel.add(lblQuantidade, gbcData);
-        spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 1, 1));
+        spinnerQuantidade = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1)); // Valor inicial ajustável
         spinnerQuantidade.setPreferredSize(new Dimension(80, 25));
         spinnerQuantidade.setFont(fieldFont);
         gbcData.gridx = 3;
@@ -513,6 +441,16 @@ public class VendaProdutoPanel extends JPanel {
         btnAdicionarItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnAdicionarItem.setToolTipText("Adicionar produto à venda");
         botoesPanel.add(btnAdicionarItem);
+        JButton btnRemoverItem = new JButton("Remover Item");
+        btnRemoverItem.setBackground(Color.RED);
+        btnRemoverItem.setForeground(Color.WHITE);
+        btnRemoverItem.setBorder(BorderFactory.createEmptyBorder());
+        btnRemoverItem.setPreferredSize(new Dimension(100, 30));
+        btnRemoverItem.setHorizontalAlignment(SwingConstants.CENTER);
+        btnRemoverItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnRemoverItem.setToolTipText("Remover item selecionado da venda");
+        btnRemoverItem.addActionListener(e -> removerItemVenda());
+        botoesPanel.add(btnRemoverItem);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 2;
@@ -533,13 +471,12 @@ public class VendaProdutoPanel extends JPanel {
             public void removeUpdate(DocumentEvent e) { atualizarProduto(); }
             public void changedUpdate(DocumentEvent e) { atualizarProduto(); }
         });
-        cbMetodoPagamento.addActionListener(e -> atualizarParcelas());
 
         panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
     }
 
- // Cria o painel da tabela de itens da venda atual
+    // Cria o painel da tabela de itens da venda atual
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -552,6 +489,7 @@ public class VendaProdutoPanel extends JPanel {
                         primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
+
         String[] colunas = {"Código Serial", "Produto", "Quantidade", "Preço Unitário", "Subtotal"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
@@ -592,13 +530,15 @@ public class VendaProdutoPanel extends JPanel {
         JScrollPane scroll = new JScrollPane(tabelaItensVenda);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-        // Painel inferior com layout vertical
+
+        // Painel inferior
         JPanel southPanel = new JPanel(new GridBagLayout());
         southPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
+
         // Label do valor total
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -608,31 +548,7 @@ public class VendaProdutoPanel extends JPanel {
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
         southPanel.add(lblValorTotal, gbc);
-        // Painel auxiliar para limitar a largura do pagamentoPanel
-        JPanel wrapperPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        wrapperPanel.setBackground(backgroundColor);
-        // Seção de Pagamento
-        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        pagamentoPanel.setBackground(backgroundColor);
-        pagamentoPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-        JLabel lblMetodo = new JLabel("Forma pgto:");
-        lblMetodo.setFont(labelFont);
-        pagamentoPanel.add(lblMetodo);
-        pagamentoPanel.add(cbMetodoPagamento);
-        JLabel lblParcelas = new JLabel("Parcelas:");
-        lblParcelas.setFont(labelFont);
-        pagamentoPanel.add(lblParcelas);
-        pagamentoPanel.add(spinnerParcelas);
-        JLabel lblDataVencimento = new JLabel("1º Vencimento:");
-        lblDataVencimento.setFont(labelFont);
-        pagamentoPanel.add(lblDataVencimento);
-        pagamentoPanel.add(dateVencimentoInicial);
-        wrapperPanel.add(pagamentoPanel);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0.0;
-        southPanel.add(wrapperPanel, gbc);
+
         // Botão Realizar Venda
         JButton btnRealizarVenda = new JButton("Realizar Venda");
         btnRealizarVenda.setBackground(primaryColor);
@@ -642,20 +558,36 @@ public class VendaProdutoPanel extends JPanel {
         btnRealizarVenda.setHorizontalAlignment(SwingConstants.CENTER);
         btnRealizarVenda.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRealizarVenda.setToolTipText("Finalizar a venda");
-        btnRealizarVenda.addActionListener(e -> realizarVenda());
+        btnRealizarVenda.addActionListener(e -> abrirCheckoutPagamento());
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         southPanel.add(btnRealizarVenda, gbc);
+
         panel.add(southPanel, BorderLayout.SOUTH);
         return panel;
     }
 
+    // Abre o diálogo de checkout para gerenciar pagamentos
+    private void abrirCheckoutPagamento() {
+        if (itensVendaAtual.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Adicione pelo menos um produto à venda!", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // Obtém o JFrame pai
+        JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        CheckoutPagamentoDialog dialog = new CheckoutPagamentoDialog(parentFrame, valorTotalVenda, itensVendaAtual, pacienteSelecionado, atendimentoSelecionado, orcamentoSelecionado);
+        dialog.setVisible(true);
+        if (dialog.isVendaConcluida()) {
+            limparCampos();
+        }
+    }
+
     // Atualiza os dados do paciente
     private void atualizarPaciente() {
-        if (!txtBuscaPaciente.isEditable()) return; // Ignora se o campo não é editável
+        if (!txtBuscaPaciente.isEditable()) return;
         String busca = txtBuscaPaciente.getText().trim().toLowerCase();
         pacienteSelecionado = null;
         if (busca.isEmpty()) {
@@ -708,9 +640,12 @@ public class VendaProdutoPanel extends JPanel {
         if (produtoSelecionado != null) {
             txtNomeProduto.setText(produtoSelecionado.getNome());
             Estoque estoque = cacheEstoque.get(produtoSelecionado.getId());
-            txtEstoque.setText(estoque != null ? String.valueOf(estoque.getQuantidade()) : "0");
+            int quantidadeEstoque = estoque != null ? estoque.getQuantidade() : 0;
+            txtEstoque.setText(String.valueOf(quantidadeEstoque));
             txtPrecoUnitario.setText(String.format("%.2f", produtoSelecionado.getPrecoVenda()).replace(".", ","));
             txtCodigoSerial.setText("");
+            // Atualiza o spinner com o estoque disponível
+            spinnerQuantidade.setModel(new SpinnerNumberModel(1, 1, quantidadeEstoque, 1));
         } else {
             limparCamposProduto();
         }
@@ -722,24 +657,7 @@ public class VendaProdutoPanel extends JPanel {
         txtEstoque.setText("");
         txtPrecoUnitario.setText("0,00");
         txtCodigoSerial.setText("");
-    }
-
-    // Atualiza opções de parcelas
-    private void atualizarParcelas() {
-        String metodo = (String) cbMetodoPagamento.getSelectedItem();
-        if ("BOLETO".equals(metodo)) {
-            spinnerParcelas.setModel(new SpinnerNumberModel(1, 1, 12, 1));
-            spinnerParcelas.setEnabled(true);
-            dateVencimentoInicial.setEnabled(true);
-        } else if ("CREDITO".equals(metodo)) {
-            spinnerParcelas.setModel(new SpinnerNumberModel(1, 1, 12, 1));
-            spinnerParcelas.setEnabled(true);
-            dateVencimentoInicial.setEnabled(false);
-        } else {
-            spinnerParcelas.setModel(new SpinnerNumberModel(1, 1, 1, 1));
-            spinnerParcelas.setEnabled(false);
-            dateVencimentoInicial.setEnabled(false);
-        }
+        spinnerQuantidade.setModel(new SpinnerNumberModel(1, 1, 1, 1));
     }
 
     // Adiciona um item à venda atual
@@ -758,10 +676,19 @@ public class VendaProdutoPanel extends JPanel {
                         JOptionPane.QUESTION_MESSAGE
                 );
                 if (resposta != JOptionPane.YES_OPTION) {
-                    return; // Interrompe se o usuário clicar em "Não"
+                    return;
                 }
+                codigoSerial = null; // Usa null para evitar conflitos com UNIQUE
             } else if (vendaProdutoController.serialExiste(codigoSerial)) {
                 throw new IllegalArgumentException("Código serial já utilizado em outra venda!");
+            }
+            // Valida se já existe um item do mesmo produto sem código serial
+            if (codigoSerial == null) {
+                boolean hasNoSerial = itensVendaAtual.stream()
+                        .anyMatch(vp -> vp.getProdutoId() == produtoSelecionado.getId() && vp.getCogidoSerial() == null);
+                if (hasNoSerial) {
+                    throw new IllegalArgumentException("Já existe um item deste produto sem código serial na venda!");
+                }
             }
             int quantidade = (Integer) spinnerQuantidade.getValue();
             BigDecimal precoUnitario;
@@ -787,7 +714,7 @@ public class VendaProdutoPanel extends JPanel {
             vendaProduto.setDataVenda(Timestamp.valueOf(dataVenda.atStartOfDay()));
             vendaProduto.setGarantiaMeses(produtoSelecionado.getGarantiaMeses());
             if (produtoSelecionado.getGarantiaMeses() > 0) {
-                vendaProduto.setFimGarantia(Date.valueOf(dataVenda.plusMonths(produtoSelecionado.getGarantiaMeses())));
+                vendaProduto.setFimGarantia(java.sql.Date.valueOf(dataVenda.plusMonths(produtoSelecionado.getGarantiaMeses())));
             }
             itensVendaAtual.add(vendaProduto);
             atualizarTabelaItens();
@@ -798,6 +725,17 @@ public class VendaProdutoPanel extends JPanel {
             produtoSelecionado = null;
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao adicionar item: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Remove o item selecionado da tabela de itens da venda
+    private void removerItemVenda() {
+        int selectedRow = tabelaItensVenda.getSelectedRow();
+        if (selectedRow >= 0) {
+            itensVendaAtual.remove(selectedRow);
+            atualizarTabelaItens();
+        } else {
+            JOptionPane.showMessageDialog(this, "Selecione um item para remover!", "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -819,7 +757,7 @@ public class VendaProdutoPanel extends JPanel {
             BigDecimal subtotal = vp.getPrecoUnitario().multiply(BigDecimal.valueOf(vp.getQuantidade()));
             valorTotalVenda = valorTotalVenda.add(subtotal);
             modeloTabelaItens.addRow(new Object[]{
-                    vp.getCogidoSerial(),
+                    vp.getCogidoSerial() != null ? vp.getCogidoSerial() : "",
                     p.getNome(),
                     vp.getQuantidade(),
                     String.format("R$ %.2f", vp.getPrecoUnitario()),
@@ -827,139 +765,6 @@ public class VendaProdutoPanel extends JPanel {
             });
         }
         lblValorTotal.setText(String.format("Valor Total: R$ %.2f", valorTotalVenda));
-    }
-
-    // Realiza a venda
-    private void realizarVenda() {
-        try {
-            if (itensVendaAtual.isEmpty()) {
-                throw new IllegalArgumentException("Adicione pelo menos um produto à venda!");
-            }
-            int parcelas = (Integer) spinnerParcelas.getValue();
-            String metodo = (String) cbMetodoPagamento.getSelectedItem();
-            LocalDate dataVencimento = LocalDate.now(); // Padrão: data atual
-            // Validar e obter a data de vencimento inicial apenas para BOLETO
-            if ("BOLETO".equals(metodo)) {
-                String dataText = dateVencimentoInicial.getText();
-                try {
-                    dataVencimento = LocalDate.parse(dataText, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                    if (dataVencimento.isBefore(LocalDate.now())) {
-                        throw new IllegalArgumentException("A data de vencimento inicial não pode ser anterior à data atual!");
-                    }
-                } catch (DateTimeParseException e) {
-                    throw new IllegalArgumentException("Data de vencimento inválida!");
-                }
-            }
-            // Verificar caixa aberto apenas para métodos que não sejam BOLETO
-            Caixa caixa = null;
-            if (!metodo.equals("BOLETO")) {
-                caixa = caixaController.getCaixaAberto();
-                if (caixa == null) {
-                    throw new IllegalStateException("Nenhum caixa aberto encontrado!");
-                }
-            }
-            Venda venda = new Venda();
-            venda.setPacienteId(pacienteSelecionado != null ? pacienteSelecionado.getId() : null);
-            venda.setAtendimentoId(atendimentoSelecionado != null ? atendimentoSelecionado.getId() : null);
-            venda.setOrcamentoId(orcamentoSelecionado != null ? orcamentoSelecionado.getId() : null);
-            venda.setValorTotal(valorTotalVenda);
-            venda.setUsuario(Sessao.getUsuarioLogado().getLogin());
-            venda.setDataHora(Timestamp.valueOf(LocalDateTime.now()));
-            if (!vendaController.registrarVenda(venda, Sessao.getUsuarioLogado().getLogin())) {
-                throw new SQLException("Falha ao registrar venda!");
-            }
-            int vendaId = venda.getId();
-            for (VendaProduto vp : itensVendaAtual) {
-                vp.setVendaId(vendaId);
-                if (!vendaProdutoController.adicionarProdutoVenda(vp)) {
-                    throw new SQLException("Falha ao registrar produto da venda!");
-                }
-                Estoque estoque = cacheEstoque.get(vp.getProdutoId());
-                estoque.setQuantidade(estoque.getQuantidade() - vp.getQuantidade());
-                estoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                if (!estoqueController.salvarOuAtualizarEstoque(estoque, Sessao.getUsuarioLogado().getLogin())) {
-                    throw new SQLException("Falha ao atualizar estoque!");
-                }
-                cacheEstoque.put(estoque.getProdutoId(), estoque);
-                MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
-                movimentoEstoque.setProdutoId(vp.getProdutoId());
-                movimentoEstoque.setQuantidade(vp.getQuantidade());
-                movimentoEstoque.setTipo(MovimentoEstoque.Tipo.SAIDA);
-                movimentoEstoque.setObservacoes("Saída por venda ID " + vendaId);
-                movimentoEstoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                if (!movimentoEstoqueController.registrarMovimento(movimentoEstoque, Sessao.getUsuarioLogado().getLogin())) {
-                    throw new SQLException("Falha ao registrar movimento de estoque!");
-                }
-            }
-            // Para CREDITO, registrar uma única parcela no caixa com o valor total
-            if ("CREDITO".equals(metodo)) {
-                PagamentoVenda pagamento = new PagamentoVenda();
-                pagamento.setVenda(venda);
-                pagamento.setValor(valorTotalVenda);
-                pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.CREDITO);
-                pagamento.setParcela(1);
-                pagamento.setTotalParcelas(parcelas); // Mantém o número de parcelas para registro
-                pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                pagamento.setDataHora(LocalDateTime.now());
-                pagamento.setDataVencimento(LocalDate.now()); // Data atual para CREDITO
-                pagamentoVendaController.inserir(pagamento);
-                CaixaMovimento movimentoCaixa = new CaixaMovimento();
-                movimentoCaixa.setCaixa(caixa);
-                movimentoCaixa.setTipo(CaixaMovimento.TipoMovimento.ENTRADA);
-                movimentoCaixa.setOrigem(CaixaMovimento.OrigemMovimento.PAGAMENTO_VENDA);
-                movimentoCaixa.setPagamentoVenda(pagamento);
-                movimentoCaixa.setFormaPagamento(CaixaMovimento.FormaPagamento.CREDITO);
-                movimentoCaixa.setValor(valorTotalVenda);
-                movimentoCaixa.setDescricao("Pagamento à vista (crédito) de venda ID " + vendaId);
-                movimentoCaixa.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                movimentoCaixa.setDataHora(LocalDateTime.now());
-                caixaMovimentoController.adicionarMovimento(movimentoCaixa);
-            }
-            // Para BOLETO, registrar parcelas com datas de vencimento, sem movimento no caixa
-            else if ("BOLETO".equals(metodo)) {
-                BigDecimal valorParcela = valorTotalVenda.divide(BigDecimal.valueOf(parcelas), 2, BigDecimal.ROUND_HALF_UP);
-                for (int i = 1; i <= parcelas; i++) {
-                    PagamentoVenda pagamento = new PagamentoVenda();
-                    pagamento.setVenda(venda);
-                    pagamento.setValor(valorParcela);
-                    pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.BOLETO);
-                    pagamento.setParcela(i);
-                    pagamento.setTotalParcelas(parcelas);
-                    pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                    pagamento.setDataHora(LocalDateTime.now());
-                    pagamento.setDataVencimento(dataVencimento.plusDays((i - 1) * 30)); // Incrementa 30 dias por parcela
-                    pagamentoVendaController.inserir(pagamento);
-                }
-            }
-            // Para outros métodos (DINHEIRO, PIX, DEBITO), registrar uma única parcela no caixa
-            else {
-                PagamentoVenda pagamento = new PagamentoVenda();
-                pagamento.setVenda(venda);
-                pagamento.setValor(valorTotalVenda);
-                pagamento.setMetodoPagamento(PagamentoVenda.MetodoPagamento.valueOf(metodo));
-                pagamento.setParcela(1);
-                pagamento.setTotalParcelas(1);
-                pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                pagamento.setDataHora(LocalDateTime.now());
-                pagamento.setDataVencimento(LocalDate.now()); // Data atual para métodos à vista
-                pagamentoVendaController.inserir(pagamento);
-                CaixaMovimento movimentoCaixa = new CaixaMovimento();
-                movimentoCaixa.setCaixa(caixa);
-                movimentoCaixa.setTipo(CaixaMovimento.TipoMovimento.ENTRADA);
-                movimentoCaixa.setOrigem(CaixaMovimento.OrigemMovimento.PAGAMENTO_VENDA);
-                movimentoCaixa.setPagamentoVenda(pagamento);
-                movimentoCaixa.setFormaPagamento(CaixaMovimento.FormaPagamento.valueOf(metodo));
-                movimentoCaixa.setValor(valorTotalVenda);
-                movimentoCaixa.setDescricao("Pagamento à vista de venda ID " + vendaId);
-                movimentoCaixa.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                movimentoCaixa.setDataHora(LocalDateTime.now());
-                caixaMovimentoController.adicionarMovimento(movimentoCaixa);
-            }
-            JOptionPane.showMessageDialog(this, "Venda realizada com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-            limparCampos();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao realizar venda: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
-        }
     }
 
     // Limpa os campos do formulário
@@ -975,11 +780,6 @@ public class VendaProdutoPanel extends JPanel {
         txtCodigoSerial.setText("");
         spinnerQuantidade.setValue(1);
         txtPrecoUnitario.setText("0,00");
-        cbMetodoPagamento.setSelectedIndex(0);
-        spinnerParcelas.setValue(1);
-        spinnerParcelas.setEnabled(false);
-        dateVencimentoInicial.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        dateVencimentoInicial.setEnabled(false);
         pacienteSelecionado = null;
         produtoSelecionado = null;
         atendimentoSelecionado = null;
