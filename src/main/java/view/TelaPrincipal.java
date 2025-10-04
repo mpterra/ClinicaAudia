@@ -106,9 +106,10 @@ public class TelaPrincipal extends JFrame {
 		}));
 		menuFinanceiro.addSeparator();
 		menuFinanceiro.add(createMenuItem("Compras a Pagar", e -> {
-			abrirComprasPagamentoPanel();
+			abrirPagamentoCompraPanel();
 		}));
 		menuFinanceiro.add(createMenuItem("Vendas a Receber", e -> {
+			abrirPagamentoVendaPanel();
 		}));
 		menuFinanceiro.addSeparator();
 		menuFinanceiro.add(createMenuItem("Relatórios", e -> {
@@ -327,9 +328,16 @@ public class TelaPrincipal extends JFrame {
 		painelCentral.repaint();
 	}
 	
-	private void abrirComprasPagamentoPanel() {
+	private void abrirPagamentoCompraPanel() {
 		painelCentral.removeAll();
 		painelCentral.add(new PagamentoCompraPanel(), BorderLayout.CENTER);
+		painelCentral.revalidate();
+		painelCentral.repaint();
+	}
+	
+	private void abrirPagamentoVendaPanel() {
+		painelCentral.removeAll();
+		painelCentral.add(new PagamentoVendaPanel(), BorderLayout.CENTER);
 		painelCentral.revalidate();
 		painelCentral.repaint();
 	}

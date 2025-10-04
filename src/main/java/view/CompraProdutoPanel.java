@@ -1,24 +1,6 @@
 package view;
-import controller.CaixaController;
-import controller.CaixaMovimentoController;
-import controller.CompraController;
-import controller.CompraProdutoController;
-import controller.EstoqueController;
-import controller.MovimentoEstoqueController;
-import controller.PagamentoCompraController;
-import controller.ProdutoController;
-import controller.FornecedorController;
-import model.Caixa;
-import model.CaixaMovimento;
-import model.Compra;
-import model.CompraProduto;
-import model.Estoque;
-import model.MovimentoEstoque;
-import model.PagamentoCompra;
-import model.Produto;
-import model.Fornecedor;
-import util.Sessao;
-import com.toedter.calendar.JCalendar; // Importação para JCalendar
+
+import com.toedter.calendar.JCalendar;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
@@ -33,12 +15,10 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.MaskFormatter;
 import java.awt.*;
-import java.awt.event.MouseAdapter; // Importação para MouseAdapter
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,8 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import controller.*;
+import model.*;
+import util.Sessao;
+import view.dialogs.CheckoutCompraDialog;
+
+// Painel para registro de compras de produtos
 public class CompraProdutoPanel extends JPanel {
     private static final long serialVersionUID = 1L;
+
     // Componentes do formulário
     private JTextField txtBuscaProdutoNome;
     private JTextField txtBuscaProdutoCodigo;
@@ -59,14 +46,10 @@ public class CompraProdutoPanel extends JPanel {
     private JComboBox<Fornecedor> cbFornecedor;
     private JLabel lblFornecedorDados;
     private JSpinner spinnerQuantidade;
-    private JComboBox<String> cbMetodoPagamento;
-    private JSpinner spinnerParcelas;
-    private JFormattedTextField txtDataVencimento; // Campo para data de vencimento
-    private JPopupMenu calendarPopup; // Pop-up para o JCalendar
-    private JCalendar calendar; // JCalendar
     private JTable tabelaItensCompra;
     private DefaultTableModel modeloTabelaItens;
     private JLabel lblValorTotal;
+
     // Estilo
     private final Color primaryColor = new Color(154, 5, 38);
     private final Color secondaryColor = new Color(94, 5, 38);
@@ -76,16 +59,12 @@ public class CompraProdutoPanel extends JPanel {
     private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
     private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
     private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
+
     // Controladores
     private final ProdutoController produtoController = new ProdutoController();
-    private final CompraController compraController = new CompraController();
-    private final CompraProdutoController compraProdutoController = new CompraProdutoController();
     private final EstoqueController estoqueController = new EstoqueController();
-    private final MovimentoEstoqueController movimentoEstoqueController = new MovimentoEstoqueController();
-    private final CaixaController caixaController = new CaixaController();
-    private final CaixaMovimentoController caixaMovimentoController = new CaixaMovimentoController();
-    private final PagamentoCompraController pagamentoCompraController = new PagamentoCompraController();
     private final FornecedorController fornecedorController = new FornecedorController();
+
     // Variáveis de estado
     private Produto produtoSelecionado;
     private List<CompraProduto> itensCompraAtual;
@@ -93,85 +72,34 @@ public class CompraProdutoPanel extends JPanel {
     private Map<Integer, Produto> cacheProdutos;
     private Map<Integer, Estoque> cacheEstoque;
     private Map<Integer, Fornecedor> cacheFornecedores;
-    // Formas de pagamento disponíveis
-    private static final String[] FORMAS_PAGAMENTO = { "DINHEIRO", "PIX", "DEBITO", "CREDITO", "BOLETO" };
+
     // Construtor padrão
     public CompraProdutoPanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(backgroundColor);
+
         // Inicializa estado
         itensCompraAtual = new ArrayList<>();
         valorTotalCompra = BigDecimal.ZERO;
         cacheProdutos = new HashMap<>();
         cacheEstoque = new HashMap<>();
         cacheFornecedores = new HashMap<>();
-        // Inicializa componentes de pagamento
-        cbMetodoPagamento = new JComboBox<>(FORMAS_PAGAMENTO);
-        cbMetodoPagamento.setPreferredSize(new Dimension(120, 25));
-        cbMetodoPagamento.setFont(fieldFont);
-        cbMetodoPagamento.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        spinnerParcelas = new JSpinner(new SpinnerNumberModel(1, 1, 12, 1));
-        spinnerParcelas.setPreferredSize(new Dimension(80, 25));
-        spinnerParcelas.setFont(fieldFont);
-        spinnerParcelas.setEnabled(false);
-        // Inicializa campo de data de vencimento
-        try {
-            MaskFormatter dateFormatter = new MaskFormatter("##/##/####");
-            dateFormatter.setPlaceholderCharacter('_');
-            txtDataVencimento = new JFormattedTextField(dateFormatter);
-            txtDataVencimento.setPreferredSize(new Dimension(120, 25));
-            txtDataVencimento.setFont(fieldFont);
-            txtDataVencimento.setEnabled(false);
-            txtDataVencimento.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao configurar formato de data: " + e.getMessage(), "Erro",
-                    JOptionPane.ERROR_MESSAGE);
-            txtDataVencimento = new JFormattedTextField();
-        }
-        // Inicializa o JCalendar e JPopupMenu
-        calendarPopup = new JPopupMenu();
-        calendar = new JCalendar();
-        calendar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        calendar.setDecorationBackgroundColor(backgroundColor);
-        calendar.setTodayButtonVisible(true);
-        calendarPopup.add(calendar);
-        calendarPopup.setPreferredSize(new Dimension(400, 300)); // Aumenta o tamanho do calendário
-        calendar.addPropertyChangeListener("calendar", evt -> {
-            java.util.Calendar selectedDate = calendar.getCalendar();
-            if (selectedDate != null) {
-                LocalDate date = selectedDate.getTime().toInstant()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toLocalDate();
-                txtDataVencimento.setText(date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-                calendarPopup.setVisible(false);
-            }
-        });
-        // Listener para abrir o calendário centralizado
-        txtDataVencimento.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (txtDataVencimento.isEnabled()) {
-                    // Calcula a posição central da tela
-                    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                    Dimension popupSize = calendarPopup.getPreferredSize();
-                    int x = (screenSize.width - popupSize.width) / 2;
-                    int y = (screenSize.height - popupSize.height) / 2;
-                    calendarPopup.show(txtDataVencimento, x - txtDataVencimento.getLocationOnScreen().x, y - txtDataVencimento.getLocationOnScreen().y);
-                }
-            }
-        });
+
         // Carrega dados iniciais
         carregarCacheInicial();
+
         // Título
         JLabel lblTitulo = new JLabel("Compra de Produtos", SwingConstants.CENTER);
         lblTitulo.setFont(titleFont);
         lblTitulo.setForeground(primaryColor);
         lblTitulo.setBorder(new EmptyBorder(5, 0, 10, 0));
         add(lblTitulo, BorderLayout.NORTH);
+
         // Painéis de formulário e tabela
         JPanel painelFormulario = criarPainelFormulario();
         JPanel painelTabela = criarPainelTabela();
+
         // Configura o JSplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, painelFormulario, painelTabela);
         splitPane.setResizeWeight(0.45);
@@ -181,6 +109,7 @@ public class CompraProdutoPanel extends JPanel {
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(0.43));
         add(splitPane, BorderLayout.CENTER);
     }
+
     // Carrega dados iniciais em cache
     private void carregarCacheInicial() {
         try {
@@ -194,19 +123,24 @@ public class CompraProdutoPanel extends JPanel {
                 cacheFornecedores.put(f.getId(), f);
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Erro ao carregar dados iniciais: " + e.getMessage(), "Erro",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao carregar dados iniciais: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
     // Cria o painel de formulário
     private JPanel criarPainelFormulario() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
-        panel.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1),
-                                "Registrar Compra", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
-                        new EmptyBorder(5, 5, 5, 5)));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1),
+                        "Registrar Compra",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
+                new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
+
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -214,6 +148,7 @@ public class CompraProdutoPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
+
         // Seção de Busca
         JPanel buscaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
         buscaPanel.setBackground(backgroundColor);
@@ -238,6 +173,7 @@ public class CompraProdutoPanel extends JPanel {
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         mainPanel.add(buscaPanel, gbc);
+
         // Seção de Dados
         JPanel dataPanel = new JPanel(new GridBagLayout());
         dataPanel.setBackground(backgroundColor);
@@ -246,6 +182,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.insets = new Insets(2, 2, 2, 2);
         gbcData.fill = GridBagConstraints.HORIZONTAL;
         gbcData.anchor = GridBagConstraints.WEST;
+
         // Dados do Fornecedor
         JLabel lblFornecedorTitle = new JLabel("Dados do Fornecedor");
         lblFornecedorTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -254,6 +191,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridy = 0;
         gbcData.gridwidth = 2;
         dataPanel.add(lblFornecedorTitle, gbcData);
+
         JLabel lblFornecedor = new JLabel("Fornecedor:");
         lblFornecedor.setFont(labelFont);
         gbcData.gridx = 0;
@@ -267,8 +205,7 @@ public class CompraProdutoPanel extends JPanel {
         cbFornecedor.addItem(null);
         cbFornecedor.setRenderer(new DefaultListCellRenderer() {
             @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                                                         boolean cellHasFocus) {
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value == null) {
                     setText("Nenhum");
@@ -284,6 +221,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridx = 1;
         gbcData.weightx = 1.0;
         dataPanel.add(cbFornecedor, gbcData);
+
         lblFornecedorDados = new JLabel();
         lblFornecedorDados.setFont(fieldFont);
         lblFornecedorDados.setForeground(Color.GRAY);
@@ -294,6 +232,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.weighty = 1.0;
         gbcData.fill = GridBagConstraints.BOTH;
         dataPanel.add(lblFornecedorDados, gbcData);
+
         // Dados do Produto
         JLabel lblProdutoTitle = new JLabel("Dados do Produto");
         lblProdutoTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -304,6 +243,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.weighty = 0.0;
         gbcData.fill = GridBagConstraints.HORIZONTAL;
         dataPanel.add(lblProdutoTitle, gbcData);
+
         JLabel lblNomeProduto = new JLabel("Produto:");
         lblNomeProduto.setFont(labelFont);
         gbcData.gridx = 2;
@@ -319,6 +259,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtNomeProduto, gbcData);
+
         JLabel lblEstoque = new JLabel("Estoque Atual:");
         lblEstoque.setFont(labelFont);
         gbcData.gridx = 2;
@@ -333,6 +274,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtEstoqueAtual, gbcData);
+
         JLabel lblQuantidade = new JLabel("Quantidade:");
         lblQuantidade.setFont(labelFont);
         gbcData.gridx = 2;
@@ -345,6 +287,7 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(spinnerQuantidade, gbcData);
+
         JLabel lblPreco = new JLabel("Preço Unitário:");
         lblPreco.setFont(labelFont);
         gbcData.gridx = 2;
@@ -359,11 +302,13 @@ public class CompraProdutoPanel extends JPanel {
         gbcData.gridx = 3;
         gbcData.weightx = 1.0;
         dataPanel.add(txtPrecoUnitario, gbcData);
+
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
         gbc.weighty = 0.4;
         mainPanel.add(dataPanel, gbc);
+
         // Seção de Botões
         JPanel botoesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 2));
         botoesPanel.setBackground(backgroundColor);
@@ -392,7 +337,7 @@ public class CompraProdutoPanel extends JPanel {
         btnRemoverItem.setPreferredSize(new Dimension(100, 30));
         btnRemoverItem.setHorizontalAlignment(SwingConstants.CENTER);
         btnRemoverItem.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnRemoverItem.setToolTipText("Remover item selecionado da compra");
+        btnRemoverItem.setToolTipText("Remover item selecionado");
         btnRemoverItem.addActionListener(e -> removerItemCompra());
         botoesPanel.add(btnRemoverItem);
         gbc.gridx = 0;
@@ -401,24 +346,32 @@ public class CompraProdutoPanel extends JPanel {
         gbc.weighty = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         mainPanel.add(botoesPanel, gbc);
+
         // Listeners
         btnAdicionarItem.addActionListener(e -> adicionarItemCompra());
         btnLimpar.addActionListener(e -> limparCampos());
         txtBuscaProdutoNome.getDocument().addDocumentListener(new BuscaDocumentListener(true));
         txtBuscaProdutoCodigo.getDocument().addDocumentListener(new BuscaDocumentListener(false));
-        cbMetodoPagamento.addActionListener(e -> atualizarParcelas());
         cbFornecedor.addActionListener(e -> atualizarDadosFornecedor());
+
         panel.add(mainPanel, BorderLayout.CENTER);
         return panel;
     }
+
     // Cria o painel da tabela de itens da compra atual
     private JPanel criarPainelTabela() {
         JPanel panel = new JPanel(new BorderLayout(5, 5));
         panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createTitledBorder(BorderFactory.createLineBorder(primaryColor, 1),
-                        "Itens da Compra Atual", TitledBorder.LEFT, TitledBorder.TOP, labelFont, primaryColor),
+                BorderFactory.createTitledBorder(
+                        BorderFactory.createLineBorder(primaryColor, 1),
+                        "Itens da Compra Atual",
+                        TitledBorder.LEFT,
+                        TitledBorder.TOP,
+                        labelFont,
+                        primaryColor),
                 new EmptyBorder(5, 5, 5, 5)));
         panel.setBackground(backgroundColor);
+
         String[] colunas = {"Produto", "Quantidade", "Preço Unitário", "Subtotal", "Fornecedor"};
         modeloTabelaItens = new DefaultTableModel(colunas, 0) {
             @Override
@@ -432,18 +385,13 @@ public class CompraProdutoPanel extends JPanel {
                 Component c = super.prepareRenderer(renderer, row, column);
                 c.setBackground(row % 2 == 0 ? rowColorLightGreen : Color.WHITE);
                 c.setForeground(Color.BLACK);
-                ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
-                return c;
-            }
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (getSelectedRow() >= 0) {
-                    Rectangle rect = getCellRect(getSelectedRow(), 0, true);
-                    rect.width = getWidth();
-                    g.setColor(Color.BLACK);
-                    g.drawRect(rect.x, rect.y, rect.width - 1, rect.height - 1);
+                if (isRowSelected(row)) {
+                    c.setBackground(secondaryColor);
+                    ((JComponent) c).setBorder(BorderFactory.createMatteBorder(1, column == 0 ? 1 : 0, 1, column == getColumnCount() - 1 ? 1 : 0, Color.BLACK));
+                } else {
+                    ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                 }
+                return c;
             }
         };
         tabelaItensCompra.setShowGrid(false);
@@ -464,41 +412,24 @@ public class CompraProdutoPanel extends JPanel {
         JScrollPane scroll = new JScrollPane(tabelaItensCompra);
         scroll.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
         panel.add(scroll, BorderLayout.CENTER);
-        // Painel inferior com layout vertical
+
+        // Painel inferior
         JPanel southPanel = new JPanel(new GridBagLayout());
         southPanel.setBackground(backgroundColor);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-        // Valor Total
+
+        // Label do valor total
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
         lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
         lblValorTotal.setForeground(primaryColor);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.weightx = 1.0;
         southPanel.add(lblValorTotal, gbc);
-        // Seção de Pagamento
-        JPanel pagamentoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 2));
-        pagamentoPanel.setBackground(backgroundColor);
-        pagamentoPanel.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 5));
-        JLabel lblMetodo = new JLabel("Método Pagamento:");
-        lblMetodo.setFont(labelFont);
-        pagamentoPanel.add(lblMetodo);
-        pagamentoPanel.add(cbMetodoPagamento);
-        JLabel lblParcelas = new JLabel("Parcelas:");
-        lblParcelas.setFont(labelFont);
-        pagamentoPanel.add(lblParcelas);
-        pagamentoPanel.add(spinnerParcelas);
-        JLabel lblDataVencimento = new JLabel("Data Vencimento:");
-        lblDataVencimento.setFont(labelFont);
-        pagamentoPanel.add(lblDataVencimento);
-        pagamentoPanel.add(txtDataVencimento);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.gridwidth = 2;
-        southPanel.add(pagamentoPanel, gbc);
+
         // Botão Realizar Compra
         JButton btnRealizarCompra = new JButton("Realizar Compra");
         btnRealizarCompra.setBackground(primaryColor);
@@ -508,32 +439,47 @@ public class CompraProdutoPanel extends JPanel {
         btnRealizarCompra.setHorizontalAlignment(SwingConstants.CENTER);
         btnRealizarCompra.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnRealizarCompra.setToolTipText("Finalizar a compra");
-        btnRealizarCompra.addActionListener(e -> realizarCompra());
+        btnRealizarCompra.addActionListener(e -> abrirCheckoutPagamento());
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 2;
+        gbc.weightx = 0.0;
         gbc.anchor = GridBagConstraints.EAST;
         southPanel.add(btnRealizarCompra, gbc);
+
         panel.add(southPanel, BorderLayout.SOUTH);
         return panel;
     }
-    // Remove o item selecionado da compra
+
+    // Abre o diálogo de checkout para gerenciar pagamentos
+    private void abrirCheckoutPagamento() {
+        if (itensCompraAtual.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Adicione pelo menos um produto à compra!", "Erro", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        // Obtém o JFrame pai
+        JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        CheckoutCompraDialog dialog = new CheckoutCompraDialog(parentFrame, valorTotalCompra, itensCompraAtual);
+        dialog.setVisible(true);
+        if (dialog.isCompraConcluida()) {
+            limparCampos();
+        }
+    }
+
+    // Remove o item selecionado da tabela de itens da compra
     private void removerItemCompra() {
         int selectedRow = tabelaItensCompra.getSelectedRow();
         if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione um item para remover!", "Aviso",
-                    JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Selecione um item para remover!", "Aviso", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Deseja remover o item selecionado?",
-                "Confirmar Remoção",
-                JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this, "Deseja remover o item selecionado?", "Confirmar Remoção", JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             itensCompraAtual.remove(selectedRow);
             atualizarTabelaItens();
         }
     }
+
     // Atualiza os dados do produto
     private void atualizarProduto(boolean isNomeChanged) {
         String buscaNome = txtBuscaProdutoNome.getText().trim().toLowerCase();
@@ -545,8 +491,7 @@ public class CompraProdutoPanel extends JPanel {
         }
         for (Produto p : cacheProdutos.values()) {
             boolean matchNome = buscaNome.isEmpty() || p.getNome().toLowerCase().contains(buscaNome);
-            boolean matchCodigo = buscaCodigo.isEmpty()
-                    || (p.getCodigoSerial() != null && p.getCodigoSerial().toLowerCase().contains(buscaCodigo));
+            boolean matchCodigo = buscaCodigo.isEmpty() || (p.getCodigoSerial() != null && p.getCodigoSerial().toLowerCase().contains(buscaCodigo));
             if (matchNome && matchCodigo) {
                 if (produtoEncontrado == null || p.getId() > produtoEncontrado.getId()) {
                     produtoEncontrado = p;
@@ -572,6 +517,7 @@ public class CompraProdutoPanel extends JPanel {
             }
         });
     }
+
     // Limpa os campos do produto
     private void limparCamposProduto() {
         txtNomeProduto.setText("");
@@ -579,35 +525,21 @@ public class CompraProdutoPanel extends JPanel {
         txtPrecoUnitario.setText("0,00");
         spinnerQuantidade.setValue(1);
     }
-    // Atualiza opções de parcelas e data de vencimento
-    private void atualizarParcelas() {
-        String metodo = (String) cbMetodoPagamento.getSelectedItem();
-        if ("CREDITO".equals(metodo) || "BOLETO".equals(metodo)) {
-            spinnerParcelas.setModel(new SpinnerNumberModel(1, 1, 12, 1));
-            spinnerParcelas.setEnabled(true);
-            txtDataVencimento.setEnabled(true);
-        } else {
-            spinnerParcelas.setModel(new SpinnerNumberModel(1, 1, 1, 1));
-            spinnerParcelas.setEnabled(false);
-            txtDataVencimento.setEnabled(false);
-            txtDataVencimento.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        }
-    }
+
     // Atualiza os dados do fornecedor exibidos
     private void atualizarDadosFornecedor() {
         Fornecedor fornecedor = (Fornecedor) cbFornecedor.getSelectedItem();
         if (fornecedor != null) {
             StringBuilder dados = new StringBuilder("<html>");
             dados.append("CNPJ: ").append(fornecedor.getCnpj() != null ? fornecedor.getCnpj() : "N/A").append("<br>");
-            dados.append("Telefone: ").append(fornecedor.getTelefone() != null ? fornecedor.getTelefone() : "N/A")
-                    .append("<br>");
-            dados.append("Email: ").append(fornecedor.getEmail() != null ? fornecedor.getEmail() : "N/A")
-                    .append("</html>");
+            dados.append("Telefone: ").append(fornecedor.getTelefone() != null ? fornecedor.getTelefone() : "N/A").append("<br>");
+            dados.append("Email: ").append(fornecedor.getEmail() != null ? fornecedor.getEmail() : "N/A").append("</html>");
             lblFornecedorDados.setText(dados.toString());
         } else {
             lblFornecedorDados.setText("");
         }
     }
+
     // Adiciona um item à compra atual
     private void adicionarItemCompra() {
         try {
@@ -638,10 +570,10 @@ public class CompraProdutoPanel extends JPanel {
             limparCamposProduto();
             produtoSelecionado = null;
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao adicionar item: " + e.getMessage(), "Erro",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Erro ao adicionar item: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
         }
     }
+
     // Atualiza a tabela de itens da compra atual
     private void atualizarTabelaItens() {
         modeloTabelaItens.setRowCount(0);
@@ -653,8 +585,7 @@ public class CompraProdutoPanel extends JPanel {
                     p = produtoController.buscarPorId(cp.getProdutoId());
                     cacheProdutos.put(p.getId(), p);
                 } catch (SQLException e) {
-                    JOptionPane.showMessageDialog(this, "Erro ao carregar produto: " + e.getMessage(), "Erro",
-                            JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Erro ao carregar produto: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                     continue;
                 }
             }
@@ -664,126 +595,25 @@ public class CompraProdutoPanel extends JPanel {
                 if (f == null) {
                     try {
                         f = fornecedorController.buscarPorId(cp.getFornecedorId());
+                        cacheFornecedores.put(f.getId(), f);
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        JOptionPane.showMessageDialog(this, "Erro ao carregar fornecedor: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
                     }
-                    cacheFornecedores.put(f.getId(), f);
                 }
             }
             BigDecimal subtotal = cp.getPrecoUnitario().multiply(BigDecimal.valueOf(cp.getQuantidade()));
             valorTotalCompra = valorTotalCompra.add(subtotal);
-            modeloTabelaItens.addRow(
-                    new Object[] { p.getNome(), cp.getQuantidade(), String.format("R$ %.2f", cp.getPrecoUnitario()),
-                            String.format("R$ %.2f", subtotal), f != null ? f.getNome() : "Não informado" });
+            modeloTabelaItens.addRow(new Object[]{
+                    p.getNome(),
+                    cp.getQuantidade(),
+                    String.format("R$ %.2f", cp.getPrecoUnitario()),
+                    String.format("R$ %.2f", subtotal),
+                    f != null ? f.getNome() : "Não informado"
+            });
         }
         lblValorTotal.setText(String.format("Valor Total: R$ %.2f", valorTotalCompra));
     }
-    // Realiza a compra
-    private void realizarCompra() {
-        try {
-            if (itensCompraAtual.isEmpty()) {
-                throw new IllegalArgumentException("Adicione pelo menos um produto à compra!");
-            }
-            int parcelas = (Integer) spinnerParcelas.getValue();
-            String metodo = (String) cbMetodoPagamento.getSelectedItem();
-            LocalDate dataVencimento = null;
-            if ("CREDITO".equals(metodo) || "BOLETO".equals(metodo)) {
-                String dataText = txtDataVencimento.getText();
-                try {
-                    dataVencimento = LocalDate.parse(dataText, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                    if (dataVencimento.isBefore(LocalDate.now())) {
-                        throw new IllegalArgumentException("Data de vencimento deve ser futura!");
-                    }
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Data de vencimento inválida!");
-                }
-            }
-            Caixa caixa = caixaController.getCaixaAberto();
-            if (caixa == null && ("DINHEIRO".equals(metodo) || "PIX".equals(metodo) || "DEBITO".equals(metodo)
-                    || parcelas == 1)) {
-                throw new IllegalStateException("Nenhum caixa aberto encontrado!");
-            }
-            Compra compra = new Compra();
-            compra.setUsuario(Sessao.getUsuarioLogado().getLogin());
-            compra.setDataCompra(Timestamp.valueOf(LocalDateTime.now()));
-            if (!compraController.criarCompra(compra, Sessao.getUsuarioLogado().getLogin())) {
-                throw new SQLException("Falha ao registrar compra!");
-            }
-            int compraId = compra.getId();
-            for (CompraProduto cp : itensCompraAtual) {
-                cp.setCompraId(compraId);
-                if (!compraProdutoController.adicionarProdutoCompra(cp)) {
-                    throw new SQLException("Falha ao registrar produto da compra!");
-                }
-                Estoque estoque = cacheEstoque.get(cp.getProdutoId());
-                if (estoque == null) {
-                    estoque = new Estoque();
-                    estoque.setProdutoId(cp.getProdutoId());
-                    estoque.setQuantidade(0);
-                    estoque.setEstoqueMinimo(0);
-                }
-                estoque.setQuantidade(estoque.getQuantidade() + cp.getQuantidade());
-                estoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                if (!estoqueController.salvarOuAtualizarEstoque(estoque, Sessao.getUsuarioLogado().getLogin())) {
-                    throw new SQLException("Falha ao atualizar estoque!");
-                }
-                cacheEstoque.put(estoque.getProdutoId(), estoque);
-                MovimentoEstoque movimentoEstoque = new MovimentoEstoque();
-                movimentoEstoque.setProdutoId(cp.getProdutoId());
-                movimentoEstoque.setQuantidade(cp.getQuantidade());
-                movimentoEstoque.setTipo(MovimentoEstoque.Tipo.ENTRADA);
-                movimentoEstoque.setObservacoes("Entrada por compra ID " + compraId);
-                movimentoEstoque.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                if (!movimentoEstoqueController.registrarMovimento(movimentoEstoque,
-                        Sessao.getUsuarioLogado().getLogin())) {
-                    throw new SQLException("Falha ao registrar movimento de estoque!");
-                }
-            }
-            BigDecimal valorParcela = valorTotalCompra.divide(BigDecimal.valueOf(parcelas), 2,
-                    BigDecimal.ROUND_HALF_UP);
-            for (int i = 1; i <= parcelas; i++) {
-                PagamentoCompra pagamento = new PagamentoCompra();
-                pagamento.setCompraId(compraId);
-                pagamento.setValor(valorParcela);
-                pagamento.setMetodoPagamento(PagamentoCompra.MetodoPagamento.valueOf(metodo));
-                pagamento.setParcela(i);
-                pagamento.setTotalParcelas(parcelas);
-                pagamento.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                pagamento.setDataHora(Timestamp.valueOf(LocalDateTime.now()));
-                pagamento.setDataVencimento(dataVencimento != null ? Date.valueOf(dataVencimento.plusMonths(i - 1))
-                        : Date.valueOf(LocalDate.now().plusMonths(i - 1)));
-                pagamento.setStatus(
-                        i == 1 && ("DINHEIRO".equals(metodo) || "PIX".equals(metodo) || "DEBITO".equals(metodo))
-                                ? PagamentoCompra.StatusPagamento.PAGO
-                                : PagamentoCompra.StatusPagamento.PENDENTE);
-                if (!pagamentoCompraController.registrarPagamento(pagamento, Sessao.getUsuarioLogado().getLogin())) {
-                    throw new SQLException("Falha ao registrar pagamento!");
-                }
-                if (i == 1 && ("DINHEIRO".equals(metodo) || "PIX".equals(metodo) || "DEBITO".equals(metodo)
-                        || parcelas == 1)) {
-                    CaixaMovimento movimentoCaixa = new CaixaMovimento();
-                    movimentoCaixa.setCaixa(caixa);
-                    movimentoCaixa.setTipo(CaixaMovimento.TipoMovimento.SAIDA);
-                    movimentoCaixa.setOrigem(CaixaMovimento.OrigemMovimento.PAGAMENTO_COMPRA);
-                    movimentoCaixa.setPagamentoCompra(pagamento);
-                    movimentoCaixa.setFormaPagamento(CaixaMovimento.FormaPagamento.valueOf(metodo));
-                    movimentoCaixa.setValor(valorParcela);
-                    movimentoCaixa
-                            .setDescricao("Pagamento " + (parcelas == 1 ? "à vista" : "parcela " + i + "/" + parcelas)
-                                    + " de compra ID " + compraId);
-                    movimentoCaixa.setUsuario(Sessao.getUsuarioLogado().getLogin());
-                    movimentoCaixa.setDataHora(LocalDateTime.now());
-                    caixaMovimentoController.adicionarMovimento(movimentoCaixa);
-                }
-            }
-            JOptionPane.showMessageDialog(this, "Compra realizada com sucesso!", "Sucesso",
-                    JOptionPane.INFORMATION_MESSAGE);
-            limparCampos();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao realizar compra: " + e.getMessage(), "Erro",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
+
     // Limpa os campos do formulário
     private void limparCampos() {
         txtBuscaProdutoNome.setText("");
@@ -794,39 +624,39 @@ public class CompraProdutoPanel extends JPanel {
         cbFornecedor.setSelectedIndex(0);
         lblFornecedorDados.setText("");
         spinnerQuantidade.setValue(1);
-        cbMetodoPagamento.setSelectedIndex(0);
-        spinnerParcelas.setValue(1);
-        spinnerParcelas.setEnabled(false);
-        txtDataVencimento.setEnabled(false);
-        txtDataVencimento.setText(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         produtoSelecionado = null;
         itensCompraAtual.clear();
         atualizarTabelaItens();
     }
+
     // Listener para busca de produtos
     private class BuscaDocumentListener implements DocumentListener {
         private final boolean isNomeField;
+
         public BuscaDocumentListener(boolean isNomeField) {
             this.isNomeField = isNomeField;
         }
+
         @Override
         public void insertUpdate(DocumentEvent e) {
             atualizarProduto(isNomeField);
         }
+
         @Override
         public void removeUpdate(DocumentEvent e) {
             atualizarProduto(isNomeField);
         }
+
         @Override
         public void changedUpdate(DocumentEvent e) {
             atualizarProduto(isNomeField);
         }
     }
+
     // Filtro para formatar entrada de valores monetários
     private class CurrencyDocumentFilter extends DocumentFilter {
         @Override
-        public void insertString(DocumentFilter.FilterBypass fb, int offset, String string, AttributeSet attr)
-                throws BadLocationException {
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
             StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
             sb.insert(offset, string);
             if (isValidInput(sb.toString())) {
@@ -834,9 +664,9 @@ public class CompraProdutoPanel extends JPanel {
                 super.replace(fb, 0, fb.getDocument().getLength(), formatted, attr);
             }
         }
+
         @Override
-        public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String string, AttributeSet attrs)
-                throws BadLocationException {
+        public void replace(FilterBypass fb, int offset, int length, String string, AttributeSet attrs) throws BadLocationException {
             StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
             sb.replace(offset, offset + length, string);
             if (isValidInput(sb.toString())) {
@@ -844,30 +674,32 @@ public class CompraProdutoPanel extends JPanel {
                 super.replace(fb, 0, fb.getDocument().getLength(), formatted, attrs);
             }
         }
+
         @Override
-        public void remove(DocumentFilter.FilterBypass fb, int offset, int length) throws BadLocationException {
+        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
             StringBuilder sb = new StringBuilder(fb.getDocument().getText(0, fb.getDocument().getLength()));
             sb.delete(offset, offset + length);
             String formatted = formatCurrency(removeNonDigits(sb.toString()));
             super.replace(fb, 0, fb.getDocument().getLength(), formatted, null);
         }
+
         private boolean isValidInput(String text) {
             return text.matches("[0-9,.]*");
         }
+
         private String removeNonDigits(String text) {
             return text.replaceAll("[^0-9]", "");
         }
+
         private String formatCurrency(String digits) {
-            if (digits.isEmpty())
-                return "0,00";
+            if (digits.isEmpty()) return "0,00";
             while (digits.length() < 3) {
                 digits = "0" + digits;
             }
             String cents = digits.substring(digits.length() - 2);
             String reais = digits.substring(0, digits.length() - 2);
             reais = reais.replaceFirst("^0+(?!$)", "");
-            if (reais.isEmpty())
-                reais = "0";
+            if (reais.isEmpty()) reais = "0";
             StringBuilder formattedReais = new StringBuilder();
             int count = 0;
             for (int i = reais.length() - 1; i >= 0; i--) {

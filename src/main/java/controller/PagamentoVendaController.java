@@ -109,6 +109,10 @@ public class PagamentoVendaController {
         return filtrar(dao.findByVenda(v),
                 faixaDataHora(inicioHora, fimHora).and(faixaDataVencimento(inicioVenc, fimVenc)));
     }
+    
+    public List<PagamentoVenda> listarPorMetodoEDataVencimento(PagamentoVenda.MetodoPagamento m, LocalDate inicio, LocalDate fim) throws SQLException {
+        return filtrar(dao.findAll(), metodo(m).and(faixaDataVencimento(inicio, fim)));
+    }
 
     public List<PagamentoVenda> listarPorVendaMetodoDataHoraEVencimento(Venda v, PagamentoVenda.MetodoPagamento m,
                                                                         LocalDateTime inicioHora, LocalDateTime fimHora,

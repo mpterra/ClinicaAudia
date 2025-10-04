@@ -589,6 +589,7 @@ CREATE TABLE pagamento_venda (
     status ENUM('PAGO','PENDENTE') DEFAULT 'PENDENTE',
     observacoes TEXT,
     usuario VARCHAR(50),
+    atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_pag_venda
         FOREIGN KEY (venda_id)
         REFERENCES venda(id)
@@ -667,3 +668,6 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
+
+SELECT * FROM pagamento_venda;
+SELECT * FROM pagamento_compra;
