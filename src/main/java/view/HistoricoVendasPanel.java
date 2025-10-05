@@ -64,9 +64,12 @@ public class HistoricoVendasPanel extends JPanel {
     private final Color primaryColor = new Color(0, 128, 0); // Verde
     private final Color backgroundColor = new Color(245, 245, 245);
     private final Color rowColorLightGreen = new Color(230, 255, 230);
-    private final Font titleFont = new Font("SansSerif", Font.BOLD, 18);
-    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 14);
-    private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 12);
+    private final Color estornarButtonColor = Color.RED; // Vermelho para Estornar
+    private final Color trocarButtonColor = Color.YELLOW; // Amarelo para Trocar
+    private final Font titleFont = new Font("SansSerif", Font.BOLD, 16);
+    private final Font labelFont = new Font("SansSerif", Font.PLAIN, 12);
+    private final Font fieldFont = new Font("SansSerif", Font.PLAIN, 11);
+    private final Font totalFont = new Font("SansSerif", Font.BOLD, 16); // Fonte maior para Valor Total
 
     // Controladores
     private final VendaController vendaController = new VendaController();
@@ -202,7 +205,7 @@ public class HistoricoVendasPanel extends JPanel {
         dateChooserFimFiltro.addPropertyChangeListener("date", evt -> aplicarFiltros());
         filtrosPanel.add(dateChooserFimFiltro);
 
-        JLabel lblProdutoNome = new JLabel("Nome do Produto:");
+        JLabel lblProdutoNome = new JLabel("Produto:");
         lblProdutoNome.setFont(labelFont);
         filtrosPanel.add(lblProdutoNome);
 
@@ -220,7 +223,7 @@ public class HistoricoVendasPanel extends JPanel {
         });
         filtrosPanel.add(txtBuscaProdutoNome);
 
-        JLabel lblPacienteNome = new JLabel("Nome do Paciente:");
+        JLabel lblPacienteNome = new JLabel("Paciente:");
         lblPacienteNome.setFont(labelFont);
         filtrosPanel.add(lblPacienteNome);
 
@@ -238,7 +241,7 @@ public class HistoricoVendasPanel extends JPanel {
         });
         filtrosPanel.add(txtBuscaPacienteNome);
 
-        chkGarantiaAtiva = new JCheckBox("Apenas Garantias Ativas");
+        chkGarantiaAtiva = new JCheckBox("Garantias Ativas");
         chkGarantiaAtiva.setFont(labelFont);
         chkGarantiaAtiva.setBackground(backgroundColor);
         chkGarantiaAtiva.addActionListener(e -> aplicarFiltros());
@@ -291,7 +294,7 @@ public class HistoricoVendasPanel extends JPanel {
         tabelaVendas.setFont(fieldFont);
         tabelaVendas.setBackground(backgroundColor);
         JTableHeader header = tabelaVendas.getTableHeader();
-        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+        header.setFont(new Font("SansSerif", Font.BOLD, 12));
         header.setBackground(primaryColor);
         header.setForeground(Color.WHITE);
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
@@ -307,23 +310,23 @@ public class HistoricoVendasPanel extends JPanel {
         JPanel southPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         southPanel.setBackground(backgroundColor);
         lblValorTotal = new JLabel("Valor Total: R$ 0,00");
-        lblValorTotal.setFont(new Font("SansSerif", Font.BOLD, 16));
+        lblValorTotal.setFont(totalFont);
         lblValorTotal.setForeground(primaryColor);
         southPanel.add(lblValorTotal);
 
         JButton btnEstornar = new JButton("Estornar Venda");
-        btnEstornar.setBackground(primaryColor);
+        btnEstornar.setBackground(estornarButtonColor);
         btnEstornar.setForeground(Color.WHITE);
-        btnEstornar.setPreferredSize(new Dimension(150, 30));
+        btnEstornar.setPreferredSize(new Dimension(120, 25));
         btnEstornar.setFont(fieldFont);
         btnEstornar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnEstornar.addActionListener(e -> estornarVenda());
         southPanel.add(btnEstornar);
 
         JButton btnTrocar = new JButton("Trocar Produto");
-        btnTrocar.setBackground(primaryColor);
-        btnTrocar.setForeground(Color.WHITE);
-        btnTrocar.setPreferredSize(new Dimension(150, 30));
+        btnTrocar.setBackground(trocarButtonColor);
+        btnTrocar.setForeground(Color.BLACK); // Preto para legibilidade em fundo amarelo
+        btnTrocar.setPreferredSize(new Dimension(120, 25));
         btnTrocar.setFont(fieldFont);
         btnTrocar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btnTrocar.addActionListener(e -> trocarProduto());
@@ -458,7 +461,7 @@ public class HistoricoVendasPanel extends JPanel {
     }
 
     /**
-     * Estorna a venda selecionada, revertendo movimentos financeiros e estoque.
+     * Estorna a venda selecionada, cancelando a venda e seus pagamentos, registrando ajuste de saída no caixa e restaurando o estoque.
      */
     private void estornarVenda() {
         int row = tabelaVendas.getSelectedRow();
@@ -474,16 +477,16 @@ public class HistoricoVendasPanel extends JPanel {
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            List<PagamentoVenda> pagamentos = pagamentoController.listarPorVenda(venda);
-            // Verifica se algum produto está emprestado
-            List<VendaProduto> produtosVenda = vendaProdutoController.listarPorVenda(venda.getId());
-            for (VendaProduto vp : produtosVenda) {
-                String codigoSerial = vp.getCogidoSerial();
-                if (codigoSerial != null && !codigoSerial.isEmpty()) {
-                    // Assumindo que existe um método para verificar empréstimos
-                    // Para simplificação, assumimos que não há empréstimos
-                }
+            if (venda.getStatusVenda() == Venda.StatusVenda.CANCELADA) {
+                JOptionPane.showMessageDialog(this, "A venda já está cancelada.", "Erro",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
             }
+            List<PagamentoVenda> pagamentos = pagamentoController.listarPorVenda(venda);
+            List<VendaProduto> produtosVenda = vendaProdutoController.listarPorVenda(venda.getId());
+            // Verifica se algum produto está emprestado
+            // Assumindo que existe uma tabela de empréstimos, mas não há método fornecido para verificar
+            // Para simplificação, assumimos que não há empréstimos
             JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Estornar Venda");
             dialog.setLayout(new GridBagLayout());
             dialog.getContentPane().setBackground(backgroundColor);
@@ -509,7 +512,7 @@ public class HistoricoVendasPanel extends JPanel {
             JButton btnConfirmar = new JButton("Confirmar Estorno");
             btnConfirmar.setBackground(primaryColor);
             btnConfirmar.setForeground(Color.WHITE);
-            btnConfirmar.setPreferredSize(new Dimension(150, 30));
+            btnConfirmar.setPreferredSize(new Dimension(120, 25));
             btnConfirmar.setFont(fieldFont);
             btnConfirmar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             gbc.gridx = 0;
@@ -522,31 +525,43 @@ public class HistoricoVendasPanel extends JPanel {
                 try {
                     String usuarioLogado = Sessao.getUsuarioLogado().getLogin();
                     Caixa caixaAberto = caixaController.getCaixaAberto();
-                    // Reverte pagamentos
+
+                    // Calcula o valor total dos pagamentos PAGO para registrar no caixa
+                    BigDecimal valorEstorno = pagamentos.stream()
+                            .filter(p -> p.getStatus().equals("PAGO"))
+                            .map(PagamentoVenda::getValor)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    // Registra movimento de caixa como ajuste de saída para o estorno
+                    if (valorEstorno.compareTo(BigDecimal.ZERO) > 0) {
+                        CaixaMovimento movimento = new CaixaMovimento();
+                        movimento.setCaixa(caixaAberto);
+                        movimento.setTipo(CaixaMovimento.TipoMovimento.SAIDA);
+                        movimento.setOrigem(CaixaMovimento.OrigemMovimento.AJUSTE);
+                        movimento.setValor(valorEstorno);
+                        movimento.setDescricao("Estorno da venda ID " + venda.getId() + ": " + txtObservacoes.getText());
+                        movimento.setDataHora(LocalDateTime.now());
+                        movimento.setUsuario(usuarioLogado);
+                        // Usa DINHEIRO como forma padrão para estornos, conforme prática comum
+                        movimento.setFormaPagamento(CaixaMovimento.FormaPagamento.DINHEIRO);
+                        movimentoController.adicionarMovimento(movimento);
+                    }
+
+                    // Cancela todos os pagamentos associados
                     for (PagamentoVenda p : pagamentos) {
                         p.setStatus("CANCELADO");
                         pagamentoController.atualizar(p);
-                        // Registra movimento de caixa apenas para pagamentos PAGO
-                        if (p.getStatus().equals("PAGO")) {
-                            CaixaMovimento movimento = new CaixaMovimento();
-                            movimento.setCaixa(caixaAberto);
-                            movimento.setTipo(CaixaMovimento.TipoMovimento.SAIDA);
-                            movimento.setOrigem(CaixaMovimento.OrigemMovimento.AJUSTE);
-                            movimento.setValor(p.getValor());
-                            movimento.setDescricao("Estorno da venda ID " + venda.getId() + " - Parcela " + p.getParcela() + ": " + txtObservacoes.getText());
-                            movimento.setDataHora(LocalDateTime.now());
-                            movimento.setUsuario(usuarioLogado);
-                            movimento.setFormaPagamento(CaixaMovimento.FormaPagamento.valueOf(p.getMetodoPagamento().name()));
-                            movimentoController.adicionarMovimento(movimento);
-                        }
                     }
-                    // Restaura estoque
+
+                    // Restaura estoque dos produtos
                     for (VendaProduto vp : produtosVenda) {
                         estoqueController.incrementarEstoque(vp.getProdutoId(), vp.getQuantidade(),
-                            "Estorno da venda ID " + venda.getId(), usuarioLogado);
+                                "Estorno da venda ID " + venda.getId(), usuarioLogado);
                     }
-                    // Remove a venda
-                    vendaController.removerVenda(venda.getId());
+
+                    // Cancela a venda
+                    vendaController.cancelarVenda(venda, usuarioLogado);
+
                     JOptionPane.showMessageDialog(dialog, "Venda estornada com sucesso!", "Sucesso",
                             JOptionPane.INFORMATION_MESSAGE);
                     carregarVendasFiltradas();
@@ -659,7 +674,7 @@ public class HistoricoVendasPanel extends JPanel {
             JButton btnConfirmar = new JButton("Confirmar Troca");
             btnConfirmar.setBackground(primaryColor);
             btnConfirmar.setForeground(Color.WHITE);
-            btnConfirmar.setPreferredSize(new Dimension(150, 30));
+            btnConfirmar.setPreferredSize(new Dimension(120, 25));
             btnConfirmar.setFont(fieldFont);
             btnConfirmar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             gbc.gridx = 0;

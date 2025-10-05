@@ -6,29 +6,36 @@ import java.util.Objects;
 
 public class Venda {
 
+    public enum StatusVenda {
+        FINALIZADA, CANCELADA
+    }
+
     private int id;
     private Integer atendimentoId;  // pode ser null
     private Integer pacienteId;     // pode ser null
     private Integer orcamentoId;    // pode ser null
     private Timestamp dataHora;
     private BigDecimal valorTotal;
+    private StatusVenda statusVenda; 
     private String usuario;
 
     // Construtor vazio
     public Venda() {
         this.valorTotal = BigDecimal.ZERO;
         this.dataHora = new Timestamp(System.currentTimeMillis());
+        this.statusVenda = StatusVenda.FINALIZADA; // default do banco
     }
 
     // Construtor completo
     public Venda(int id, Integer atendimentoId, Integer pacienteId, Integer orcamentoId,
-                 Timestamp dataHora, BigDecimal valorTotal, String usuario) {
+                 Timestamp dataHora, BigDecimal valorTotal, StatusVenda statusVenda, String usuario) {
         this.id = id;
         this.atendimentoId = atendimentoId;
         this.pacienteId = pacienteId;
         this.orcamentoId = orcamentoId;
         this.dataHora = dataHora != null ? dataHora : new Timestamp(System.currentTimeMillis());
         this.valorTotal = valorTotal != null ? valorTotal : BigDecimal.ZERO;
+        this.statusVenda = statusVenda != null ? statusVenda : StatusVenda.FINALIZADA;
         this.usuario = usuario;
     }
 
@@ -46,11 +53,18 @@ public class Venda {
     public void setOrcamentoId(Integer orcamentoId) { this.orcamentoId = orcamentoId; }
 
     public Timestamp getDataHora() { return dataHora; }
-    public void setDataHora(Timestamp dataHora) { this.dataHora = dataHora; }
+    public void setDataHora(Timestamp dataHora) { 
+        this.dataHora = dataHora != null ? dataHora : new Timestamp(System.currentTimeMillis()); 
+    }
 
     public BigDecimal getValorTotal() { return valorTotal; }
     public void setValorTotal(BigDecimal valorTotal) { 
         this.valorTotal = valorTotal != null ? valorTotal : BigDecimal.ZERO;
+    }
+
+    public StatusVenda getStatusVenda() { return statusVenda; }
+    public void setStatusVenda(StatusVenda statusVenda) { 
+        this.statusVenda = statusVenda != null ? statusVenda : StatusVenda.FINALIZADA;
     }
 
     public String getUsuario() { return usuario; }
@@ -66,6 +80,7 @@ public class Venda {
                 ", orcamentoId=" + orcamentoId +
                 ", dataHora=" + dataHora +
                 ", valorTotal=" + valorTotal +
+                ", statusVenda=" + statusVenda +
                 ", usuario='" + usuario + '\'' +
                 '}';
     }

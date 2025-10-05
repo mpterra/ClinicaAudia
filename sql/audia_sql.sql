@@ -534,6 +534,7 @@ CREATE TABLE venda (
     orcamento_id INT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     valor_total DECIMAL(10,2) DEFAULT 0,
+    status_venda ENUM('FINALIZADA','CANCELADA') DEFAULT 'FINALIZADA',
     usuario VARCHAR(50),
     CONSTRAINT fk_venda_atendimento
         FOREIGN KEY (atendimento_id)
@@ -669,4 +670,8 @@ CREATE TABLE caixa_movimento (
 );
 
 -- ==============================================
+
+SELECT * FROM pagamento_venda;
+SELECT * FROM venda;
+SELECT * FROM venda_produto;
 

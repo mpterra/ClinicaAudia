@@ -1,6 +1,7 @@
 package dao;
 
 import model.Venda;
+import model.Venda.StatusVenda;
 import util.Database;
 
 import java.sql.*;
@@ -13,8 +14,8 @@ public class VendaDAO {
     // CREATE
     // ============================
     public boolean salvar(Venda venda, String usuarioLogado) throws SQLException {
-        String sql = "INSERT INTO venda (atendimento_id, paciente_id, orcamento_id, valor_total, usuario) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO venda (atendimento_id, paciente_id, orcamento_id, valor_total, status_venda, usuario) " +
+                     "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -40,9 +41,14 @@ public class VendaDAO {
                 stmt.setNull(3, Types.INTEGER);
             }
 
-            // valor_total e usuario
+            // valor_total
             stmt.setBigDecimal(4, venda.getValorTotal());
-            stmt.setString(5, usuarioLogado);
+
+            // status_venda (enum -> string)
+            stmt.setString(5, venda.getStatusVenda().name());
+
+            // usuário logado
+            stmt.setString(6, usuarioLogado);
 
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
@@ -94,7 +100,7 @@ public class VendaDAO {
     // ============================
     public boolean atualizar(Venda venda, String usuarioLogado) throws SQLException {
         String sql = "UPDATE venda SET atendimento_id = ?, paciente_id = ?, orcamento_id = ?, " +
-                     "valor_total = ?, usuario = ? WHERE id = ?";
+                     "valor_total = ?, status_venda = ?, usuario = ? WHERE id = ?";
 
         try (Connection conn = Database.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -123,16 +129,18 @@ public class VendaDAO {
             // valor_total
             stmt.setBigDecimal(4, venda.getValorTotal());
 
+            // status_venda
+            stmt.setString(5, venda.getStatusVenda().name());
+
             // usuário logado
-            stmt.setString(5, usuarioLogado);
+            stmt.setString(6, usuarioLogado);
 
             // id da venda (WHERE)
-            stmt.setInt(6, venda.getId());
+            stmt.setInt(7, venda.getId());
 
             return stmt.executeUpdate() > 0;
         }
     }
-
 
     // ============================
     // DELETE
@@ -172,6 +180,14 @@ public class VendaDAO {
         v.setValorTotal(rs.getBigDecimal("valor_total"));
         v.setDataHora(rs.getTimestamp("data_hora"));
         v.setUsuario(rs.getString("usuario"));
+
+        // status_venda (string -> enum)
+        String statusStr = rs.getString("status_venda");
+        if (statusStr != null) {
+            v.setStatusVenda(StatusVenda.valueOf(statusStr));
+        } else {
+            v.setStatusVenda(StatusVenda.FINALIZADA); // default de segurança
+        }
 
         return v;
     }

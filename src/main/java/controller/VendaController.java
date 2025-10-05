@@ -2,6 +2,7 @@ package controller;
 
 import dao.VendaDAO;
 import model.Venda;
+import model.Venda.StatusVenda;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -38,7 +39,7 @@ public class VendaController {
     // ============================
     public boolean atualizarVenda(Venda venda, String usuarioLogado) throws SQLException {
         validarVenda(venda);
-        return dao.atualizar(venda, usuarioLogado); // método que vamos implementar no DAO
+        return dao.atualizar(venda, usuarioLogado);
     }
 
     // ============================
@@ -49,7 +50,7 @@ public class VendaController {
     }
 
     // ============================
-    // Validação de regras de negócio
+    // Regras de Negócio
     // ============================
     private void validarVenda(Venda venda) {
         if (venda == null) {
@@ -61,5 +62,19 @@ public class VendaController {
         if (venda.getValorTotal().doubleValue() < 0) {
             throw new IllegalArgumentException("Valor total não pode ser negativo.");
         }
+        if (venda.getStatusVenda() == null) {
+            venda.setStatusVenda(StatusVenda.FINALIZADA); // default igual ao banco
+        }
+    }
+
+    // ============================
+    // Regras extras (se quiser usar)
+    // ============================
+    public boolean cancelarVenda(Venda venda, String usuarioLogado) throws SQLException {
+        if (venda == null || venda.getId() <= 0) {
+            throw new IllegalArgumentException("Venda inválida para cancelamento.");
+        }
+        venda.setStatusVenda(StatusVenda.CANCELADA);
+        return dao.atualizar(venda, usuarioLogado);
     }
 }
